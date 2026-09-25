@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-09-25T22:05:18",
+    "date": "2026-09-25T23:13:17",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -1617,29 +1617,6 @@
             "description": "Silkscreen clearance",
             "items": [
                 {
-                    "description": "R63のリファレンスフィールド",
-                    "pos": {
-                        "x": 134.75,
-                        "y": 82.855
-                    },
-                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
-                },
-                {
-                    "description": "セグメント of R62 、F.Silkscreen 上",
-                    "pos": {
-                        "x": 134.596359,
-                        "y": 83.155
-                    },
-                    "uuid": "ef104198-0375-4ff5-9cd1-ed30db282e67"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_overlap"
-        },
-        {
-            "description": "Silkscreen clearance",
-            "items": [
-                {
                     "description": "セグメント of R62 、F.Silkscreen 上",
                     "pos": {
                         "x": 134.596359,
@@ -1686,6 +1663,29 @@
             "description": "Silkscreen clearance",
             "items": [
                 {
+                    "description": "R63のリファレンスフィールド",
+                    "pos": {
+                        "x": 134.75,
+                        "y": 82.855
+                    },
+                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
+                },
+                {
+                    "description": "セグメント of R62 、F.Silkscreen 上",
+                    "pos": {
+                        "x": 134.596359,
+                        "y": 83.155
+                    },
+                    "uuid": "ef104198-0375-4ff5-9cd1-ed30db282e67"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
                     "description": "C61のリファレンスフィールド",
                     "pos": {
                         "x": 136.975,
@@ -1700,29 +1700,6 @@
                         "y": 82.855
                     },
                     "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
-                }
-            ],
-            "severity": "warning",
-            "type": "silk_overlap"
-        },
-        {
-            "description": "Silkscreen clearance",
-            "items": [
-                {
-                    "description": "セグメント of J21 、F.Silkscreen 上",
-                    "pos": {
-                        "x": 109.11,
-                        "y": 54.664
-                    },
-                    "uuid": "0ed9d55b-af14-42e0-bfd1-8409c0d0485c"
-                },
-                {
-                    "description": "J1のリファレンスフィールド",
-                    "pos": {
-                        "x": 109.351,
-                        "y": 56.227
-                    },
-                    "uuid": "42e750e9-091c-4baa-8326-813d2a636144"
                 }
             ],
             "severity": "warning",
@@ -1752,46 +1729,46 @@
             "type": "silk_overlap"
         },
         {
-            "description": "Silkscreen clipped by solder mask",
+            "description": "Silkscreen clearance",
             "items": [
                 {
-                    "description": "J4のリファレンスフィールド",
+                    "description": "セグメント of J21 、F.Silkscreen 上",
                     "pos": {
-                        "x": 125.276,
-                        "y": 56.242
+                        "x": 109.11,
+                        "y": 54.664
                     },
-                    "uuid": "b5820450-3a5a-4e71-af28-e1d3651bec76"
+                    "uuid": "0ed9d55b-af14-42e0-bfd1-8409c0d0485c"
                 },
                 {
-                    "description": "パッド 2 [/GND] - R2 ( F.Cu 上)",
+                    "description": "J1のリファレンスフィールド",
                     "pos": {
-                        "x": 125.075,
-                        "y": 54.875
+                        "x": 109.351,
+                        "y": 56.227
                     },
-                    "uuid": "f124113f-578c-4e6f-95c6-f5f6ffbb1728"
+                    "uuid": "42e750e9-091c-4baa-8326-813d2a636144"
                 }
             ],
             "severity": "warning",
-            "type": "silk_over_copper"
+            "type": "silk_overlap"
         },
         {
             "description": "Silkscreen clipped by solder mask",
             "items": [
                 {
-                    "description": "R63のリファレンスフィールド",
+                    "description": "L60のリファレンスフィールド",
                     "pos": {
-                        "x": 134.75,
-                        "y": 82.855
+                        "x": 133.7,
+                        "y": 84.05
                     },
-                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
+                    "uuid": "8594bdaf-31eb-4f51-b1c2-4fc987f633f8"
                 },
                 {
-                    "description": "パッド 1 [/USB_MCU_D+] - R62 ( F.Cu 上)",
+                    "description": "パッド 1 [/USB_MCU_D-] - R63 ( F.Cu 上)",
                     "pos": {
                         "x": 134.24,
-                        "y": 82.775
+                        "y": 84.025
                     },
-                    "uuid": "5f17616d-8520-4e88-a514-c3773e8f7c7c"
+                    "uuid": "1384c00a-02bf-4b32-8cd4-b168db6e446c"
                 }
             ],
             "severity": "warning",
@@ -1824,20 +1801,20 @@
             "description": "Silkscreen clipped by solder mask",
             "items": [
                 {
-                    "description": "L60のリファレンスフィールド",
+                    "description": "R63のリファレンスフィールド",
                     "pos": {
-                        "x": 133.7,
-                        "y": 84.05
+                        "x": 134.75,
+                        "y": 82.855
                     },
-                    "uuid": "8594bdaf-31eb-4f51-b1c2-4fc987f633f8"
+                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
                 },
                 {
-                    "description": "パッド 1 [/USB_MCU_D-] - R63 ( F.Cu 上)",
+                    "description": "パッド 1 [/USB_MCU_D+] - R62 ( F.Cu 上)",
                     "pos": {
                         "x": 134.24,
-                        "y": 84.025
+                        "y": 82.775
                     },
-                    "uuid": "1384c00a-02bf-4b32-8cd4-b168db6e446c"
+                    "uuid": "5f17616d-8520-4e88-a514-c3773e8f7c7c"
                 }
             ],
             "severity": "warning",
@@ -1861,6 +1838,29 @@
                         "y": 82.775
                     },
                     "uuid": "f966ee6a-af92-44cc-b673-930ef601d2b2"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "J4のリファレンスフィールド",
+                    "pos": {
+                        "x": 125.276,
+                        "y": 56.242
+                    },
+                    "uuid": "b5820450-3a5a-4e71-af28-e1d3651bec76"
+                },
+                {
+                    "description": "パッド 2 [/GND] - R2 ( F.Cu 上)",
+                    "pos": {
+                        "x": 125.075,
+                        "y": 54.875
+                    },
+                    "uuid": "f124113f-578c-4e6f-95c6-f5f6ffbb1728"
                 }
             ],
             "severity": "warning",

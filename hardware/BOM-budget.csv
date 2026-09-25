@@ -27,6 +27,7 @@ J16,B6 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A
 J17,B7 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J18,B8 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J19,B9 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J2,POWER SELECT,1,Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical,"THT, front side",,,,,,,,"Add a 2.54 mm shunt. Pins 1-2 short: J1 only. Pins 2-3 short: J1 plus J4, with J4 power through D1. Select header and shunt rated for the load current."
 J20,B10 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J21,B11 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J22,USB COMMON,1,Connector_JST:JST_XH_B5B-XH-A_1x05_P2.50mm_Vertical,THT,B5B-XH-A(LF)(SN),JST,C157991,0.0473,0.1500,0.0473,0.1500,LCSC reference price; THT
@@ -71,7 +72,6 @@ R60,33,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1%
 R61,1k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
 R62,27,1,Resistor_SMD:R_0402_1005Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
 R63,27,1,Resistor_SMD:R_0402_1005Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
-SW1,POWER SELECT,1,Button_Switch_THT:SW_DIP_SPSTx01_Slide_9.78x4.72mm_W7.62mm_P2.54mm,"THT, front side",,,,,,,,Select a slide switch matching the mounted footprint and current rating; physical switch selects J1 VBUS or J4 external 5 V through D1
 U1,RP2354B,1,Package_DFN_QFN:QFN-80-1EP_10x10mm_P0.4mm_EP3.4x3.4mm,SMT,RP2354B,Raspberry Pi,C39843328,1.5500,1.5800,1.5500,1.5800,"LCSC current listing; QFN-80, exact board device"
 U2,USBLC6-2SC6,1,Package_TO_SOT_SMD:SOT-23-6,SMT,USBLC6-2SC6,ST,C7519,0.1844,0.2500,0.1844,0.2500,SOT-23-6; protection IC
 U3,AP2112K-3.3,1,Package_TO_SOT_SMD:SOT-23-5,SMT,AP2112K-3.3TRG1,Diodes Inc.,C51118,0.1091,0.1800,0.1091,0.1800,SOT-25-5/SOT-23-5 compatible footprint; confirm package drawing
