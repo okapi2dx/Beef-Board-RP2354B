@@ -12,12 +12,14 @@ Beef Board V2 の RP2354B 版です。RP2354B 基板、KiCad 回路図、部品�
 | `hardware/BEEF-BOARD.pretty/` | プロジェクト用フットプリント |
 | `hardware/BOM-budget.csv` | 暫定部品表と概算価格 |
 | `hardware/ROUTING.md` | 配線整理の変更量と残る確認事項 |
+| `hardware/DRC-efficient.json` | 配線整理後の KiCad DRC 結果 |
+| `hardware/routing-changes.json` | 採用した配線変更の記録 |
 | `firmware/Beef-Board-RP2354B.uf2` | BOOTSEL 書き込み用ファームウェア |
 | `firmware/src/` | ファームウェアのソースコード |
 | `configurator/` | RP2354B 対応 Configurator のソース一式（Web UI・Windows デスクトップ版） |
 | `configurator/Beef-Board-RP2354B-Configurator-V1.00.exe` | Windows 64-bit 用ポータブル版 |
 
-元の基板は初回コミット `4c3e07a` に保存されています。現在の基板は部品位置とビアを維持した配線整理版です。変更量は [`hardware/ROUTING.md`](hardware/ROUTING.md) を参照してください。
+現在の PCB は今回指定されたファイルを基準に配線整理した版です。部品位置とビアは入力時のままです。変更量は [`hardware/ROUTING.md`](hardware/ROUTING.md) を参照してください。
 
 ## 状態
 

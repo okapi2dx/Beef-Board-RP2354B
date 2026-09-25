@@ -1,0 +1,126 @@
+{
+  "attempts": 164,
+  "changes": [
+    {
+      "net": "/B8_LED_SINK",
+      "saving_mm": 0.1816,
+      "old_segments": 10,
+      "new_segments": 9
+    },
+    {
+      "net": "/B3_LED_SINK",
+      "saving_mm": 0.1342,
+      "old_segments": 6,
+      "new_segments": 4
+    },
+    {
+      "net": "/B10_LED_SINK",
+      "saving_mm": 0.5103,
+      "old_segments": 10,
+      "new_segments": 6
+    },
+    {
+      "net": "/B7_IN",
+      "saving_mm": 0.1435,
+      "old_segments": 15,
+      "new_segments": 11
+    },
+    {
+      "net": "/ENC1_B",
+      "saving_mm": 0.1551,
+      "old_segments": 4,
+      "new_segments": 3
+    },
+    {
+      "net": "/ENC1_B",
+      "saving_mm": 1.4823,
+      "old_segments": 4,
+      "new_segments": 2
+    },
+    {
+      "net": "/B9_IN",
+      "saving_mm": 0.1746,
+      "old_segments": 38,
+      "new_segments": 4
+    },
+    {
+      "net": "/ENC2_A",
+      "saving_mm": 0.8459,
+      "old_segments": 3,
+      "new_segments": 2
+    },
+    {
+      "net": "/B9_LED_CTL",
+      "saving_mm": 0.7955,
+      "old_segments": 6,
+      "new_segments": 2
+    },
+    {
+      "net": "/ENC2_B",
+      "saving_mm": 0.2011,
+      "old_segments": 40,
+      "new_segments": 2
+    },
+    {
+      "net": "/B5_LED_CTL",
+      "saving_mm": 0.521,
+      "old_segments": 6,
+      "new_segments": 2
+    },
+    {
+      "net": "/B8_LED_CTL",
+      "saving_mm": 0.394,
+      "old_segments": 6,
+      "new_segments": 2
+    },
+    {
+      "net": "/B5_LED_CTL",
+      "saving_mm": 0.1373,
+      "old_segments": 8,
+      "new_segments": 4
+    },
+    {
+      "net": "/B5_LED_CTL",
+      "saving_mm": 0.2544,
+      "old_segments": 6,
+      "new_segments": 2
+    },
+    {
+      "net": "/B11_IN",
+      "saving_mm": 0.169,
+      "old_segments": 3,
+      "new_segments": 2
+    },
+    {
+      "net": "/B5_IN",
+      "saving_mm": 0.1442,
+      "old_segments": 6,
+      "new_segments": 2
+    },
+    {
+      "net": "/ENC2_A",
+      "saving_mm": 0.3293,
+      "old_segments": 3,
+      "new_segments": 2
+    },
+    {
+      "net": "/B3_IN",
+      "saving_mm": 0.2296,
+      "old_segments": 5,
+      "new_segments": 2
+    },
+    {
+      "net": "/B1_LED_CTL",
+      "saving_mm": 0.2286,
+      "old_segments": 4,
+      "new_segments": 1
+    },
+    {
+      "net": "/B5_LED_CTL",
+      "saving_mm": 0.2046,
+      "old_segments": 4,
+      "new_segments": 1
+    }
+  ],
+  "saved_mm": 7.2360999999999995
+}

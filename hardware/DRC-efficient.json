@@ -1,0 +1,879 @@
+{
+    "$schema": "https://schemas.kicad.org/drc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-09-25T21:14:09",
+    "ignored_checks": [
+        {
+            "description": "Footprint has no courtyard defined",
+            "key": "missing_courtyard"
+        },
+        {
+            "description": "Track endpoint not centered on via",
+            "key": "track_not_centered_on_via"
+        },
+        {
+            "description": "Tuning profile track geometries",
+            "key": "tuning_profile_track_geometries"
+        },
+        {
+            "description": "Footprint doesn't match symbol's footprint filters",
+            "key": "footprint_filters_mismatch"
+        },
+        {
+            "description": "Footprint component type doesn't match footprint pads",
+            "key": "footprint_type_mismatch"
+        }
+    ],
+    "included_severities": [
+        "error",
+        "warning"
+    ],
+    "kicad_version": "10.0.6",
+    "schematic_parity": [],
+    "source": "Beef-Board-RP2354B.kicad_pcb",
+    "unconnected_items": [],
+    "violations": [
+        {
+            "description": "Courtyards overlap",
+            "items": [
+                {
+                    "description": "フットプリント H3",
+                    "pos": {
+                        "x": 88.704,
+                        "y": 95.812
+                    },
+                    "uuid": "2aaa1ba0-03ee-4c2a-bea2-6cace4ab356e"
+                },
+                {
+                    "description": "フットプリント J43",
+                    "pos": {
+                        "x": 97.17,
+                        "y": 93.5
+                    },
+                    "uuid": "67e2341b-0880-44c3-ba7d-8262569cc6f1"
+                }
+            ],
+            "severity": "error",
+            "type": "courtyards_overlap"
+        },
+        {
+            "description": "Courtyards overlap",
+            "items": [
+                {
+                    "description": "フットプリント H2",
+                    "pos": {
+                        "x": 160.204,
+                        "y": 64.312
+                    },
+                    "uuid": "3288a731-bb6f-4d59-b824-84ef57d2b1c1"
+                },
+                {
+                    "description": "フットプリント J32",
+                    "pos": {
+                        "x": 156.016,
+                        "y": 54.864
+                    },
+                    "uuid": "8510733e-71a4-4507-a11c-9563996ba313"
+                }
+            ],
+            "severity": "error",
+            "type": "courtyards_overlap"
+        },
+        {
+            "description": "Courtyards overlap",
+            "items": [
+                {
+                    "description": "フットプリント H2",
+                    "pos": {
+                        "x": 160.204,
+                        "y": 64.312
+                    },
+                    "uuid": "3288a731-bb6f-4d59-b824-84ef57d2b1c1"
+                },
+                {
+                    "description": "フットプリント J8",
+                    "pos": {
+                        "x": 158.0605,
+                        "y": 72.878
+                    },
+                    "uuid": "969037c9-fb57-4a07-8e2b-ef7ca7820520"
+                }
+            ],
+            "severity": "error",
+            "type": "courtyards_overlap"
+        },
+        {
+            "description": "Courtyards overlap",
+            "items": [
+                {
+                    "description": "フットプリント J16",
+                    "pos": {
+                        "x": 107.004,
+                        "y": 100.138
+                    },
+                    "uuid": "525cc478-5c65-42df-8410-656035f0f004"
+                },
+                {
+                    "description": "フットプリント J43",
+                    "pos": {
+                        "x": 97.17,
+                        "y": 93.5
+                    },
+                    "uuid": "67e2341b-0880-44c3-ba7d-8262569cc6f1"
+                }
+            ],
+            "severity": "error",
+            "type": "courtyards_overlap"
+        },
+        {
+            "description": "Courtyards overlap",
+            "items": [
+                {
+                    "description": "フットプリント J10",
+                    "pos": {
+                        "x": 160.568,
+                        "y": 86.978
+                    },
+                    "uuid": "53b1b308-d200-4ff0-af8f-6338dc423dc4"
+                },
+                {
+                    "description": "フットプリント H4",
+                    "pos": {
+                        "x": 160.204,
+                        "y": 95.812
+                    },
+                    "uuid": "cbe039e1-654b-445f-83e5-2e10055f8aa1"
+                }
+            ],
+            "severity": "error",
+            "type": "courtyards_overlap"
+        },
+        {
+            "description": "Courtyards overlap",
+            "items": [
+                {
+                    "description": "フットプリント J31",
+                    "pos": {
+                        "x": 85.45,
+                        "y": 54.864
+                    },
+                    "uuid": "55c92fc3-dc6e-4e82-bb71-13d2460e0703"
+                },
+                {
+                    "description": "フットプリント H1",
+                    "pos": {
+                        "x": 88.704,
+                        "y": 64.312
+                    },
+                    "uuid": "a6f942ad-83bf-4f28-8e36-2afea7cbe44c"
+                }
+            ],
+            "severity": "error",
+            "type": "courtyards_overlap"
+        },
+        {
+            "description": "Courtyards overlap",
+            "items": [
+                {
+                    "description": "フットプリント H4",
+                    "pos": {
+                        "x": 160.204,
+                        "y": 95.812
+                    },
+                    "uuid": "cbe039e1-654b-445f-83e5-2e10055f8aa1"
+                },
+                {
+                    "description": "フットプリント J41",
+                    "pos": {
+                        "x": 149.368,
+                        "y": 86.978
+                    },
+                    "uuid": "dd0c1cce-ed67-4de6-80e4-25758bdfa76d"
+                }
+            ],
+            "severity": "error",
+            "type": "courtyards_overlap"
+        },
+        {
+            "description": "フットプリント 'USB_C_Receptacle_G-Switch_GT-USB-7051x' が、ライブラリ 'Connector_USB' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J20",
+                    "pos": {
+                        "x": 99.06,
+                        "y": 61.914
+                    },
+                    "uuid": "19a900f5-f306-4d2f-b7f9-387f9a0236ab"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J15",
+                    "pos": {
+                        "x": 113.854,
+                        "y": 107.188
+                    },
+                    "uuid": "2b02179e-e791-4a4a-a7f1-61549e021ddc"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J17",
+                    "pos": {
+                        "x": 100.154,
+                        "y": 107.188
+                    },
+                    "uuid": "2ee2b723-13a2-40d6-9345-b2fc074f3d08"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J40",
+                    "pos": {
+                        "x": 149.368,
+                        "y": 79.928
+                    },
+                    "uuid": "343b4f2b-48b1-4597-9ce6-66d80ee1f8da"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J33",
+                    "pos": {
+                        "x": 97.304,
+                        "y": 100.738
+                    },
+                    "uuid": "3cff9c7e-58f6-4fef-a393-642399cf333b"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal' が、ライブラリ 'TerminalBlock_Phoenix' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J3",
+                    "pos": {
+                        "x": 131.38,
+                        "y": 63.614
+                    },
+                    "uuid": "4ff714b8-ad73-4e40-8af7-2690c5608551"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J16",
+                    "pos": {
+                        "x": 107.004,
+                        "y": 100.138
+                    },
+                    "uuid": "525cc478-5c65-42df-8410-656035f0f004"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J10",
+                    "pos": {
+                        "x": 160.568,
+                        "y": 86.978
+                    },
+                    "uuid": "53b1b308-d200-4ff0-af8f-6338dc423dc4"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J31",
+                    "pos": {
+                        "x": 85.45,
+                        "y": 54.864
+                    },
+                    "uuid": "55c92fc3-dc6e-4e82-bb71-13d2460e0703"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J34",
+                    "pos": {
+                        "x": 147.604,
+                        "y": 100.738
+                    },
+                    "uuid": "5bcf71b8-e292-49cd-a2f3-368bf193083e"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J13",
+                    "pos": {
+                        "x": 127.554,
+                        "y": 107.188
+                    },
+                    "uuid": "5f032be4-8fad-445f-b290-f28569976331"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J32",
+                    "pos": {
+                        "x": 156.016,
+                        "y": 54.864
+                    },
+                    "uuid": "8510733e-71a4-4507-a11c-9563996ba313"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J8",
+                    "pos": {
+                        "x": 158.0605,
+                        "y": 72.878
+                    },
+                    "uuid": "969037c9-fb57-4a07-8e2b-ef7ca7820520"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J6",
+                    "pos": {
+                        "x": 110.17,
+                        "y": 68.964
+                    },
+                    "uuid": "9920333e-2b72-4e0f-8204-d9bacf637c94"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J14",
+                    "pos": {
+                        "x": 120.704,
+                        "y": 100.138
+                    },
+                    "uuid": "a261eaaa-ece9-46c5-b13c-09908ea2c6d6"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J9",
+                    "pos": {
+                        "x": 160.5605,
+                        "y": 79.928
+                    },
+                    "uuid": "b74f55f0-56db-425b-9eda-29f4eca1ebd0"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal' が、ライブラリ 'Connector_USB' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J21",
+                    "pos": {
+                        "x": 99.06,
+                        "y": 54.864
+                    },
+                    "uuid": "c0d1f9fe-971b-4a9b-99d7-7767c1be9291"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J11",
+                    "pos": {
+                        "x": 141.254,
+                        "y": 107.188
+                    },
+                    "uuid": "c5266940-38ce-4f6d-b630-69a72f0310d5"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J12",
+                    "pos": {
+                        "x": 134.404,
+                        "y": 100.138
+                    },
+                    "uuid": "c79f5a56-bfed-4322-97af-f50f601f10f2"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J5",
+                    "pos": {
+                        "x": 99.06,
+                        "y": 68.964
+                    },
+                    "uuid": "ce89ea6a-cfb6-4a4a-ae58-04547a4c9516"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J18",
+                    "pos": {
+                        "x": 142.23,
+                        "y": 54.864
+                    },
+                    "uuid": "d825c9ed-4e27-47ab-8a48-47d477976694"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J41",
+                    "pos": {
+                        "x": 149.368,
+                        "y": 86.978
+                    },
+                    "uuid": "dd0c1cce-ed67-4de6-80e4-25758bdfa76d"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J7",
+                    "pos": {
+                        "x": 146.892,
+                        "y": 72.878
+                    },
+                    "uuid": "df926f4c-f7c6-47d5-9fe8-a1cdd0ccbcb2"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J19",
+                    "pos": {
+                        "x": 142.23,
+                        "y": 61.914
+                    },
+                    "uuid": "e2ccb812-3dd1-49d9-867f-47f66b7c21f3"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "フットプリント 'JST_XH_B5B-XH-A_1x05_P2.50mm_Vertical' が、ライブラリ 'Connector_JST' のコピーと一致しません",
+            "items": [
+                {
+                    "description": "フットプリント J22",
+                    "pos": {
+                        "x": 123.88,
+                        "y": 62.964
+                    },
+                    "uuid": "e356e281-7e12-4948-9d29-39fa8dbcf272"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_mismatch"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "C60のリファレンスフィールド",
+                    "pos": {
+                        "x": 132.575,
+                        "y": 86.29
+                    },
+                    "uuid": "586e2287-d6d1-471b-b8a9-aea3d051afe2"
+                },
+                {
+                    "description": "円 of L60 、F.Silkscreen 上",
+                    "pos": {
+                        "x": 132.3,
+                        "y": 86.3
+                    },
+                    "uuid": "fa580363-a083-47bb-985f-02253943b197"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "R63のリファレンスフィールド",
+                    "pos": {
+                        "x": 134.75,
+                        "y": 82.855
+                    },
+                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
+                },
+                {
+                    "description": "セグメント of R62 、F.Silkscreen 上",
+                    "pos": {
+                        "x": 134.596359,
+                        "y": 83.155
+                    },
+                    "uuid": "ef104198-0375-4ff5-9cd1-ed30db282e67"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "セグメント of R62 、F.Silkscreen 上",
+                    "pos": {
+                        "x": 134.596359,
+                        "y": 82.395
+                    },
+                    "uuid": "2d29f517-0c06-4c4a-96cc-63ab3682fbd0"
+                },
+                {
+                    "description": "R63のリファレンスフィールド",
+                    "pos": {
+                        "x": 134.75,
+                        "y": 82.855
+                    },
+                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "R62のリファレンスフィールド",
+                    "pos": {
+                        "x": 134.75,
+                        "y": 81.605
+                    },
+                    "uuid": "413816cd-d930-4c80-8586-6af0eb9544be"
+                },
+                {
+                    "description": "C61のリファレンスフィールド",
+                    "pos": {
+                        "x": 136.975,
+                        "y": 82.74
+                    },
+                    "uuid": "98f9b651-0dff-448f-b13c-ef5e064aa1cf"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "C61のリファレンスフィールド",
+                    "pos": {
+                        "x": 136.975,
+                        "y": 82.74
+                    },
+                    "uuid": "98f9b651-0dff-448f-b13c-ef5e064aa1cf"
+                },
+                {
+                    "description": "R63のリファレンスフィールド",
+                    "pos": {
+                        "x": 134.75,
+                        "y": 82.855
+                    },
+                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "セグメント of J21 、F.Silkscreen 上",
+                    "pos": {
+                        "x": 109.11,
+                        "y": 54.664
+                    },
+                    "uuid": "0ed9d55b-af14-42e0-bfd1-8409c0d0485c"
+                },
+                {
+                    "description": "J1のリファレンスフィールド",
+                    "pos": {
+                        "x": 109.351,
+                        "y": 56.227
+                    },
+                    "uuid": "42e750e9-091c-4baa-8326-813d2a636144"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clearance",
+            "items": [
+                {
+                    "description": "J1のリファレンスフィールド",
+                    "pos": {
+                        "x": 109.351,
+                        "y": 56.227
+                    },
+                    "uuid": "42e750e9-091c-4baa-8326-813d2a636144"
+                },
+                {
+                    "description": "セグメント of J21 、F.Silkscreen 上",
+                    "pos": {
+                        "x": 109.12,
+                        "y": 58.374
+                    },
+                    "uuid": "bfb1d436-d0f2-4fea-ba78-36ddc98769d4"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_overlap"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "J4のリファレンスフィールド",
+                    "pos": {
+                        "x": 125.276,
+                        "y": 56.242
+                    },
+                    "uuid": "b5820450-3a5a-4e71-af28-e1d3651bec76"
+                },
+                {
+                    "description": "パッド 2 [/GND] - R2 ( F.Cu 上)",
+                    "pos": {
+                        "x": 125.075,
+                        "y": 54.875
+                    },
+                    "uuid": "f124113f-578c-4e6f-95c6-f5f6ffbb1728"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "R63のリファレンスフィールド",
+                    "pos": {
+                        "x": 134.75,
+                        "y": 82.855
+                    },
+                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
+                },
+                {
+                    "description": "パッド 1 [/USB_MCU_D+] - R62 ( F.Cu 上)",
+                    "pos": {
+                        "x": 134.24,
+                        "y": 82.775
+                    },
+                    "uuid": "5f17616d-8520-4e88-a514-c3773e8f7c7c"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "C60のリファレンスフィールド",
+                    "pos": {
+                        "x": 132.575,
+                        "y": 86.29
+                    },
+                    "uuid": "586e2287-d6d1-471b-b8a9-aea3d051afe2"
+                },
+                {
+                    "description": "パッド 1 [/VREG_LX] - L60 ( F.Cu 上)",
+                    "pos": {
+                        "x": 133.0,
+                        "y": 85.6
+                    },
+                    "uuid": "7fdd8897-5071-4073-92f2-02d7774215a0"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "L60のリファレンスフィールド",
+                    "pos": {
+                        "x": 133.7,
+                        "y": 84.05
+                    },
+                    "uuid": "8594bdaf-31eb-4f51-b1c2-4fc987f633f8"
+                },
+                {
+                    "description": "パッド 1 [/USB_MCU_D-] - R63 ( F.Cu 上)",
+                    "pos": {
+                        "x": 134.24,
+                        "y": 84.025
+                    },
+                    "uuid": "1384c00a-02bf-4b32-8cd4-b168db6e446c"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        },
+        {
+            "description": "Silkscreen clipped by solder mask",
+            "items": [
+                {
+                    "description": "R63のリファレンスフィールド",
+                    "pos": {
+                        "x": 134.75,
+                        "y": 82.855
+                    },
+                    "uuid": "b9f3b613-097f-4046-8adf-8532dd6464b1"
+                },
+                {
+                    "description": "パッド 2 [/USB_D+] - R62 ( F.Cu 上)",
+                    "pos": {
+                        "x": 135.26,
+                        "y": 82.775
+                    },
+                    "uuid": "f966ee6a-af92-44cc-b673-930ef601d2b2"
+                }
+            ],
+            "severity": "warning",
+            "type": "silk_over_copper"
+        }
+    ]
+}
