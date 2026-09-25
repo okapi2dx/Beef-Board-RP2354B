@@ -1,4 +1,4 @@
-﻿Reference,Description/value,Qty,Footprint,Mounting,Suggested MPN (uncommitted),Manufacturer,LCSC SKU,Unit USD low,Unit USD high,Extended USD low,Extended USD high,Notes
+Reference,Description/value,Qty,Footprint,Mounting,Suggested MPN (uncommitted),Manufacturer,LCSC SKU,Unit USD low,Unit USD high,Extended USD low,Extended USD high,Notes
 C10,15pF,1,Capacitor_SMD:C_0603_1608Metric,SMT,0603 C0G/NP0 capacitor (candidate),Asian brands,,0.0050,0.0200,0.0050,0.0200,Capacitance per Value; voltage/tolerance not specified
 C11,15pF,1,Capacitor_SMD:C_0603_1608Metric,SMT,0603 C0G/NP0 capacitor (candidate),Asian brands,,0.0050,0.0200,0.0050,0.0200,Capacitance per Value; voltage/tolerance not specified
 C2,10uF,1,Capacitor_SMD:C_0805_2012Metric,SMT,0805 X5R/X7R capacitor (candidate),Asian brands,,0.0300,0.1000,0.0300,0.1000,10 uF; verify rated voltage and DC-bias derating
@@ -43,8 +43,8 @@ J42,UART A 3V3,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-
 J43,UART B 3V3,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J5,ENC1 A,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J6,ENC1 B,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
-J60,BOOTSEL HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
-J61,RESET HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
+J60,RESET HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
+J61,BOOTSEL HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
 J7,ENC2 A,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J8,ENC2 B,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J9,VAUX OUT,1,Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,THT,B2B-XH-A(LF)(SN),JST,C158012,0.0408,0.0700,0.0408,0.0700,LCSC price tier; THT

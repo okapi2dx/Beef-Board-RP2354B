@@ -38,7 +38,7 @@
     <p>{tr('USBドライブが表示されたらUF2をコピーしてください。', 'When the USB drive appears, copy the UF2 file to it.')}</p>
   {/if}
 
-  <p>{tr('ボードが未接続の場合はJ60を短絡し、J61でリセットしてBOOTSELモードに入れます。', 'If the board is disconnected, short J60 and reset with J61 to enter BOOTSEL mode.')}</p>
+  <p>{tr('ボードが未接続の場合はJ61を短絡し、J60でリセットしてBOOTSELモードに入れます。', 'If the board is disconnected, short J61 and reset with J60 to enter BOOTSEL mode.')}</p>
   <a class="underline" href="./firmware/Beef-Board-RP2354B.uf2" download="Beef-Board-RP2354B.uf2">
     {tr('RP2354B用UF2をダウンロード', 'Download RP2354B UF2')}
   </a>

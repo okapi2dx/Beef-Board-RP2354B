@@ -38,7 +38,7 @@ The CMake configuration targets the RP2350B pinout, Arm core and 2 MB flash size
 
 ## Flashing and current limits
 
-For first flashing, short J60 (BOOTSEL to GND), reset the board through J61 or reconnect power, then remove the J60 short after the ROM USB drive appears. Copy the UF2 to that drive. Use the USB device connector J1.
+For first flashing, short J61 (BOOTSEL to GND), reset the board through J60 or reconnect power, then remove the J61 short after the ROM USB drive appears. Copy the UF2 to that drive. Use the USB device connector J1.
 
 This image was compiled and checked with `picotool info`; it has not been run on a physical board. Confirm USB enumeration, all buttons/LEDs, encoder direction and RGB color order on hardware before relying on it. The two analog inputs are not sampled. The board's second encoder also remains unused by the controller logic.
 
