@@ -542,7 +542,7 @@
 			)
 		)
 	)
-	(footprint "Connector_USB:USB_C_Receptacle_G-Switch_GT-USB-7051x"
+	(footprint "BEEF-BOARD:USB-C-TH_G-SWITCH_GT-USB-7038X_1"
 		(layer "F.Cu")
 		(uuid "08a0ce18-464c-40b9-8d41-322c1cce8488")
 		(at 132.25 56.145 90)
@@ -17966,7 +17966,7 @@
 			)
 		)
 	)
-	(footprint "Connector_USB:USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal"
+	(footprint "BEEF-BOARD:USB-C-TH_G-SWITCH_GT-USB-7038X_1"
 		(layer "F.Cu")
 		(uuid "c01cbbdd-c4b6-4262-a2f6-374f9e71680d")
 		(at 116.325 56.13 90)
