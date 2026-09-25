@@ -1,0 +1,77 @@
+﻿Reference,Description/value,Qty,Footprint,Mounting,Suggested MPN (uncommitted),Manufacturer,LCSC SKU,Unit USD low,Unit USD high,Extended USD low,Extended USD high,Notes
+C10,15pF,1,Capacitor_SMD:C_0603_1608Metric,SMT,0603 C0G/NP0 capacitor (candidate),Asian brands,,0.0050,0.0200,0.0050,0.0200,Capacitance per Value; voltage/tolerance not specified
+C11,15pF,1,Capacitor_SMD:C_0603_1608Metric,SMT,0603 C0G/NP0 capacitor (candidate),Asian brands,,0.0050,0.0200,0.0050,0.0200,Capacitance per Value; voltage/tolerance not specified
+C2,10uF,1,Capacitor_SMD:C_0805_2012Metric,SMT,0805 X5R/X7R capacitor (candidate),Asian brands,,0.0300,0.1000,0.0300,0.1000,10 uF; verify rated voltage and DC-bias derating
+C3,4.7uF,1,Capacitor_SMD:C_0805_2012Metric,SMT,0805 X5R/X7R capacitor (candidate),Asian brands,,0.0200,0.0500,0.0200,0.0500,4.7 uF; verify rated voltage and DC-bias derating
+C4,100nF,1,Capacitor_SMD:C_0603_1608Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+C5,100nF,1,Capacitor_SMD:C_0603_1608Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+C6,100nF,1,Capacitor_SMD:C_0603_1608Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+C60,4.7uF,1,Capacitor_SMD:C_0402_1005Metric,SMT,0402 X5R/X7R capacitor (candidate),Asian brands,,0.0100,0.0400,0.0100,0.0400,4.7 uF; verify rated voltage and DC-bias derating
+C61,4.7uF,1,Capacitor_SMD:C_0402_1005Metric,SMT,0402 X5R/X7R capacitor (candidate),Asian brands,,0.0100,0.0400,0.0100,0.0400,4.7 uF; verify rated voltage and DC-bias derating
+C62,100nF,1,Capacitor_SMD:C_0402_1005Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+C63,100nF,1,Capacitor_SMD:C_0402_1005Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+C64,100nF,1,Capacitor_SMD:C_0402_1005Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+C7,100nF,1,Capacitor_SMD:C_0603_1608Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+C8,1uF,1,Capacitor_SMD:C_0603_1608Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+C9,10nF,1,Capacitor_SMD:C_0603_1608Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
+D1,SS34,1,Diode_SMD:D_SMA,SMT,SS34,generic,,0.0700,0.1300,0.0700,0.1300,SMA Schottky; verify voltage/current requirements
+FB1,600R@100MHz,1,Inductor_SMD:L_0603_1608Metric_Pad1.05x0.95mm_HandSolder,SMT,BLM18AG601SN1 or equivalent,Murata/equivalent,,0.0300,0.0800,0.0300,0.0800,"0603 ferrite, 600 ohm @ 100 MHz; candidate only"
+J1,USB-C DEVICE,1,Connector_USB:USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal,SMT + shell anchors; verify assembly method,USB4105-GF-A-060,GCT,C3025063,1.0300,1.5000,1.0300,1.5000,LCSC current listing; confirm shell stakes/contact footprint
+J10,VAUX OUT,1,Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,THT,B2B-XH-A(LF)(SN),JST,C158012,0.0408,0.0700,0.0408,0.0700,LCSC price tier; THT
+J11,B1 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J12,B2 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J13,B3 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J14,B4 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J15,B5 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J16,B6 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J17,B7 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J18,B8 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J19,B9 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J20,B10 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J21,B11 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J22,USB COMMON,1,Connector_JST:JST_XH_B5B-XH-A_1x05_P2.50mm_Vertical,THT,B5B-XH-A(LF)(SN),JST,C157991,0.0473,0.1500,0.0473,0.1500,LCSC reference price; THT
+J3,VAUX 5V INPUT,1,"TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal",THT,KF301-5.0-2P (candidate; verify footprint),generic terminal block,C474881,0.3000,1.0000,0.3000,1.0000,5.00 mm 2-pin price allowance; footprint match required
+J31,ENCODER 1,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J32,ENCODER 2,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J33,AE1 0-5V,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
+J34,AE2 0-5V,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
+J4,USB-C AUX POWER,1,Connector_USB:USB_C_Receptacle_G-Switch_GT-USB-7051x,SMT + shell anchors; verify assembly method,GT-USB-7051x (suffix TBD),G-Switch / verify,,0.2000,0.8000,0.2000,0.8000,Board footprint/value lacks exact orderable suffix; placeholder estimate only
+J40,TT RGB,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
+J41,CENTER BAR RGB,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
+J42,UART A 3V3,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J43,UART B 3V3,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
+J5,ENC1 A,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
+J6,ENC1 B,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
+J60,BOOTSEL HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
+J61,RUN-GND RESET HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
+J7,ENC2 A,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
+J8,ENC2 B,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
+J9,VAUX OUT,1,Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,THT,B2B-XH-A(LF)(SN),JST,C158012,0.0408,0.0700,0.0408,0.0700,LCSC price tier; THT
+L60,3.3uH,1,BEEF-BOARD:RP2354B_VREG_L_3u3,SMT,AOTA-B201610S3R3-101-T,Abracon,,0.1000,0.3500,0.1000,0.3500,Custom board footprint says 3.3 uH; validate electrical rating/footprint
+Q1,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q10,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q11,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q2,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q3,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q4,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q5,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q6,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q7,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q8,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+Q9,2N7002,1,Package_TO_SOT_SMD:SOT-23,SMT,2N7002,JSCJ,C8545,0.0164,0.0300,0.0164,0.0300,SOT-23; LCSC MOQ/price tier applies
+R1,5.1k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R2,5.1k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R5,5.1k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R52,10k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R53,15k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R54,10k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R55,15k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R6,5.1k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R60,33,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R61,1k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R62,27,1,Resistor_SMD:R_0402_1005Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+R63,27,1,Resistor_SMD:R_0402_1005Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+U1,RP2354B,1,Package_DFN_QFN:QFN-80-1EP_10x10mm_P0.4mm_EP3.4x3.4mm,SMT,RP2354B,Raspberry Pi,C39843328,1.5500,1.5800,1.5500,1.5800,"LCSC current listing; QFN-80, exact board device"
+U2,USBLC6-2SC6,1,Package_TO_SOT_SMD:SOT-23-6,SMT,USBLC6-2SC6,ST,C7519,0.1844,0.2500,0.1844,0.2500,SOT-23-6; protection IC
+U3,AP2112K-3.3,1,Package_TO_SOT_SMD:SOT-23-5,SMT,AP2112K-3.3TRG1,Diodes Inc.,C51118,0.1091,0.1800,0.1091,0.1800,SOT-25-5/SOT-23-5 compatible footprint; confirm package drawing
+Y1,12MHz CL=10pF,1,Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm,SMT,XC32M4-12.000-F10NNFT (candidate),HCI,C2842186,0.0757,0.1200,0.0757,0.1200,"12 MHz, 10 pF, 3225; check load/footprint"
