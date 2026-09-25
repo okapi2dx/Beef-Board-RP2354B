@@ -7,7 +7,7 @@ This is native RP2354B firmware built with the Pico SDK. It preserves the Beef B
 - `Beef-Board-RP2354B.uf2`: RP2350 Arm image for BOOTSEL drag-and-drop flashing.
 - `Beef-Board-RP2354B.elf`: matching debug image.
 - `src/` and `CMakeLists.txt`: complete build sources. Pico SDK and its TinyUSB submodule are external dependencies.
-- `configurator-overrides/`: files for the Beef Board V2 Configurator's `v2-overrides` tree, including RP2354B detection, settings access, desktop USB permission, BOOTSEL instructions and the bundled UF2.
+- `../configurator/`: complete Configurator source with RP2354B detection, settings access, desktop USB permission, BOOTSEL instructions and the bundled UF2.
 
 ## Implemented
 
@@ -42,7 +42,7 @@ For first flashing, short J60 (BOOTSEL to GND), reset the board through J61 or r
 
 This image was compiled and checked with `picotool info`; it has not been run on a physical board. Confirm USB enumeration, all buttons/LEDs, encoder direction and RGB color order on hardware before relying on it. The two analog inputs are not sampled. The board's second encoder also remains unused by the controller logic.
 
-The firmware identifies itself as `FEED:0003` and board type code `3` in the Beef Board information report. The included Configurator overrides use the same board code and PID. Its active firmware choices are RP2354B and legacy AT90; STM32 devices and flashing paths are excluded. The Configurator can read and write RP2354B settings and guide manual UF2 flashing; it does not write the UF2 to the ROM USB drive automatically. HID gamepad and keyboard reports are present independently of that application.
+The firmware identifies itself as `FEED:0003` and board type code `3` in the Beef Board information report. The included Configurator uses the same board code and PID. Its active firmware choices are RP2354B and legacy AT90; unsupported devices and flashing paths are excluded. The Configurator can read and write RP2354B settings and guide manual UF2 flashing; it does not write the UF2 to the ROM USB drive automatically. HID gamepad and keyboard reports are present independently of that application.
 
 The Configurator source passed `svelte-check` with no errors or warnings and its static build included the UF2. USB operation and flashing still require a physical RP2354B board to verify.
 

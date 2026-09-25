@@ -1,0 +1,65 @@
+{
+  "name": "beef-board-desktop",
+  "version": "1.0.0",
+  "description": "Windows desktop configurator for Beef Board",
+  "author": "Beef Board contributors",
+  "license": "GPL-3.0-only",
+  "main": "main.cjs",
+  "scripts": {
+    "build:ui": "npm --prefix ../beef-config run sync && node ../beef-config/build-desktop.mjs",
+    "start": "electron .",
+    "test": "node --test policy.test.cjs firmware.test.cjs native-flash.test.cjs update-check.test.cjs",
+    "dist": "npm run build:ui && electron-builder --win portable --x64",
+    "version:sync": "node ../scripts/sync-version.mjs",
+    "version:check": "node ../scripts/sync-version.mjs --check",
+    "predist": "npm run version:check"
+  },
+  "build": {
+    "appId": "io.github.hwxlr8.beefboard.desktop",
+    "productName": "Beef Board Configurator",
+    "asar": true,
+    "directories": {
+      "output": "../build"
+    },
+    "files": [
+      "main.cjs",
+      "policy.cjs",
+      "native-flash.cjs",
+      "update-check.cjs",
+      "preload.cjs",
+      "package.json",
+      "!*/**",
+      {
+        "to": "ui",
+        "from": "../beef-config/build"
+      },
+      {
+        "to": "LICENSE",
+        "from": "../LICENSE"
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "Beef Board Configurator V1.00.exe",
+      "unpackDirName": false
+    },
+    "extraResources": [
+      {
+        "to": "avrdude",
+        "from": "../beef-tool/avrdude",
+        "filter": [
+          "avrdude.exe",
+          "avrdude.conf"
+        ]
+      }
+    ]
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "electron": "44.3.0",
+    "electron-builder": "26.15.3"
+  }
+}

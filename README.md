@@ -13,7 +13,8 @@ Beef Board V2 の RP2354B 版です。RP2354B 基板、KiCad 回路図、部品�
 | `hardware/BOM-budget.csv` | 暫定部品表と概算価格 |
 | `firmware/Beef-Board-RP2354B.uf2` | BOOTSEL 書き込み用ファームウェア |
 | `firmware/src/` | ファームウェアのソースコード |
-| `firmware/configurator-overrides/` | 既存 Beef Board Configurator に適用する RP2354B 対応ファイル |
+| `configurator/` | RP2354B 対応 Configurator のソース一式（Web UI・Windows デスクトップ版） |
+| `configurator/Beef-Board-RP2354B-Configurator-V1.00.exe` | Windows 64-bit 用ポータブル版 |
 
 基板ファイルは元の完成版を**内容変更なし**で複製し、ファイル名のみこのリポジトリ用に変更しました。元ファイルと複製後の SHA-256 はどちらも `809799BD11535BDA2E2E1D615DC2C81EE66FC8C3E554AD3BAF7050547B10E662` です。
 
@@ -28,4 +29,4 @@ Beef Board V2 の RP2354B 版です。RP2354B 基板、KiCad 回路図、部品�
 
 J60 を短絡して J61 でリセットするか、接続済みファームウェアから BOOTSEL コマンドを送ります。J1 の USB 接続で ROM の USB ドライブが表示されたら `firmware/Beef-Board-RP2354B.uf2` をコピーしてください。J60 の短絡は USB ドライブが現れたら外します。
 
-Configurator の対応ファイルは差分一式で、単体の Configurator アプリではありません。既存の Beef Board V2 Configurator に適用してください。RP2354B 用のファームウェア選択と BOOTSEL 案内を追加し、STM32 用の書き込み経路は表示しません。
+Configurator は同梱のポータブル版を実行するか、[`configurator/README.md`](configurator/README.md) に従ってソースからビルドできます。RP2354B 用のファームウェア選択と BOOTSEL 案内があり、旧 AT90USB1286 も引き続き扱えます。STM32 用の書き込み経路は含みません。

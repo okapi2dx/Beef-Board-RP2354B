@@ -7,6 +7,11 @@
 # Local firmware build directories
 firmware/build/
 **/node_modules/
+configurator/beef-config/.svelte-kit/
+configurator/beef-config/build/
+configurator/beef-config/.vite/
+configurator/desktop/dist/
+configurator/build/
 
 # OS files
 .DS_Store
