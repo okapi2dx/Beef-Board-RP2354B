@@ -31,7 +31,7 @@ J2,POWER SELECT,1,Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical,"TH
 J20,B10 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J21,B11 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J22,USB COMMON,1,Connector_JST:JST_XH_B5B-XH-A_1x05_P2.50mm_Vertical,THT,B5B-XH-A(LF)(SN),JST,C157991,0.0473,0.1500,0.0473,0.1500,LCSC reference price; THT
-J3,VAUX 5V INPUT,1,"TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal",THT,KF301-5.0-2P (candidate; verify footprint),generic terminal block,C474881,0.3000,1.0000,0.3000,1.0000,5.00 mm 2-pin price allowance; footprint match required
+J3,VAUX 5V INPUT,1,"TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal",THT,KF301-5.0-2P (candidate; verify footprint),generic terminal block,C474881,0.3000,1.0000,0.3000,1.0000,5.00 mm 2-pin price allowance; footprint match required; pin 1 GND, pin 2 EXT_5V
 J31,ENCODER 1,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J32,ENCODER 2,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J33,AE1 0-5V,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
