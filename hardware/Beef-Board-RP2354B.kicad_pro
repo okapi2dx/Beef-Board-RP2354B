@@ -264,7 +264,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "Beef-Board-V2-RP2354B-routing-progress.kicad_pro",
+    "filename": "Beef-Board-RP2354B.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -390,8 +390,8 @@
     "legacy_lib_list": [],
     "top_level_sheets": [
       {
-        "filename": "Beef-Board-V2-RP2354B.kicad_sch",
-        "name": "Beef-Board-V2-RP2354B",
+        "filename": "Beef-Board-RP2354B.kicad_sch",
+        "name": "Beef-Board-RP2354B",
         "uuid": "00000000-0000-0000-0000-000000000000"
       }
     ]

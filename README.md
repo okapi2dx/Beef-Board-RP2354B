@@ -7,16 +7,17 @@ Beef Board V2 の RP2354B 版です。RP2354B 基板、KiCad 回路図、部品�
 | 場所 | 内容 |
 |---|---|
 | `hardware/Beef-Board-RP2354B.kicad_pro` | KiCad 10 プロジェクト |
-| `hardware/Beef-Board-RP2354B.kicad_pcb` | 完成版として指定された基板 |
+| `hardware/Beef-Board-RP2354B.kicad_pcb` | 指定された基板の配線整理版 |
 | `hardware/Beef-Board-RP2354B.kicad_sch` | 基板に合わせた回路図 |
 | `hardware/BEEF-BOARD.pretty/` | プロジェクト用フットプリント |
 | `hardware/BOM-budget.csv` | 暫定部品表と概算価格 |
+| `hardware/ROUTING.md` | 配線整理の変更量と残る確認事項 |
 | `firmware/Beef-Board-RP2354B.uf2` | BOOTSEL 書き込み用ファームウェア |
 | `firmware/src/` | ファームウェアのソースコード |
 | `configurator/` | RP2354B 対応 Configurator のソース一式（Web UI・Windows デスクトップ版） |
 | `configurator/Beef-Board-RP2354B-Configurator-V1.00.exe` | Windows 64-bit 用ポータブル版 |
 
-基板ファイルは元の完成版を**内容変更なし**で複製し、ファイル名のみこのリポジトリ用に変更しました。元ファイルと複製後の SHA-256 はどちらも `809799BD11535BDA2E2E1D615DC2C81EE66FC8C3E554AD3BAF7050547B10E662` です。
+元の基板は初回コミット `4c3e07a` に保存されています。現在の基板は部品位置とビアを維持した配線整理版です。変更量は [`hardware/ROUTING.md`](hardware/ROUTING.md) を参照してください。
 
 ## 状態
 
