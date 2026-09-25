@@ -1,7 +1,7 @@
 {
     "$schema": "https://schemas.kicad.org/drc.v1.json",
     "coordinate_units": "mm",
-    "date": "2026-09-25T21:38:29",
+    "date": "2026-09-25T22:05:18",
     "ignored_checks": [
         {
             "description": "Footprint has no courtyard defined",
@@ -29,7 +29,1013 @@
         "warning"
     ],
     "kicad_version": "10.0.6",
-    "schematic_parity": [],
+    "schematic_parity": [
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド 13 [/GND] (J1)",
+                    "pos": {
+                        "x": 112.1,
+                        "y": 57.56
+                    },
+                    "uuid": "8bc50507-43e3-40cc-b698-5358afbd940f"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド 13 [/GND] (J1)",
+                    "pos": {
+                        "x": 120.55,
+                        "y": 57.56
+                    },
+                    "uuid": "38144422-ddd1-488a-889b-27dcc67bbedd"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド 13 [/GND] (J1)",
+                    "pos": {
+                        "x": 112.1,
+                        "y": 54.7
+                    },
+                    "uuid": "55672ee2-f7f1-4851-af83-3e3efc067820"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド 13 [/GND] (J1)",
+                    "pos": {
+                        "x": 120.55,
+                        "y": 54.7
+                    },
+                    "uuid": "52802c32-1546-4146-9fdd-172c809e5ec3"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A1B12 [/GND] (J1)",
+                    "pos": {
+                        "x": 119.825,
+                        "y": 56.13
+                    },
+                    "uuid": "868f110f-26db-403d-91f7-1a514bd6c36e"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A4B9 [/VBUS_5V] (J1)",
+                    "pos": {
+                        "x": 118.825,
+                        "y": 56.13
+                    },
+                    "uuid": "4e404d3d-d344-49bb-900e-8336f400dbe7"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(J1-SBU1-PadA8))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A8 [<no net>] (J1)",
+                    "pos": {
+                        "x": 114.825,
+                        "y": 56.95
+                    },
+                    "uuid": "80517131-9777-483c-88e2-d2fa0f643077"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A9B4 [/VBUS_5V] (J1)",
+                    "pos": {
+                        "x": 113.825,
+                        "y": 56.13
+                    },
+                    "uuid": "5725cc14-6a71-4ee0-b4e4-ca7b2165344f"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A12B1 [/GND] (J1)",
+                    "pos": {
+                        "x": 112.825,
+                        "y": 56.13
+                    },
+                    "uuid": "65d71889-1bb2-48c1-b215-af03d7641a7f"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(J1-SBU2-PadB8))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド B8 [<no net>] (J1)",
+                    "pos": {
+                        "x": 117.825,
+                        "y": 55.31
+                    },
+                    "uuid": "702127de-719c-4024-b876-571fd1f7ae2e"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン A1 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン A12 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン B1 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン B12 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン S1 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン A4 (/VBUS_5V) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン A9 (/VBUS_5V) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン B4 (/VBUS_5V) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン B9 (/VBUS_5V) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J1",
+                    "pos": {
+                        "x": 116.325,
+                        "y": 56.13
+                    },
+                    "uuid": "c01cbbdd-c4b6-4262-a2f6-374f9e71680d"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド 13 [/GND] (J4)",
+                    "pos": {
+                        "x": 128.025,
+                        "y": 57.575
+                    },
+                    "uuid": "53dc3472-64b1-49c3-854e-d727a58cb01a"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド 13 [/GND] (J4)",
+                    "pos": {
+                        "x": 136.475,
+                        "y": 57.575
+                    },
+                    "uuid": "3d89a5d0-d56d-4f55-805c-9b694853fc76"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド 13 [/GND] (J4)",
+                    "pos": {
+                        "x": 128.025,
+                        "y": 54.715
+                    },
+                    "uuid": "4f70823a-647b-419c-a7c6-dc07dfdce666"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド 13 [/GND] (J4)",
+                    "pos": {
+                        "x": 136.475,
+                        "y": 54.715
+                    },
+                    "uuid": "c1d6bf9e-25aa-424c-b936-09cbc324b5ea"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A1B12 [/GND] (J4)",
+                    "pos": {
+                        "x": 135.75,
+                        "y": 56.145
+                    },
+                    "uuid": "472b5bf3-9f2b-49bc-b28d-fa678b6ac212"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A4B9 [EXT_5V] (J4)",
+                    "pos": {
+                        "x": 134.75,
+                        "y": 56.145
+                    },
+                    "uuid": "141a9477-8685-43b9-a1e9-1098300c9bfb"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(J4-D+-PadA6))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A6 [<no net>] (J4)",
+                    "pos": {
+                        "x": 132.75,
+                        "y": 56.965
+                    },
+                    "uuid": "8fb40b17-8698-4ca4-9509-7e6d1eb3fce5"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(J4-D--PadA7))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A7 [<no net>] (J4)",
+                    "pos": {
+                        "x": 131.75,
+                        "y": 56.965
+                    },
+                    "uuid": "a7c73faa-4ad0-4b4e-afb6-d7193ff4018a"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(J4-SBU1-PadA8))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A8 [<no net>] (J4)",
+                    "pos": {
+                        "x": 130.75,
+                        "y": 56.965
+                    },
+                    "uuid": "9d76a7ec-b6e3-41ac-9cfd-64d838539efc"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A9B4 [EXT_5V] (J4)",
+                    "pos": {
+                        "x": 129.75,
+                        "y": 56.145
+                    },
+                    "uuid": "ec33cad6-eb20-46bd-b2c0-0d0fd1680a7a"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図に対応するピンが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド A12B1 [/GND] (J4)",
+                    "pos": {
+                        "x": 128.75,
+                        "y": 56.145
+                    },
+                    "uuid": "d4c5a860-d3e3-4dc4-a529-7fdedca4f30b"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(J4-D+-PadB6))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド B6 [<no net>] (J4)",
+                    "pos": {
+                        "x": 131.75,
+                        "y": 55.325
+                    },
+                    "uuid": "0f7e51fb-dde1-4efc-9470-102520752181"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(J4-D--PadB7))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド B7 [<no net>] (J4)",
+                    "pos": {
+                        "x": 132.75,
+                        "y": 55.325
+                    },
+                    "uuid": "9146b580-02dd-4e01-8d3e-536ecaee3b35"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(J4-SBU2-PadB8))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "PTHパッド B8 [<no net>] (J4)",
+                    "pos": {
+                        "x": 133.75,
+                        "y": 55.325
+                    },
+                    "uuid": "abd6130a-7618-4938-a1f7-8f1dc8a83eea"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン A1 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン A12 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン B1 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン B12 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン S1 (/GND) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン A4 (EXT_5V) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン A9 (EXT_5V) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン B4 (EXT_5V) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図のピン B9 (EXT_5V) のパッドが見つかりません",
+            "items": [
+                {
+                    "description": "フットプリント J4",
+                    "pos": {
+                        "x": 132.25,
+                        "y": 56.145
+                    },
+                    "uuid": "08a0ce18-464c-40b9-8d41-322c1cce8488"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "フィールド 'Datasheet' が異なります(プリント基板図: 'file:///C:\\rpi-pdb\\parts\\Inductors\\Fixed\\M2016\\ABRACON_AOTA-B201610S3R3-101-T\\datasheets', 回路図: '')",
+            "items": [
+                {
+                    "description": "フットプリント L60",
+                    "pos": {
+                        "x": 133.7,
+                        "y": 85.6
+                    },
+                    "uuid": "3e79382c-b2d4-4882-a0c7-d90497d9c9ba"
+                }
+            ],
+            "severity": "warning",
+            "type": "footprint_symbol_field_mismatch"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO8-Pad6))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 6 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 127.158,
+                        "y": 77.726
+                    },
+                    "uuid": "00333af0-0652-490e-9ef0-4dcaa9c038a1"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO9-Pad7))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 7 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 126.758,
+                        "y": 77.726
+                    },
+                    "uuid": "4a41fd05-9059-488c-ad5e-49c2ba462b1a"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO10-Pad8))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 8 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 126.358,
+                        "y": 77.726
+                    },
+                    "uuid": "7ef23c8a-c7ad-46bb-89b8-a6f30a440460"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO11-Pad9))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 9 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 125.958,
+                        "y": 77.726
+                    },
+                    "uuid": "bd8bd186-b694-45ea-b6ed-39aa173e2913"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO12-Pad11))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 11 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 125.158,
+                        "y": 77.726
+                    },
+                    "uuid": "07768015-1fd8-4ed7-b95a-4693bca08397"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO13-Pad12))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 12 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 124.758,
+                        "y": 77.726
+                    },
+                    "uuid": "ce746d91-c7c3-4d0f-96e1-35d012ee9245"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO14-Pad13))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 13 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 124.358,
+                        "y": 77.726
+                    },
+                    "uuid": "14f8e373-250a-416f-82d4-dbc5f6ac791c"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO15-Pad14))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 14 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 123.958,
+                        "y": 77.726
+                    },
+                    "uuid": "4471234e-1fd8-4608-9bee-e743876991d3"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO16-Pad16))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 16 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 123.158,
+                        "y": 77.726
+                    },
+                    "uuid": "0192b036-9d4d-4a4a-8608-211648f41e21"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO27-Pad28))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 28 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 120.408,
+                        "y": 81.676
+                    },
+                    "uuid": "7a1c7eee-5469-40b5-be32-1b575effe8e1"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO28-Pad36))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 36 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 120.408,
+                        "y": 84.876
+                    },
+                    "uuid": "f8eebb60-52ea-4971-a8db-3ee5d7e97540"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO37-Pad46))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 46 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 123.558,
+                        "y": 87.626
+                    },
+                    "uuid": "af6a8743-645d-4023-bc60-89d16412e351"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO38-Pad47))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 47 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 123.958,
+                        "y": 87.626
+                    },
+                    "uuid": "c8314c76-0259-4234-a321-e2052a9bed27"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-GPIO39-Pad48))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 48 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 124.358,
+                        "y": 87.626
+                    },
+                    "uuid": "6473d07d-c16b-4d4f-8a69-d37d50fad4e7"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-QSPI_SD3-Pad70))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 70 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 130.308,
+                        "y": 82.876
+                    },
+                    "uuid": "c8c425bf-22f5-48e5-a241-f083ee8ade55"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-QSPI_SCLK-Pad71))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 71 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 130.308,
+                        "y": 82.476
+                    },
+                    "uuid": "e2704ad4-ac02-4161-a3a1-53ef1185949e"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-QSPI_SD0-Pad72))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 72 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 130.308,
+                        "y": 82.076
+                    },
+                    "uuid": "c6459914-8e57-454f-a744-a8e044e21045"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-QSPI_SD2-Pad73))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 73 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 130.308,
+                        "y": 81.676
+                    },
+                    "uuid": "82509baa-f318-4f10-94c5-d3ed35d5308f"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U1-QSPI_SD1-Pad74))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 74 [<no net>] - U1 ( F.Cu 上)",
+                    "pos": {
+                        "x": 130.308,
+                        "y": 81.276
+                    },
+                    "uuid": "8145d1a1-c7a6-4a0c-bef2-032b756a26ae"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "回路図(unconnected-(U3-NC-Pad4))で指定されたネットのパッドが見つかりません",
+            "items": [
+                {
+                    "description": "パッド 4 [<no net>] - U3 ( F.Cu 上)",
+                    "pos": {
+                        "x": 129.3,
+                        "y": 69.4
+                    },
+                    "uuid": "519df55d-94f8-4ec1-9040-ed61504c8b2a"
+                }
+            ],
+            "severity": "warning",
+            "type": "net_conflict"
+        },
+        {
+            "description": "Extra footprint",
+            "items": [
+                {
+                    "description": "フットプリント H3",
+                    "pos": {
+                        "x": 88.704,
+                        "y": 95.812
+                    },
+                    "uuid": "2aaa1ba0-03ee-4c2a-bea2-6cace4ab356e"
+                }
+            ],
+            "severity": "warning",
+            "type": "extra_footprint"
+        },
+        {
+            "description": "Extra footprint",
+            "items": [
+                {
+                    "description": "フットプリント H2",
+                    "pos": {
+                        "x": 160.204,
+                        "y": 64.312
+                    },
+                    "uuid": "3288a731-bb6f-4d59-b824-84ef57d2b1c1"
+                }
+            ],
+            "severity": "warning",
+            "type": "extra_footprint"
+        },
+        {
+            "description": "Extra footprint",
+            "items": [
+                {
+                    "description": "フットプリント H1",
+                    "pos": {
+                        "x": 88.704,
+                        "y": 64.312
+                    },
+                    "uuid": "a6f942ad-83bf-4f28-8e36-2afea7cbe44c"
+                }
+            ],
+            "severity": "warning",
+            "type": "extra_footprint"
+        },
+        {
+            "description": "Extra footprint",
+            "items": [
+                {
+                    "description": "フットプリント H4",
+                    "pos": {
+                        "x": 160.204,
+                        "y": 95.812
+                    },
+                    "uuid": "cbe039e1-654b-445f-83e5-2e10055f8aa1"
+                }
+            ],
+            "severity": "warning",
+            "type": "extra_footprint"
+        }
+    ],
     "source": "Beef-Board-RP2354B.kicad_pcb",
     "unconnected_items": [],
     "violations": [

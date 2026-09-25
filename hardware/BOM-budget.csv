@@ -16,7 +16,7 @@ C8,1uF,1,Capacitor_SMD:C_0603_1608Metric,SMT,"ceramic capacitor, X7R (candidate)
 C9,10nF,1,Capacitor_SMD:C_0603_1608Metric,SMT,"ceramic capacitor, X7R (candidate)",Asian brands,,0.0030,0.0150,0.0030,0.0150,Capacitance per Value; voltage/tolerance not specified
 D1,SS34,1,Diode_SMD:D_SMA,SMT,SS34,generic,,0.0700,0.1300,0.0700,0.1300,SMA Schottky; verify voltage/current requirements
 FB1,600R@100MHz,1,Inductor_SMD:L_0603_1608Metric_Pad1.05x0.95mm_HandSolder,SMT,BLM18AG601SN1 or equivalent,Murata/equivalent,,0.0300,0.0800,0.0300,0.0800,"0603 ferrite, 600 ohm @ 100 MHz; candidate only"
-J1,USB-C DEVICE,1,Connector_USB:USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal,SMT + shell anchors; verify assembly method,USB4105-GF-A-060,GCT,C3025063,1.0300,1.5000,1.0300,1.5000,LCSC current listing; confirm shell stakes/contact footprint
+J1,USB-C DEVICE,1,BEEF-BOARD:USB-C-TH_G-SWITCH_GT-USB-7038X_1,THT,GT-USB-7038X (verify exact mechanical variant),G-Switch,,,,,,PCB footprint matches GT-USB-7038X family; verify exact body height/length against the selected part before purchase; previous SKU and price were for a different connector
 J10,VAUX OUT,1,Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,THT,B2B-XH-A(LF)(SN),JST,C158012,0.0408,0.0700,0.0408,0.0700,LCSC price tier; THT
 J11,B1 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J12,B2 LEGACY,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
@@ -35,7 +35,7 @@ J31,ENCODER 1,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A
 J32,ENCODER 2,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
 J33,AE1 0-5V,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J34,AE2 0-5V,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
-J4,USB-C AUX POWER,1,Connector_USB:USB_C_Receptacle_G-Switch_GT-USB-7051x,SMT + shell anchors; verify assembly method,GT-USB-7051x (suffix TBD),G-Switch / verify,,0.2000,0.8000,0.2000,0.8000,Board footprint/value lacks exact orderable suffix; placeholder estimate only
+J4,USB-C AUX POWER,1,BEEF-BOARD:USB-C-TH_G-SWITCH_GT-USB-7038X_1,THT,GT-USB-7038X (verify exact mechanical variant),G-Switch,,,,,,PCB footprint matches GT-USB-7038X family; verify exact body height/length against the selected part before purchase; previous SKU and price were for a different connector
 J40,TT RGB,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J41,CENTER BAR RGB,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J42,UART A 3V3,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-A(LF)(SN),JST,C144395,0.0373,0.0700,0.0373,0.0700,LCSC price tier; THT
@@ -43,7 +43,7 @@ J43,UART B 3V3,1,Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,THT,B4B-XH-
 J5,ENC1 A,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J6,ENC1 B,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J60,BOOTSEL HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
-J61,RUN-GND RESET HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
+J61,RESET HEADER,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,THT,,,,0.0000,0.0000,0.0000,0.0000,Needs exact orderable part selection
 J7,ENC2 A,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J8,ENC2 B,1,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,THT,B3B-XH-A(LF)(SN),JST,C144394,0.0332,0.1000,0.0332,0.1000,LCSC reference price; THT
 J9,VAUX OUT,1,Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,THT,B2B-XH-A(LF)(SN),JST,C158012,0.0408,0.0700,0.0408,0.0700,LCSC price tier; THT
@@ -71,6 +71,7 @@ R60,33,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1%
 R61,1k,1,Resistor_SMD:R_0603_1608Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
 R62,27,1,Resistor_SMD:R_0402_1005Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
 R63,27,1,Resistor_SMD:R_0402_1005Metric,SMT,"0603/0402 thick-film resistor, ±1% (candidate)",Asian brands,,0.0030,0.0100,0.0030,0.0100,Resistance per Value column; power rating/voltage not specified in PCB fields
+SW1,POWER SELECT,1,Button_Switch_THT:SW_DIP_SPSTx01_Slide_9.78x4.72mm_W7.62mm_P2.54mm,"THT, front side",,,,,,,,Select a slide switch matching the mounted footprint and current rating; physical switch selects J1 VBUS or J4 external 5 V through D1
 U1,RP2354B,1,Package_DFN_QFN:QFN-80-1EP_10x10mm_P0.4mm_EP3.4x3.4mm,SMT,RP2354B,Raspberry Pi,C39843328,1.5500,1.5800,1.5500,1.5800,"LCSC current listing; QFN-80, exact board device"
 U2,USBLC6-2SC6,1,Package_TO_SOT_SMD:SOT-23-6,SMT,USBLC6-2SC6,ST,C7519,0.1844,0.2500,0.1844,0.2500,SOT-23-6; protection IC
 U3,AP2112K-3.3,1,Package_TO_SOT_SMD:SOT-23-5,SMT,AP2112K-3.3TRG1,Diodes Inc.,C51118,0.1091,0.1800,0.1091,0.1800,SOT-25-5/SOT-23-5 compatible footprint; confirm package drawing

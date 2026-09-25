@@ -11843,7 +11843,7 @@
 				)
 			)
 		)
-		(property "Value" "BOOTSEL HEADER"
+		(property "Value" "RESET HEADER"
 			(at 0 4.92 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -18864,7 +18864,7 @@
 		(at 155.79 105.9)
 		(descr "1x-dip-switch SPST , Slide, row spacing 7.62 mm (300 mils), body size 9.78x4.72mm (see e.g. https://www.ctscorp.com/wp-content/uploads/206-208.pdf)")
 		(tags "DIP Switch SPST Slide 7.62mm 300mil")
-		(property "Reference" "REF**"
+		(property "Reference" "SW1"
 			(at 3.81 -3.42 0)
 			(layer "F.SilkS")
 			(uuid "665aea23-909e-4b39-9a15-aed5cc6bb300")
@@ -18875,7 +18875,7 @@
 				)
 			)
 		)
-		(property "Value" "SW_DIP_SPSTx01_Slide_9.78x4.72mm_W7.62mm_P2.54mm"
+		(property "Value" "POWER SELECT"
 			(at 3.81 3.42 0)
 			(layer "F.Fab")
 			(uuid "960b271d-5b1a-47b9-8524-194aef86fe59")
