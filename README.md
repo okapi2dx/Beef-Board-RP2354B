@@ -19,7 +19,7 @@ Beef Board V2 の RP2354B 版です。RP2354B 基板、KiCad 回路図、部品�
 | `configurator/` | RP2354B 対応 Configurator のソース一式（Web UI・Windows デスクトップ版） |
 | `configurator/Beef-Board-RP2354B-Configurator-V1.00.exe` | Windows 64-bit 用ポータブル版 |
 
-現在の PCB は今回指定されたファイルを基準に配線整理した版です。配線整理後、電源スイッチを J2 の3ピンヘッダに交換し、周辺の電源配線を変更しました。変更量は [`hardware/ROUTING.md`](hardware/ROUTING.md) を参照してください。
+現在の PCB は今回指定されたファイルを基準に配線整理した版です。配線整理後、電源スイッチを J2 の3ピンヘッダに交換し、周辺の電源配線を変更しました。直近の編集では GND ビアを4本減らし、AE2 の5V入力配線を引き直しています。変更量は [`hardware/ROUTING.md`](hardware/ROUTING.md) を参照してください。
 
 ## 状態
 
