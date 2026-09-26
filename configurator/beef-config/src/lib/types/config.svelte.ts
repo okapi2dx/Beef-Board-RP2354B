@@ -1,4 +1,5 @@
 import { ReportId } from '$lib/types/hid';
+import { featureReportPayload } from '$lib/types/feature-report';
 import { appState } from '$lib/types/state.svelte';
 import { TurntableMode, BarMode, ControllerType, InputMode, TurntableCurve, Hsv, numberToTurntableMode, numberToBarMode, numberToControllerType, numberToInputMode, numberToTurntableCurve, turntableModeToNumber, barModeToNumber, controllerTypeToNumber, inputModeToNumber, turntableCurveToNumber } from '$lib/types/types.svelte';
 import * as HIDCodes from '$lib/types/hid-codes';
@@ -252,8 +253,9 @@ export async function readConfig(): Promise<Config> {
 
   try {
     const result = await appState.device.receiveFeatureReport(ReportId.Config);
-    const configBytes = new Uint8Array(result.buffer, result.byteOffset + 1, result.byteLength - 1).slice();
-    const configData = new DataView(configBytes.buffer); // Skip report id
+    const payload = featureReportPayload(result, ReportId.Config);
+    const configBytes = new Uint8Array(payload.buffer, payload.byteOffset, payload.byteLength).slice();
+    const configData = new DataView(configBytes.buffer);
 
     const version = configData.getUint8(0);
     if (version <= 10) {

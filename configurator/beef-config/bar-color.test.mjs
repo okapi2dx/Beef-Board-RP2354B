@@ -15,14 +15,25 @@ async function moduleFile(name, source) {
 try {
   const types = await moduleFile('types', await readFile(new URL('./src/lib/types/types.svelte.ts', import.meta.url), 'utf8'));
   const codes = await moduleFile('codes', await readFile(new URL('./src/lib/types/hid-codes.ts', import.meta.url), 'utf8'));
+  const feature = await moduleFile('feature-report', await readFile(new URL('./src/lib/types/feature-report.ts', import.meta.url), 'utf8'));
   let source = await readFile(new URL('./src/lib/types/config.svelte.ts', import.meta.url), 'utf8');
-  source = source.replace("import { ReportId } from '$lib/types/hid';", 'const ReportId = { Config: 3 };')
+  source = source.replace("import { ReportId } from '$lib/types/hid';", 'const ReportId = { Config: 1 };')
     .replace("import { appState } from '$lib/types/state.svelte';", 'const appState = globalThis.__barTestState;')
-    .replace('$lib/types/types.svelte', types.href).replace('$lib/types/hid-codes', codes.href);
+    .replace('$lib/types/types.svelte', types.href).replace('$lib/types/hid-codes', codes.href)
+    .replace('$lib/types/feature-report', feature.href);
   let sent;
   globalThis.__barTestState = { device: { sendFeatureReport: async (_id, data) => { sent = data; } } };
-  const { Config, updateConfig } = await import((await moduleFile('config', source)).href);
+  const { Config, readConfig, updateConfig } = await import((await moduleFile('config', source)).href);
   const { BarMode, barModeToNumber, ControllerType, controllerTypeToNumber, Hsv } = await import(types.href);
+  const received = new Uint8Array(1024);
+  received[0] = 33;
+  received[1] = 1;
+  for (const report of [received, Uint8Array.from([1, ...received])]) {
+    globalThis.__barTestState.device.receiveFeatureReport = async () => new DataView(report.buffer);
+    const config = await readConfig();
+    assert.equal(config.version, 33);
+    assert.equal(config.reverse_tt, 1);
+  }
   assert.deepEqual(Object.values(ControllerType), ['Default', 'IIDX Entry', 'IIDX Premium']);
   assert.deepEqual(Object.values(ControllerType).map(mode => controllerTypeToNumber[mode]), [0, 1, 2]);
   assert.equal(barModeToNumber[BarMode.Static], 8);

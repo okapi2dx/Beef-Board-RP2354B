@@ -1,4 +1,5 @@
 import { appState, onDisconnect } from '$lib/types/state.svelte';
+import { featureReportPayload } from '$lib/types/feature-report';
 import {
   BEEF_CONFIG_USAGE,
   BEEF_CONFIG_USAGE_PAGE,
@@ -51,7 +52,7 @@ export function parseDiagnostics(data: DataView): Diagnostics {
 export async function readDiagnostics(): Promise<Diagnostics> {
   if (!appState.device) throw new Error('Device not connected');
   const result = await appState.device.receiveFeatureReport(ReportId.Diagnostics);
-  const data = new DataView(result.buffer, result.byteOffset + 1, result.byteLength - 1);
+  const data = featureReportPayload(result, ReportId.Diagnostics, [13, 24]);
   return parseDiagnostics(data);
 }
 
@@ -208,7 +209,7 @@ export async function readFirmwareInfo(): Promise<FirmwareInfo> {
 
   try {
     const result = await appState.device.receiveFeatureReport(ReportId.FirmwareVersion);
-    const data = new DataView(result.buffer, result.byteOffset + 1, result.byteLength - 1);
+    const data = featureReportPayload(result, ReportId.FirmwareVersion, [7]);
     const hasSemanticVersion = data.byteLength >= 7;
     const version = hasSemanticVersion ? `${data.getUint8(4)}.${data.getUint8(5)}.${data.getUint8(6)}` : null;
     return { version };

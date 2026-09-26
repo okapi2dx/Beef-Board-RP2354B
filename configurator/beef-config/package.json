@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"test:bar-color": "node --conditions=browser bar-color.test.mjs",
+		"test:feature-report": "node --conditions=browser feature-report.test.mjs",
 		"test:key-mapping": "node --conditions=browser key-mapping.test.mjs",
 		"dev": "vite dev",
 		"build": "vite build",
@@ -14,7 +15,7 @@
 		"format": "prettier --write .",
 		"sync": "svelte-kit sync",
 		"test:led-emulator": "node --conditions=browser led-emulator.test.mjs",
-		"test": "npm run test:bar-color && npm run test:key-mapping && npm run test:led-emulator"
+		"test": "npm run test:feature-report && npm run test:bar-color && npm run test:key-mapping && npm run test:led-emulator"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.12.0",
