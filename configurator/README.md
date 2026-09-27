@@ -4,7 +4,7 @@ RP2354B ボード用の設定画面と Windows デスクトップアプリのソ
 
 RP2354B は USB HID の `FEED:0003` と Board Info report 6 で識別します。設定の読み書き、BOOTSEL モードへの切り替え、同梱 UF2 のダウンロードに対応します。UF2 は表示された ROM USB ドライブへ手動でコピーします。STM32 用の接続・書き込み機能は含みません。
 
-Windows 64-bit では [`Beef-Board-RP2354B-Configurator-V1.00.exe`](Beef-Board-RP2354B-Configurator-V1.00.exe) を実行できます。実行ファイルには RP2354B の UF2 を同梱しています。
+ポータブル EXE はリポジトリに含めていません。Windows 64-bit 版は、次の手順でソースからビルドしてください。作成したアプリには RP2354B の UF2 が含まれます。
 
 ## ソースからビルド
 
