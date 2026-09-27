@@ -1,10 +1,23 @@
 # Beef Board RP2354B Configurator
 
-RP2354B ボード用の設定画面と Windows デスクトップアプリのソース一式です。従来の AT90USB1286 ボードも扱えます。Configurator は [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を基にした Beef Board ソフトウェアのフォーク／派生コードをベースに、RP2354B 対応を統合しています。ライセンスは [`LICENSE`](LICENSE) を参照してください。
+RP2354B と従来の AT90USB1286 に対応した、Beef Board 用 Configurator のソースです。Windows デスクトップアプリと Web UI を含みます。
 
-本Configuratorの開発では、設計、実装、デバッグ、ドキュメント作成に AI を活用しています。仕様や変更の採用判断はプロジェクト管理者が行い、実機での確認状況はこのREADMEに記載します。
+## できること
 
-RP2354B は USB HID の `FEED:0003` と Board Info report 6 で識別します。設定の読み書き、BOOTSEL モードへの切り替え、同梱 UF2 のダウンロードに対応します。UF2 は表示された ROM USB ドライブへ手動でコピーします。STM32 用の接続・書き込み機能は含みません。
+- 入力方式、ターンテーブル、LED、キー割り当ての設定
+- ボタンやターンテーブル入力、ファームウェア診断情報のモニター
+- AT90USB1286 用 HEX の書き込み
+- RP2354B 用 UF2 の取得と BOOTSEL モードへの切り替え案内
+
+RP2354B 用 UF2 は、表示された ROM USB ドライブに手動でコピーしてください。Configurator は UF2 をドライブへ自動転送しません。STM32 用の接続・書き込み機能はありません。
+
+## 開発とソースコードの由来
+
+開発では、設計、実装、デバッグ、ドキュメント作成に AI を活用しています。仕様や変更の採用判断はプロジェクト管理者が行います。実機での確認状況はこのREADMEに記載します。
+
+Configurator は [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を基にした Beef Board ソフトウェアのフォーク／派生コードを出発点として、RP2354B 対応を加えています。ライセンスは [`LICENSE`](LICENSE) を参照してください。
+
+RP2354B は USB HID の `FEED:0003` と Board Info report 6 で識別します。
 
 ポータブル EXE はリポジトリに含めていません。Windows 64-bit 版は、次の手順でソースからビルドしてください。作成したアプリには RP2354B の UF2 が含まれます。
 
