@@ -1,0 +1,61 @@
+MCU = at90usb1286
+ARCH = AVR8
+BOARD = BOARD_NONE
+F_CPU = 16000000
+F_USB = $(F_CPU)
+OPTIMIZATION = 2
+TARGET = beef
+
+LIGHT_BAR_LEDS ?= 16
+FW_VER = 0x$(shell git rev-parse --short=8 HEAD)
+FW_VERSION_MAJOR ?= 1
+FW_VERSION_MINOR ?= 0
+FW_VERSION_PATCH ?= 1
+
+FASTLED_SRC = FastLED/src
+SRC = $(wildcard *.c) $(wildcard *.cpp) $(wildcard devices/iidx/*.cpp) \
+	$(FASTLED_SRC)/colorutils.cpp $(FASTLED_SRC)/FastLED.cpp $(FASTLED_SRC)/hsv2rgb.cpp $(FASTLED_SRC)/lib8tion.cpp \
+	$(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
+LUFA_PATH = LUFA
+CC_FLAGS = -DUSE_LUFA_CONFIG_HEADER -IConfig/ -include fastled_shim.h \
+	-DFASTLED_NO_PINMAP \
+	-DLIGHT_BAR_LEDS=$(LIGHT_BAR_LEDS) \
+	-DFW_VER=$(FW_VER) \
+	-DFW_VERSION_MAJOR=$(FW_VERSION_MAJOR) \
+	-DFW_VERSION_MINOR=$(FW_VERSION_MINOR) \
+	-DFW_VERSION_PATCH=$(FW_VERSION_PATCH)
+LD_FLAGS =
+
+# Default target
+all:
+
+# Include LUFA-specific DMBS extension modules
+DMBS_LUFA_PATH ?= $(LUFA_PATH)/Build/LUFA
+include $(DMBS_LUFA_PATH)/lufa-sources.mk
+include $(DMBS_LUFA_PATH)/lufa-gcc.mk
+
+# Include common DMBS build system modules
+DMBS_PATH ?= $(LUFA_PATH)/Build/DMBS/DMBS
+include $(DMBS_PATH)/core.mk
+include $(DMBS_PATH)/gcc.mk
+
+.PHONY: dfu
+dfu: all
+	sudo avrdude -c flip1 -p usb1286 -U flash:w:$(TARGET).hex
+
+.PHONY: isp
+isp: all
+	sudo avrdude -c stk500v1 -b 19200 -p $(MCU) -P /dev/ttyACM0 -U flash:w:$(TARGET).hex
+
+.PHONY: flash-factory-fuse
+fuse:
+	sudo avrdude -c stk500v1 -b 19200 -p $(MCU) -P /dev/ttyACM0 -U lfuse:w:0xde:m -U hfuse:w:0x99:m -U efuse:w:0xf3:m
+
+.PHONY: fuse-dump
+fuse-dump:
+	sudo avrdude -c stk500v1 -b 19200 -p $(MCU) -P /dev/ttyACM0 -U lfuse:r:-:h -U hfuse:r:-:h -U efuse:r:-:h
+
+# flash the factory DFU bootloader
+.PHONY: bootloader
+bootloader:
+	sudo avrdude -c stk500v1 -b 19200 -p $(MCU) -P /dev/ttyACM0 -U flash:w:$(BOOTLOADER).hex
