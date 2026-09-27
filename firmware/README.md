@@ -1,4 +1,4 @@
-# Beef Board V2 RP2354B firmware (prototype 0.1.3)
+# Beef Board RP2354B firmware (V1.00)
 
 This is native RP2354B firmware built with the Pico SDK. It preserves the Beef Board HID configuration and controller behavior. The GPIO mapping was checked against the RP2354B PCB and matching schematic on 2026-09-25. The later routing cleanup keeps all footprints and vias in place.
 

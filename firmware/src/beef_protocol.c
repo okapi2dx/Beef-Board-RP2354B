@@ -8,13 +8,13 @@
 #include "tusb.h"
 
 #ifndef BEEF_FW_VERSION_MAJOR
-#define BEEF_FW_VERSION_MAJOR 0
+#define BEEF_FW_VERSION_MAJOR 1
 #endif
 #ifndef BEEF_FW_VERSION_MINOR
-#define BEEF_FW_VERSION_MINOR 1
+#define BEEF_FW_VERSION_MINOR 0
 #endif
 #ifndef BEEF_FW_VERSION_PATCH
-#define BEEF_FW_VERSION_PATCH 3
+#define BEEF_FW_VERSION_PATCH 0
 #endif
 
 #define CONFIG_SAVE_DELAY_MS 750u
