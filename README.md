@@ -42,17 +42,6 @@ Beef Board Configurator は、IIDX 系コントローラーの設定・調整・
   - アプリ更新の確認
   - 日本語 / English、ライト / ダークテーマ
 
-## 対応基板
-
-このプロジェクトは、異なる2種類のマイコンを搭載した基板を扱います。
-
-| マイコン／基板 | 説明 | ファームウェア／書き込み |
-|---|---|---|
-| **RP2354B** | このリポジトリの基板設計とファームウェア。11個のボタン入力、ターンテーブル用エンコーダー、ボタンLED、RGB LED出力に対応 | [UF2](firmware/Beef-Board-RP2354B.uf2)をBOOTSELのUSBドライブへ手動でコピー |
-| **AT90USB1286** | 従来のBeef Board基板。Configuratorから設定・診断できるレガシー対応 | [HEX](firmware/Beef-Board-AT90USB1286.hex)をConfiguratorから書き込み。ソースコードはこのリポジトリに含みません |
-
-基板により、使用できる入出力や書き込み方法が異なります。Windows版Configuratorのビルド方法は [`configurator/README.md`](configurator/README.md) を参照してください。ポータブルEXEはリポジトリに含めていません。
-
 ## 旧PHOENIXWAN UART
 
 RP2354B基板のUART端子は、**旧PHOENIXWANのターンテーブルリングとセンターバーLEDを接続して制御する用途**です。ターンテーブルリングはJ42、センターバーはJ43に接続し、ConfiguratorのLED設定に合わせて制御します。このUART機能はAT90USB1286基板にはありません。
