@@ -17,7 +17,7 @@
 	import ControllerMonitor from '$lib/ControllerMonitor.svelte';
 
 import { readConfig, updateConfig, type Config } from '$lib/types/config.svelte';
-import { Command, sendCommand, waitForReconnection } from '$lib/types/hid';
+import { restartAndWaitForReconnection } from '$lib/types/hid';
 import { BoardType, defaultUsbIdentity } from '$lib/types/board';
 	import { appState } from '$lib/types/state.svelte';
 	import { TurntableMode, BarMode, ControllerType, InputMode } from '$lib/types/types.svelte';
@@ -40,8 +40,9 @@ import { BoardType, defaultUsbIdentity } from '$lib/types/board';
 
 	async function changeControllerMode(mode: ControllerType): Promise<void> {
 		if (!config || mode === config.controller_type || controllerRestarting) return;
+		const preferredDefaultIdentity = defaultUsbIdentity(appState.boardInfo);
 		const expectedIdentity = mode === ControllerType.Default
-			? defaultUsbIdentity(appState.boardInfo)
+			? [preferredDefaultIdentity, { vendorId: 0xfeed, productId: preferredDefaultIdentity.productId === 0x0003 ? 0x0000 : 0x0003 }]
 			: { vendorId: 0x1ccf, productId: mode === ControllerType.IIDXEntry ? 0x1018 : 0x8048 };
 		controllerRestarting = true;
 		appState.connecting = true;
@@ -50,18 +51,9 @@ import { BoardType, defaultUsbIdentity } from '$lib/types/board';
 			config.controller_type = mode;
 			await updateConfig(config);
 
-			// Changing controller mode changes the USB identity. The device can
-			// disappear before Chromium resolves sendFeatureReport(), so a send
-			// error can still mean that the restart command succeeded.
-			try {
-				await sendCommand(Command.Restart);
-			} catch {
-				// Always continue into USB re-enumeration/reconnection.
-			}
-
-			// The old USB identity can still answer HID requests before the board
-			// processes Restart. Wait specifically for the identity selected above.
-			await waitForReconnection(20000, expectedIdentity);
+			// The board info report is unavailable on some Windows IIDX identities.
+			// Accept either supported default identity, then verify its config HID.
+			await restartAndWaitForReconnection(20000, expectedIdentity);
 			config = await readConfig();
 		} catch (err) {
 			appState.error = `${err}`;

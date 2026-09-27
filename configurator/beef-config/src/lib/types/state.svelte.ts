@@ -1,5 +1,5 @@
 import { DfuDevice } from "$lib/types/dfu";
-import { Command, detectDevice, readBoardInfo, sendCommand, waitForReconnection } from "$lib/types/hid";
+import { detectDevice, readBoardInfo, restartAndWaitForReconnection, waitForReconnection } from "$lib/types/hid";
 import type { BoardInfo } from "$lib/types/board";
 
 class AppState {
@@ -118,15 +118,7 @@ export async function reconnectDevice(): Promise<void> {
   appState.connecting = true;
   appState.error = undefined;
   try {
-    // The controller can disappear from USB before Chromium resolves the
-    // SET_REPORT promise. A send error here can therefore mean the restart
-    // command already succeeded, so always continue into re-enumeration.
-    try {
-      await sendCommand(Command.Restart);
-    } catch {
-      // Expected when the USB restart races the host-side control transfer.
-    }
-    await waitForReconnection(20000);
+    await restartAndWaitForReconnection(20000);
   } catch (err) {
     await onDisconnect();
     appState.error = `Error communicating with device: ${err}`;

@@ -14,13 +14,14 @@
 	import LanguageSelect from '$lib/LanguageSelect.svelte';
 	import { initializeLocale, tr } from '$lib/types/locale.svelte';
 	import { formatDisplayVersion } from '$lib/types/version';
-	import { Command, readFirmwareInfo, sendCommand, waitForReconnection, type FirmwareInfo } from '$lib/types/hid';
+	import { Command, readBoardInfo, readFirmwareInfo, sendCommand, waitForReconnection, type FirmwareInfo } from '$lib/types/hid';
 	import { isRp2354bBoard, RP2354B_BEEF_PRODUCT_ID, RP2354B_BEEF_VENDOR_ID } from '$lib/types/board';
 
 	import { connectDevice, reconnectDevice, reconnectDfuDevice, appState } from '$lib/types/state.svelte';
 
 	const Tab = {
 		Config: 'config',
+		DeviceInfo: 'device-info',
 		Firmware: 'dfu'
 	} as const;
 
@@ -35,6 +36,7 @@
 	let resetDialogOpen = $state(false);
 	let firmwareTarget = $state<'auto' | 'rp2354b' | 'at90'>('auto');
 	let lastAutoFirmwareTarget = $state<'rp2354b' | 'at90'>('at90');
+	let lastConnectedDevice: HIDDevice | null = null;
 
 	onMount(async () => {
 		initializeLocale();
@@ -62,6 +64,39 @@
 		const controller = controllerDisplayName(device);
 		return appState.boardInfo ? `${controller} · ${appState.boardInfo.mcu}` : controller;
 	}
+
+	function deviceSerialNumber(device: HIDDevice): string | null {
+		return (device as HIDDevice & { serialNumber?: string }).serialNumber ?? null;
+	}
+
+	async function resetConfiguration(): Promise<void> {
+		if (appState.connecting) return;
+		// Dismiss the confirmation immediately; USB reset/re-enumeration can take
+		// several seconds and must not keep the modal open while it completes.
+		resetDialogOpen = false;
+		appState.connecting = true;
+		appState.error = undefined;
+		try {
+			try {
+				await sendCommand(Command.ResetConfig);
+			} catch {
+				// Reset reboots USB immediately; the report can reject after the
+				// board has already accepted the command. Still wait for it to return.
+			}
+			await waitForReconnection(20000);
+		} catch (err) {
+			appState.error = `${tr('初期化後に基板へ再接続できませんでした', 'Could not reconnect to the board after reset')}: ${err}`;
+		} finally {
+			appState.connecting = false;
+			resetDialogOpen = false;
+		}
+	}
+
+	$effect(() => {
+		const device = appState.device;
+		if (device && device !== lastConnectedDevice) activeTab = Tab.DeviceInfo;
+		lastConnectedDevice = device;
+	});
 
 	$effect(() => {
 		const device = appState.device;
@@ -149,15 +184,22 @@
 	{:else}
 		<div class="desktop-layout">
 			<aside class="app-sidebar">
-				<div class="sidebar-device-card">
+				<button
+					class:active={activeTab === Tab.DeviceInfo}
+					class="sidebar-device-card"
+					type="button"
+					aria-label={tr('ボード情報を表示', 'Show board information')}
+					aria-current={activeTab === Tab.DeviceInfo ? 'page' : undefined}
+					onclick={() => { activeTab = Tab.DeviceInfo; }}
+				>
 					<div class="device-status-row">
 						<span class:connected={!!appState.device} class="status-dot"></span>
 						<div>
-							<div class="status-title">{appState.device ? tr('接続済み', 'Connected') : tr('未接続', 'Disconnected')}</div>
-							<div class="status-subtitle">{connectedDeviceLabel(appState.device)}</div>
+							<div class="status-title">{tr('ボード', 'Board')}</div>
+							<div class="status-subtitle">{appState.device ? connectedDeviceLabel(appState.device) : tr('未接続', 'Disconnected')}</div>
 						</div>
 					</div>
-				</div>
+				</button>
 
 				<nav class="sidebar-nav" aria-label={tr('メインメニュー', 'Main menu')}>
 					<div class="sidebar-label">{tr('コントローラー設定', 'CONTROLLER')}</div>
@@ -215,12 +257,9 @@
 							<AlertDialog.Footer>
 								<Button
 									variant="outline"
-									class="reset-action-button"
-									onclick={async () => {
-										await sendCommand(Command.ResetConfig);
-										await waitForReconnection();
-										resetDialogOpen = false;
-									}}
+					class="reset-action-button"
+					onclick={resetConfiguration}
+					disabled={appState.connecting}
 								>
 									{tr('続行', 'Continue')}
 								</Button>
@@ -232,7 +271,47 @@
 			</aside>
 
 			<section class="app-content">
-				{#if activeTab === Tab.Config}
+				{#if activeTab === Tab.DeviceInfo}
+					<section class="device-info-page">
+						<div class="device-info-heading">
+							<div>
+								<p class="device-info-eyebrow">{tr('デバイス', 'DEVICE')}</p>
+								<h2>{tr('接続中の基板', 'Connected board')}</h2>
+							</div>
+							<span class:connected={!!appState.device} class="device-info-status">
+								<span class="status-dot"></span>
+								{appState.device ? tr('接続中', 'Connected') : tr('未接続', 'Disconnected')}
+							</span>
+						</div>
+
+						{#if appState.device}
+							<div class="device-hero-card">
+								<div class="device-hero-icon" aria-hidden="true">B</div>
+								<div>
+									<p>{tr('基板名', 'Board')}</p>
+									<h3>{connectedDeviceLabel(appState.device)}</h3>
+								</div>
+							</div>
+							<div class="device-info-grid">
+								<div class="device-info-card"><span>{tr('ファームウェア', 'Firmware')}</span><strong>{firmwareInfo?.version ? formatDisplayVersion(firmwareInfo.version) : '—'}</strong></div>
+								<div class="device-info-card"><span>{tr('マイコン', 'MCU')}</span><strong>{appState.boardInfo?.mcu ?? '—'}</strong></div>
+								<div class="device-info-card"><span>{tr('ハードウェア改訂', 'Hardware revision')}</span><strong>{appState.boardInfo?.hardwareRevision ?? tr('不明', 'Unknown')}</strong></div>
+								<div class="device-info-card"><span>{tr('ブートローダー', 'Bootloader')}</span><strong>{appState.boardInfo?.bootloader ?? '—'}</strong></div>
+								<div class="device-info-card"><span>USB ID（VID / PID）</span><strong>VID 0x{appState.device.vendorId.toString(16).padStart(4, '0').toUpperCase()}　/　PID 0x{appState.device.productId.toString(16).padStart(4, '0').toUpperCase()}</strong></div>
+								<div class="device-info-card"><span>{tr('USB製品名', 'USB product name')}</span><strong>{appState.device.productName || tr('不明', 'Unknown')}</strong></div>
+								<div class="device-info-card"><span>{tr('シリアル番号', 'Serial number')}</span><strong>{deviceSerialNumber(appState.device) || tr('取得できません', 'Unavailable')}</strong></div>
+							</div>
+							<div class="device-info-footer">
+								<span>{tr('USB HIDで基板を認識しています', 'Board detected over USB HID')}</span>
+							</div>
+						{:else}
+							<div class="empty-state">
+							<h3>{tr('基板が接続されていません', 'No board connected')}</h3>
+								<p>{tr('「接続」ボタンから基板を接続すると、デバイス情報がここに表示されます。', 'Connect a board to view its device information here.')}</p>
+							</div>
+						{/if}
+					</section>
+				{:else if activeTab === Tab.Config}
 					{#if appState.device}
 						<ConfigScreen active={true} bind:settingsTab={settingsSection} showTabs={false} />
 					{:else}
@@ -340,14 +419,38 @@
 		overflow: hidden;
 	}
 	.sidebar-device-card {
+		width: 100%;
+		border: 1px solid transparent;
+		border-radius: 12px;
+		background: transparent;
+		color: inherit;
 		padding: 6px 6px 14px;
 		border-bottom: 1px solid var(--border);
+		text-align: left;
+		cursor: pointer;
+		transition: background 120ms ease, border-color 120ms ease;
+	}
+	.sidebar-device-card:hover,
+	.sidebar-device-card:focus-visible {
+		background: color-mix(in srgb, #3b82f6 7%, transparent);
+		border-color: color-mix(in srgb, #3b82f6 26%, transparent);
+		outline: none;
+	}
+	.sidebar-device-card.active {
+		border-color: color-mix(in srgb, #3b82f6 28%, var(--border));
+		background: color-mix(in srgb, #3b82f6 9%, var(--card));
+		color: #2563eb;
+		box-shadow: inset 4px 0 0 #3b82f6;
+	}
+	:global(.dark) .sidebar-device-card.active {
+		border-color: color-mix(in srgb, #93c5fd 35%, var(--border));
+		background: color-mix(in srgb, #3b82f6 14%, var(--card));
+		color: #93c5fd;
 	}
 	.device-status-row {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		margin-bottom: 12px;
 	}
 	.status-dot {
 		width: 10px;
@@ -406,9 +509,27 @@
 		color: #93c5fd;
 	}
 	.sidebar-item.active {
-		border-color: var(--border);
-		background: var(--muted);
-		box-shadow: inset 3px 0 0 currentColor;
+		border-color: color-mix(in srgb, #3b82f6 28%, var(--border));
+		background: color-mix(in srgb, #3b82f6 9%, var(--card));
+		color: #2563eb;
+		box-shadow: inset 4px 0 0 #3b82f6;
+	}
+	.sidebar-item.active .nav-title {
+		font-weight: 850;
+	}
+	.sidebar-item.active:not(:disabled):hover {
+		background: color-mix(in srgb, #3b82f6 13%, var(--card));
+		color: #2563eb;
+	}
+	:global(.dark) .sidebar-item.active {
+		border-color: color-mix(in srgb, #93c5fd 35%, var(--border));
+		background: color-mix(in srgb, #3b82f6 14%, var(--card));
+		color: #93c5fd;
+		box-shadow: inset 4px 0 0 #60a5fa;
+	}
+	:global(.dark) .sidebar-item.active:not(:disabled):hover {
+		background: color-mix(in srgb, #3b82f6 20%, var(--card));
+		color: #bfdbfe;
 	}
 	.sidebar-reset {
 		margin-top: 16px;
@@ -478,6 +599,21 @@
 		max-width: 520px;
 		color: var(--muted-foreground);
 	}
+	.device-info-page { display: flex; flex-direction: column; gap: 18px; }
+	.device-info-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+	.device-info-heading h2 { font-size: 25px; font-weight: 800; letter-spacing: -0.02em; }
+	.device-info-eyebrow { color: var(--muted-foreground); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+	.device-info-status { display: inline-flex; align-items: center; gap: 9px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); font-size: 12px; font-weight: 700; }
+	.device-info-status .status-dot { width: 8px; height: 8px; margin: 0; box-shadow: none; }
+	.device-info-status.connected { color: #15803d; border-color: color-mix(in srgb, #22c55e 35%, var(--border)); }
+	.device-hero-card { display: flex; align-items: center; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: 18px; background: linear-gradient(120deg, color-mix(in srgb, #14b8a6 9%, var(--card)), var(--card) 65%); box-shadow: 0 10px 30px rgba(15, 23, 42, .05); }
+	.device-hero-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: #0f766e; color: white; font-size: 28px; font-weight: 800; }
+	.device-hero-card p, .device-info-card span { color: var(--muted-foreground); font-size: 12px; }
+	.device-hero-card h3 { font-size: 21px; font-weight: 800; }
+	.device-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+	.device-info-card { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+	.device-info-card strong { overflow-wrap: anywhere; font-size: 14px; font-weight: 700; }
+	.device-info-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--muted-foreground); font-size: 12px; }
 	@media (max-width: 820px) {
 		.app-shell {
 			height: auto;
@@ -517,6 +653,9 @@
 			overflow: visible;
 			padding-right: 0;
 		}
+		.device-info-grid { grid-template-columns: 1fr; }
+		.device-info-heading { align-items: flex-start; }
+		.device-info-footer { align-items: flex-start; flex-direction: column; }
 	}
 </style>
 

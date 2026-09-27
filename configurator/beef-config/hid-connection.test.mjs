@@ -21,15 +21,19 @@ try {
  const info=Uint8Array.from([0x42,0x45,0x45,0x46,1,3,2,0,63,0,4]);
  const device={vendorId:0x1ccf,productId:0x1018,productName:'BEEF BOARD',opened:true,
   collections:[{usagePage:0xffeb,usage:1}], receiveFeatureReport:async id=>new DataView((id===6?info:new Uint8Array(139)).buffer)};
- let requests=0;
- Object.defineProperty(globalThis,'navigator',{configurable:true,value:{hid:{getDevices:async()=>[],addEventListener(){},requestDevice:async({filters})=>{
-  requests++;assert.equal(filters[0].productId,0x1018);return [device];
+ let requests=0,granted=false;
+ Object.defineProperty(globalThis,'navigator',{configurable:true,value:{hid:{getDevices:async()=>granted?[device]:[],addEventListener(){},requestDevice:async()=>{
+  throw new Error('Desktop reconnect must use a fresh user gesture');
  }}}});
- globalThis.window={beefNative:{}};
+ globalThis.window={beefNative:{authorizeHidIdentity:async identity=>{
+  requests++;assert.deepEqual(identity,{vendorId:0x1ccf,productId:0x1018});
+  if(requests===2)granted=true;
+  return granted?1:0;
+ }}};
  let now=0;Date.now=()=>now;
  globalThis.setTimeout=callback=>{now+=250;queueMicrotask(callback);return 0;};
  await waitForReconnection(5000,{vendorId:0x1ccf,productId:0x1018});
- assert.equal(requests,1);assert.equal(state.device,device);
+ assert.equal(requests,2);assert.equal(state.device,device);
  const diagnostics=new Uint8Array(24);diagnostics[0]=4;diagnostics[13]=80;
  const version=Uint8Array.from([0,0,0,0,0,1,1]);
  for(const prefix of [false,true]) {
@@ -46,7 +50,7 @@ try {
   assert.equal((await readFirmwareInfo()).version,null);
  }
  assert.deepEqual(parseDiagnostics(new DataView(new Uint8Array(13).buffer)).ledLevels,[]);
- console.log('PASS: changed USB identity permission/reconnect; diagnostic/version layouts; legacy LED telemetry');
+ console.log('PASS: delayed USB identity permission/reconnect; diagnostic/version layouts; legacy LED telemetry');
 } finally {
  Date.now=originalNow;globalThis.setTimeout=originalTimer;globalThis.window=originalWindow;
  if(navigatorDescriptor)Object.defineProperty(globalThis,'navigator',navigatorDescriptor);else delete globalThis.navigator;

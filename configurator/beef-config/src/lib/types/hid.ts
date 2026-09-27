@@ -114,16 +114,16 @@ export async function readBoardInfo(device: HIDDevice): Promise<BoardInfo> {
 }
 
 export type HidDeviceIdentity = Pick<HIDDevice, 'vendorId' | 'productId'>;
+export type ReconnectIdentity = HidDeviceIdentity | HidDeviceIdentity[];
 
 async function openVerifiedConfigDevice(
   devices: HIDDevice[],
-  expectedIdentity?: HidDeviceIdentity
+  expectedIdentities?: HidDeviceIdentity[]
 ): Promise<HIDDevice | null> {
   for (const device of devices.filter((candidate) =>
     isBeefDevice(candidate) &&
-    (!expectedIdentity ||
-      (candidate.vendorId === expectedIdentity.vendorId &&
-        candidate.productId === expectedIdentity.productId))
+    (!expectedIdentities || expectedIdentities.some(identity =>
+      candidate.vendorId === identity.vendorId && candidate.productId === identity.productId))
   )) {
     try {
       if (!device.opened) await device.open();
@@ -141,32 +141,42 @@ async function openVerifiedConfigDevice(
 
 export async function waitForReconnection(
   timeoutMs = 15000,
-  expectedIdentity?: HidDeviceIdentity
+  expectedIdentity?: ReconnectIdentity
 ): Promise<void> {
   await onDisconnect();
+  const expectedIdentities = expectedIdentity
+    ? Array.isArray(expectedIdentity) ? expectedIdentity : [expectedIdentity]
+    : undefined;
   const deadline = Date.now() + timeoutMs;
-  const requestPermissionAt = Date.now() + 2000;
-  let requestedNewIdentity = false;
+  let nextPermissionRequestAt = Date.now() + 1500;
+  let permissionRequestAttempts = 0;
+  let lastPermissionError: unknown;
+  let lastAuthorizedCount = 0;
   while (Date.now() < deadline) {
-    let selectedDevice = await openVerifiedConfigDevice(
-      await navigator.hid.getDevices(),
-      expectedIdentity
-    );
+    const authorizedDevices = await navigator.hid.getDevices();
+    lastAuthorizedCount = authorizedDevices.length;
+    let selectedDevice = await openVerifiedConfigDevice(authorizedDevices, expectedIdentities);
     // Changing controller mode also changes VID/PID. Chromium may therefore
     // treat the restarted board as a new WebHID identity even though Electron's
-    // device policy allows it. Re-run the chooser once in the desktop app so
-    // the new identity is granted without making the user reconnect the cable.
-    if (!selectedDevice && !requestedNewIdentity && window.beefNative && Date.now() >= requestPermissionAt) {
-      requestedNewIdentity = true;
+    // device policy allows it. Retry discovery while USB enumeration settles;
+    // an early chooser can legitimately return an empty list.
+    if (!selectedDevice && window.beefNative && Date.now() >= nextPermissionRequestAt) {
+      permissionRequestAttempts++;
       try {
-        selectedDevice = await openVerifiedConfigDevice(
-          await navigator.hid.requestDevice({ filters: expectedIdentity
-            ? [{ ...expectedIdentity, usagePage: BEEF_CONFIG_USAGE_PAGE, usage: BEEF_CONFIG_USAGE }]
-            : beefHidFilters }),
-          expectedIdentity
-        );
-      } catch {
-        // Keep polling: getDevices() may become available after enumeration.
+        if (expectedIdentities?.length) {
+          const identity = expectedIdentities[(permissionRequestAttempts - 1) % expectedIdentities.length];
+          await window.beefNative.authorizeHidIdentity(identity);
+          selectedDevice = await openVerifiedConfigDevice(await navigator.hid.getDevices(), expectedIdentities);
+        } else {
+          selectedDevice = await openVerifiedConfigDevice(
+            await navigator.hid.requestDevice({ filters: beefHidFilters }));
+        }
+      } catch (err) {
+        // A mode change re-enumerates USB asynchronously. Retry while the
+        // new identity settles, but preserve the rejection for diagnostics.
+        lastPermissionError = err;
+      } finally {
+        nextPermissionRequestAt = Date.now() + 2000;
       }
     }
     if (selectedDevice) {
@@ -178,7 +188,54 @@ export async function waitForReconnection(
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  throw new Error('Controller restarted, but automatic reconnection timed out');
+  const identity = expectedIdentities
+    ? ` expected ${expectedIdentities.map(id => `0x${id.vendorId.toString(16)}:0x${id.productId.toString(16)}`).join(' or ')};`
+    : '';
+  const reason = lastPermissionError ? ` permission error: ${lastPermissionError};` : '';
+  throw new Error(`Controller restarted, but automatic reconnection timed out (${identity} authorized devices: ${lastAuthorizedCount}; permission attempts: ${permissionRequestAttempts};${reason})`);
+}
+
+export async function restartAndWaitForReconnection(
+  timeoutMs = 20000,
+  expectedIdentity?: ReconnectIdentity
+): Promise<void> {
+  const oldDevice = appState.device;
+  if (!oldDevice) throw new Error('Device not connected');
+
+  let lastSendError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (appState.device !== oldDevice) break;
+    try {
+      await sendCommand(Command.Restart);
+    } catch (err) {
+      // A successful restart can disconnect USB before SET_REPORT resolves.
+      lastSendError = err;
+    }
+
+    const disconnectDeadline = Date.now() + 1800;
+    while (Date.now() < disconnectDeadline && appState.device === oldDevice) {
+      const devices = await navigator.hid.getDevices();
+      if (!devices.some(device =>
+        device.vendorId === oldDevice.vendorId &&
+        device.productId === oldDevice.productId && hasConfigCollection(device))) break;
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    if (appState.device !== oldDevice) break;
+    const devices = await navigator.hid.getDevices();
+    if (!devices.some(device =>
+      device.vendorId === oldDevice.vendorId &&
+      device.productId === oldDevice.productId && hasConfigCollection(device))) break;
+  }
+
+  if (appState.device === oldDevice) {
+    const devices = await navigator.hid.getDevices();
+    if (devices.some(device =>
+      device.vendorId === oldDevice.vendorId &&
+      device.productId === oldDevice.productId && hasConfigCollection(device))) {
+      throw new Error(`Controller did not restart${lastSendError ? `: ${lastSendError}` : ''}`);
+    }
+  }
+  await waitForReconnection(timeoutMs, expectedIdentity);
 }
 
 export async function detectAuthorizedDevice(): Promise<HIDDevice | null> {

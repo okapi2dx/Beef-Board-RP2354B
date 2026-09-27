@@ -3,6 +3,7 @@ contextBridge.exposeInMainWorld('beefNative', {
   selectFirmware: () => ipcRenderer.invoke('beef:select-firmware'),
   flashFirmware: () => ipcRenderer.invoke('beef:flash-firmware'),
   restartDfu: () => ipcRenderer.invoke('beef:restart-dfu'),
+  authorizeHidIdentity: identity => ipcRenderer.invoke('beef:authorize-hid-identity', identity),
   getVersion: () => ipcRenderer.invoke('beef:get-version'),
   checkForUpdates: () => ipcRenderer.invoke('beef:check-update'),
   openUpdate: url => ipcRenderer.invoke('beef:open-update', url),

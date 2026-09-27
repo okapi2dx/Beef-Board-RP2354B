@@ -11,6 +11,7 @@ declare global {
 				restartExitCode: number | null;
 			}>;
 			restartDfu(): Promise<{ success: boolean; exitCode: number | null }>;
+			authorizeHidIdentity(identity: { vendorId: number; productId: number }): Promise<number>;
 			getVersion(): Promise<string>;
 			checkForUpdates(): Promise<{
 				currentVersion: string;

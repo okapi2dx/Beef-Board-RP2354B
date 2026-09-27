@@ -111,6 +111,16 @@ async function start() {
     authorize(event);
     return flasher.restartDfu(text => { if (!window.webContents.isDestroyed()) window.webContents.send('beef:flash-log', text); });
   });
+  ipcMain.handle('beef:authorize-hid-identity', async (event, identity) => {
+    authorize(event);
+    const supported = [[0xfeed, 0x0000], [0xfeed, 0x0003], [0x1ccf, 0x1018], [0x1ccf, 0x8048]];
+    if (!identity || !supported.some(([vendorId, productId]) =>
+      identity.vendorId === vendorId && identity.productId === productId)) throw new Error('Unsupported HID identity');
+    // WebHID requires a user gesture for requestDevice(). The firmware restart
+    // completes after the original mode-selection gesture has expired.
+    const code = `navigator.hid.requestDevice({filters:[{vendorId:${identity.vendorId},productId:${identity.productId},usagePage:65515,usage:1}]}).then(devices=>devices.length)`;
+    return window.webContents.executeJavaScript(code, true);
+  });
   ipcMain.handle('beef:get-version', async event => {
     authorize(event);
     return app.getVersion();
@@ -153,12 +163,16 @@ async function start() {
       event.preventDefault();
       if (!trusted(details.frame?.url)) return callback('');
       const devices = details.deviceList.filter(device => allowedDevice(type, device));
-      if (!devices.length) {
+      if (!devices.length && type === 'usb') {
         callback('');
         await dialog.showMessageBox(window, { type: 'info', title: '機器が見つかりません',
-          message: type === 'hid' ? 'BEEF BOARDをUSBで接続して、もう一度お試しください。' : 'DFU機器が見つかりません。起動モードとWinUSBドライバーを確認して、再接続してください。' });
+          message: 'DFU機器が見つかりません。起動モードとWinUSBドライバーを確認して、再接続してください。' });
         return;
       }
+      // HID reconnection can request the new USB identity before Windows has
+      // finished enumerating it. Return an empty selection immediately so the
+      // renderer can keep polling instead of interrupting the wait with a dialog.
+      if (!devices.length) return callback('');
       if (devices.length === 1) return callback(devices[0].deviceId);
       try {
         const result = await dialog.showMessageBox(window, { title: '接続する機器', message: 'BEEF BOARDを選択してください。',
