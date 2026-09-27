@@ -1,4 +1,4 @@
-# Beef Board V2 RP2354B firmware (prototype 0.1.1)
+# Beef Board V2 RP2354B firmware (prototype 0.1.2)
 
 This is native RP2354B firmware built with the Pico SDK. It preserves the Beef Board HID configuration and controller behavior. The GPIO mapping was checked against the RP2354B PCB and matching schematic on 2026-09-25. The later routing cleanup keeps all footprints and vias in place.
 
@@ -14,7 +14,7 @@ This is native RP2354B firmware built with the Pico SDK. It preserves the Beef B
 - 11 button inputs with the original debounce, button mapping, keyboard/joystick HID reports and diagnostics.
 - 11 button LED outputs with the original brightness, fade and host-lighting logic. Software PWM runs at 100 Hz.
 - Encoder 1 turntable handling on GP21/GP20. Encoder 2 pins GP3/GP2 are initialized but have no behavior in the original firmware either.
-- Two WS2812 outputs on GP1/GP0, using PIO and nonblocking DMA, with 1–255 LEDs on each output. UART0 on GP18/GP19 and UART1 on GP22/GP23 initialize at 115200 baud. No UART command protocol existed in the source firmware.
+- Two WS2812 outputs on GP1/GP0, using PIO and nonblocking DMA, with 1–255 LEDs on each output. J42 (UART A, GP18/GP19) drives a Phoenixwan turntable ring and J43 (UART B, GP22/GP23) drives a Phoenixwan center bar at 115200 baud.
 - HID configuration reports and settings journaled across the last two 4 KB sectors of the RP2354B's 2 MB flash. Both settings sectors are excluded from the linked program region. The prior single-sector format is imported in place.
 - HID bootloader command enters the RP2350 ROM BOOTSEL USB mode. The restart command uses the watchdog reset.
 
@@ -24,6 +24,14 @@ The following GPIO mapping comes from the PCB/schematic pair:
 |---|---|
 | Buttons | 46, 44, 43, 36, 34, 32, 31, 7, 6, 24, 17 |
 | Button LEDs | 47, 45, 33, 35, 42, 30, 29, 4, 5, 26, 25 |
+
+## Phoenixwan UART lighting (0.1.2)
+
+Connect the ring's RX to J42 TX and its TX to J42 RX; connect the center bar's RX to J43 TX and its TX to J43 RX. Use a shared ground and confirm the peripheral voltage before connecting. The ring and bar each perform the initialization exchange described by the [turntable](https://github.com/veroxzik/djdao-documentation/blob/main/iidx/phoenixwan/turntable-control.md) and [center bar](https://github.com/veroxzik/djdao-documentation/blob/main/iidx/phoenixwan/center-light-bar.md) notes. UART receive processing is bounded so the USB controller remains responsive.
+
+The ring uses native modes 1–7 for the Configurator's Static, Spin, Shift, Rainbow Static, Rainbow Reactive/Spin, Reactive and Breathing effects. Spin and synchronous rainbow receive motion direction; synchronous rainbow also receives an estimated speed. The center bar uses its native off and center 2–16 LED commands: Static lights all 16, key spectrum varies the count, and tape mode lights one center pair. WS2812 outputs continue to use the complete Configurator effects.
+
+The published UART command list has relative H/S/B steps but no absolute color query, color reset or step size. It also has no ring off or direct HID RGB command, and the center bar has no moving pattern or per-pixel RGB command. Therefore the UART devices cannot exactly reproduce Configurator colors, Off/HID ring modes, or moving center-bar effects. For these effects use the board's WS2812 outputs. Physical Phoenixwan hardware has not yet been connected for validation.
 
 ## Build
 

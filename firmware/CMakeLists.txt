@@ -12,6 +12,7 @@ add_executable(beef_board_rp2354b
   src/main.c
   src/beef_runtime.c
   src/beef_lighting.c
+  src/phoenixwan_uart.c
   src/beef_protocol.c
   src/beef_config_store.c
   src/usb_descriptors.c
@@ -43,5 +44,5 @@ pico_enable_stdio_uart(beef_board_rp2354b 0)
 pico_add_linker_script_override_path(beef_board_rp2354b
   ${CMAKE_CURRENT_LIST_DIR}/ld FILES pico_flash_region.ld)
 pico_set_program_name(beef_board_rp2354b "Beef Board RP2354B")
-pico_set_program_version(beef_board_rp2354b "0.1.1")
+pico_set_program_version(beef_board_rp2354b "0.1.2")
 pico_add_extra_outputs(beef_board_rp2354b)

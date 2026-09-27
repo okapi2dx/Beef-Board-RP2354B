@@ -278,6 +278,9 @@ import { defaultUsbIdentity } from '$lib/types/board';
 				{#if config.version >= 19}
 					<Switch label={tr('ターンテーブルとセンターバーの発光効果を連動', 'Link Turntable and Light Bar Effects')} bind:checked={config.link_bar_effect} />
 				{/if}
+				{#if config.version >= 33}
+					<p class="mb-4 text-sm">{tr('PHOENIXWAN UART接続では本体の対応モードとセンターバーの中央点灯数を制御します。色指定、一部の動き、ターンテーブルの消灯はUARTの公開仕様では再現できません。', 'Phoenixwan UART controls the ring modes and the number of center bar LEDs. The published UART protocol cannot reproduce exact colors, some animations, or turntable off.')}</p>
+				{/if}
 				{@const ttModeMapping = Object.values(TurntableMode)}
 				<div class="grid gap-x-6 gap-y-2 md:grid-cols-2">
 					<div class="min-w-0">

@@ -12,6 +12,7 @@
 #include "hardware/sync.h"
 #include "beef_runtime.h"
 #include "beef_lighting.h"
+#include "phoenixwan_uart.h"
 #include "ws2812.pio.h"
 #include "tusb.h"
 
@@ -93,6 +94,9 @@ static int dma_tt, dma_bar;
 static uint8_t previous_tt_count, previous_bar_count;
 static uint32_t rgb_last_frame, rgb_dma_done_us;
 static bool rgb_transmitting, rgb_latching;
+static int8_t uart_tt_direction;
+static uint32_t uart_tt_motion_ms;
+static uint16_t uart_tt_interval_ms;
 
 static diagnostics_t diagnostics;
 static uint8_t previous_input_mode = 0xffu;
@@ -220,6 +224,7 @@ static void controller_hardware_init(void) {
   uart_init(uart1, 115200);
   gpio_set_function(22, GPIO_FUNC_UART);
   gpio_set_function(23, GPIO_FUNC_UART);
+  phoenixwan_uart_init();
   encoder_prev = (gpio_get(21) ? 1u : 0u) | (gpio_get(20) ? 2u : 0u);
   gpio_set_irq_enabled_with_callback(21, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, encoder_irq);
   gpio_set_irq_enabled(20, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
@@ -280,6 +285,12 @@ static void process_turntable(uint32_t now) {
   int32_t delta=encoder_delta; encoder_delta=0;
   restore_interrupts(irq);
   const uint8_t *cfg=beef_config_store_data();
+  if (delta) {
+    uint32_t interval = now - uart_tt_motion_ms;
+    uart_tt_interval_ms = interval > 65535u ? 65535u : (uint16_t)interval;
+    uart_tt_motion_ms = now;
+    uart_tt_direction = (delta > 0) != (cfg[1] != 0) ? 1 : -1;
+  }
   beef_turntable_update(&turntable,cfg,delta,now);
   if(cfg[CFG_DIGITAL_TT]) {
     if(turntable.output.direction<0)pending_tt_buttons=1u<<11;
@@ -478,6 +489,11 @@ int main(void) {
     beef_protocol_task();
 
     uint32_t now = to_ms_since_boot(get_absolute_time());
+    bool host_active = host_lighting_seen &&
+        (uint32_t)(now - host_lighting_ms) < 1000u;
+    phoenixwan_uart_task(now, beef_config_store_data(), uart_tt_direction,
+                         now - uart_tt_motion_ms, uart_tt_interval_ms,
+                         lighting.level, host_active);
     if (now != last_scan_ms) {
       last_scan_ms = now;
 
