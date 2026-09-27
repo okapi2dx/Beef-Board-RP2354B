@@ -54,15 +54,6 @@ Configurator は [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を�
 | `firmware/src/` | ファームウェアのソースコード |
 | `configurator/` | RP2354B 対応 Configurator のソース一式（Web UI・Windows デスクトップ版） |
 
-現在の PCB は今回指定されたファイルを基準に配線整理した版です。配線整理後、電源スイッチを J2 の3ピンヘッダに交換し、周辺の電源配線を変更しました。直近の編集では GND ビアを4本減らし、AE2 の5V入力配線を引き直しています。変更量は [`hardware/ROUTING.md`](hardware/ROUTING.md) を参照してください。
-
-## 状態
-
-- 現在の基板の KiCad DRC は未配線 0 件、指摘 46 件です。回路図との比較指摘は 67 件です。
-- 回路図と基板の比較には USB-C 複合パッドの表現差などを含む指摘が残っています。実機評価および製造業者による確認は未実施です。
-- BOM の価格・候補型番は暫定です。特に J4 の USB-C コネクタ、J3 端子台、一部コンデンサの仕様を発注前に確認してください。
-- ファームウェアは RP2354B 向けにビルド済みですが、実機での USB・入出力・書き込み動作は未検証です。詳細は [firmware/README.md](firmware/README.md) を参照してください。
-
 ## 電源選択（J2）
 
 基板表側の J2「POWER SELECT」に、2.54 mm ピッチの3ピンヘッダとショートピンを取り付けます。基板の印字「1・2・3」で番号を確認してください。
