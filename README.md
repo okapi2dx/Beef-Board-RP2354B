@@ -15,13 +15,13 @@ Configurator は、BEEF BOARD を使用した IIDX 系コントローラーの�
 - **ファームウェア更新:** AT90USB1286 の HEX 書き込みと RP2354B の UF2 手動書き込み案内
 - **使いやすさ:** 日本語 / English、ライト / ダークテーマ、接続状態とファームウェアバージョンの表示
 
-Configurator は [元プロジェクト](https://github.com/okapi2dx/Beef-Board-Configurator) をベースに、RP2354B 対応を統合した派生版です。ポータブル EXE はこのリポジトリには含めていません。Windows 版は [`configurator/README.md`](configurator/README.md) の手順でビルドできます。
+Configurator は Beef Board ソフトウェアの派生コードを基に RP2354B 対応を統合しています。ポータブル EXE はこのリポジトリには含めていません。Windows 版は [`configurator/README.md`](configurator/README.md) の手順でビルドできます。
 
 ## 開発とプロジェクトの由来
 
 本プロジェクトは、基板・ファームウェア・Configurator の設計、実装、デバッグ、ドキュメント作成に AI を活用しています。仕様や設計の採用判断はプロジェクト管理者が行います。実機での確認状況は「状態」および各ファームウェアの README に記載しています。
 
-Configurator の直接のベースは [okapi2dx/Beef-Board-Configurator](https://github.com/okapi2dx/Beef-Board-Configurator) です。同プロジェクトは [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を基にしたフォーク／派生プロジェクトであり、このリポジトリの Configurator に RP2354B 対応を統合しています。
+Configurator の元になった Beef Board ソフトウェアは [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を基にしたフォーク／派生プロジェクトです。このリポジトリでは RP2354B 対応を統合しています。
 
 ### 対応基板と書き込み方式
 
