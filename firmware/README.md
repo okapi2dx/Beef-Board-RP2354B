@@ -25,7 +25,7 @@ The following GPIO mapping comes from the PCB/schematic pair:
 | Buttons | 46, 44, 43, 36, 34, 32, 31, 7, 6, 24, 17 |
 | Button LEDs | 47, 45, 33, 35, 42, 30, 29, 4, 5, 26, 25 |
 
-## Phoenixwan UART lighting (0.1.3)
+## Phoenixwan UART lighting (V1.00)
 
 Connect the ring's RX to J42 TX and its TX to J42 RX; connect the center bar's RX to J43 TX and its TX to J43 RX. Use a shared ground and confirm the peripheral voltage before connecting. The ring and bar each perform the initialization exchange described by the [turntable](https://github.com/veroxzik/djdao-documentation/blob/main/iidx/phoenixwan/turntable-control.md) and [center bar](https://github.com/veroxzik/djdao-documentation/blob/main/iidx/phoenixwan/center-light-bar.md) notes. UART receive processing is bounded so the USB controller remains responsive.
 
@@ -56,7 +56,7 @@ The Configurator source passed `svelte-check` with no errors or warnings and its
 
 RP2354B's [48 GPIO and stacked 2 MB flash](https://www.raspberrypi.com/products/rp2350/) are documented by Raspberry Pi. The [Pico SDK](https://github.com/raspberrypi/pico-sdk) supplies the RP2350 startup, ROM boot and TinyUSB integration.
 
-## 0.1.1 fixes and validation
+## V1.00 fixes and validation
 
 - Turntable hold expires relative to the last real movement (100 axis counts/s while holding). Analog deadzone uses 0–30 degrees; digital TT follows raw direction without the analog gate. Delay buffers both movement and releases for 0–255 ms.
 - Keyboard reports include TT-/TT+ and deduplicate key codes. Pending digital TT presses survive a busy USB endpoint. Encoder edges are collected by GPIO interrupts instead of 1 ms polling.
@@ -75,4 +75,4 @@ It covers the production input/lighting/storage logic and extracted hardware-ada
 
 These checks do not replace physical-board validation of USB enumeration, GPIO/encoder signals, WS2812 timing and persistent settings after an actual power cycle. Update both the UF2 and Configurator to use this revision together.
 
-The 0.1.1 validation run also passed Svelte type checking, web/desktop builds, all app regression suites, 11 desktop unit tests, and headless UI checks for turntable feedback, button mapping, interrupt diagnostics and RP2354B settings/UF2/BOOTSEL. The packaged Electron app started successfully and served the exact matching UF2 through its local protocol. UI checks use mocked HID devices and do not flash hardware.
+The V1.00 validation run also passed Svelte type checking, web/desktop builds, all app regression suites, 11 desktop unit tests, and headless UI checks for turntable feedback, button mapping, interrupt diagnostics and RP2354B settings/UF2/BOOTSEL. The packaged Electron app started successfully and served the exact matching UF2 through its local protocol. UI checks use mocked HID devices and do not flash hardware.
