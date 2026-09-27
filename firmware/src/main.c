@@ -8,33 +8,22 @@
 #include "hardware/uart.h"
 #include "hardware/timer.h"
 #include "hardware/clocks.h"
+#include "hardware/dma.h"
+#include "hardware/sync.h"
+#include "beef_runtime.h"
+#include "beef_lighting.h"
 #include "ws2812.pio.h"
 #include "tusb.h"
 
 #include "beef_config_store.h"
 #include "beef_protocol.h"
 
-#define CFG_REVERSE_TT               1u
-#define CFG_TT_EFFECT                2u
-#define CFG_BAR_EFFECT               4u
 #define CFG_DISABLE_LEDS              5u
-#define CFG_TT_STATIC_HSV             6u
-#define CFG_TT_SPIN_HSV               9u
-#define CFG_TT_SHIFT_HSV             12u
-#define CFG_TT_RAINBOW_STATIC_HSV    15u
-#define CFG_TT_RAINBOW_REACT_HSV     18u
-#define CFG_TT_RAINBOW_SPIN_HSV      21u
-#define CFG_TT_REACT_HSV             24u
-#define CFG_TT_BREATHING_HSV         27u
-#define CFG_TT_RATIO                 30u
 #define CFG_IIDX_INPUT_MODE          32u
-#define CFG_TT_SUSTAIN_MS            34u
 #define CFG_IIDX_BUTTONS_DEBOUNCE    75u
 #define CFG_LED_REFRESH              78u
 #define CFG_TT_LEDS                  80u
-#define CFG_BAR_STATIC_HSV           81u
 #define CFG_DIGITAL_TT               85u
-#define CFG_TT_DELAY_MS              86u
 #define CFG_BUTTON_LED_BRIGHTNESS    88u
 #define CFG_BUTTON_LED_INVERT        89u
 #define CFG_BUTTON_LED_INDIVIDUAL    90u
@@ -48,26 +37,8 @@
 #define INPUT_MODE_JOYSTICK 0u
 #define INPUT_MODE_KEYBOARD 1u
 
-#define TT_EFFECT_HID     8u
-#define TT_EFFECT_DISABLE 9u
-#define BAR_EFFECT_HID     4u
-#define BAR_EFFECT_DISABLE 7u
 
 #define BUTTON_COUNT 11u
-#define WS2812_MAX_LEDS 64u
-
-typedef struct {
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
-} rgb8_t;
-
-typedef struct {
-  rgb8_t color;
-  uint8_t count;
-  bool valid;
-} ws2812_cache_t;
-#define TT_EVENT_QUEUE_SIZE 64u
 
 typedef unsigned int gpio_pin_t;
 
@@ -89,11 +60,6 @@ typedef struct __attribute__((packed)) {
   uint8_t led_levels[BUTTON_COUNT];
 } diagnostics_t;
 
-typedef struct {
-  uint32_t due_ms;
-  int8_t direction;
-} tt_event_t;
-
 _Static_assert(sizeof(diagnostics_t) == BEEF_DIAGNOSTICS_SIZE,
                "diagnostics layout must remain 24 bytes");
 
@@ -114,19 +80,19 @@ static uint16_t logical_buttons;
 static uint16_t previous_raw_buttons;
 static uint32_t button_changed_ms[BUTTON_COUNT];
 
-static uint8_t encoder_prev;
-static int32_t tt_sensitivity_accumulator;
-static uint8_t tt_x = 127u;
-static int8_t tt_direction;
-static uint32_t tt_transitions;
-static uint32_t tt_last_transition_ms;
-static uint32_t tt_last_applied_ms;
-static uint32_t tt_repeat_due_ms;
-static uint32_t tt_sustain_until_ms;
-
-static tt_event_t tt_queue[TT_EVENT_QUEUE_SIZE];
-static uint8_t tt_queue_head;
-static uint8_t tt_queue_tail;
+static volatile uint8_t encoder_prev;
+static volatile int32_t encoder_delta;
+static volatile uint32_t encoder_transitions;
+static volatile uint32_t encoder_last_ms, encoder_interval_ms;
+static beef_turntable_t turntable;
+static uint16_t pending_tt_buttons;
+static beef_lighting_t lighting;
+static beef_rgb_t ring_pixels[BEEF_MAX_LEDS], bar_pixels[BEEF_MAX_LEDS];
+static uint32_t ring_words[BEEF_MAX_LEDS], bar_words[BEEF_MAX_LEDS];
+static int dma_tt, dma_bar;
+static uint8_t previous_tt_count, previous_bar_count;
+static uint32_t rgb_last_frame, rgb_dma_done_us;
+static bool rgb_transmitting, rgb_latching;
 
 static diagnostics_t diagnostics;
 static uint8_t previous_input_mode = 0xffu;
@@ -136,8 +102,6 @@ static uint8_t host_tt_rgb[3];
 static uint8_t host_center_rgb[3];
 static uint32_t host_lighting_ms;
 static bool host_lighting_seen;
-static ws2812_cache_t tt_rgb_cache;
-static ws2812_cache_t center_rgb_cache;
 
 static volatile uint8_t led_pwm_duty[BUTTON_COUNT];
 static volatile uint8_t led_pwm_phase;
@@ -161,32 +125,6 @@ static uint16_t read_le16(uint8_t const *p) {
   return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
-static rgb8_t hsv_to_rgb(uint8_t h, uint8_t s, uint8_t v) {
-  if (s == 0u) return (rgb8_t){v, v, v};
-
-  uint8_t region = h / 43u;
-  uint8_t remainder = (uint8_t)((h - region * 43u) * 6u);
-
-  uint8_t p = (uint8_t)(((uint16_t)v * (255u - s)) >> 8);
-  uint8_t q = (uint8_t)(((uint16_t)v *
-                         (255u - (((uint16_t)s * remainder) >> 8))) >> 8);
-  uint8_t t = (uint8_t)(((uint16_t)v *
-                         (255u - (((uint16_t)s * (255u - remainder)) >> 8))) >> 8);
-
-  switch (region) {
-    case 0: return (rgb8_t){v, t, p};
-    case 1: return (rgb8_t){q, v, p};
-    case 2: return (rgb8_t){p, v, t};
-    case 3: return (rgb8_t){p, q, v};
-    case 4: return (rgb8_t){t, p, v};
-    default: return (rgb8_t){v, p, q};
-  }
-}
-
-static rgb8_t config_hsv(uint8_t const *cfg, uint32_t offset) {
-  return hsv_to_rgb(cfg[offset], cfg[offset + 1u], cfg[offset + 2u]);
-}
-
 static uint ws2812_sm_init(uint pin) {
   uint sm = pio_claim_unused_sm(rgb_pio, true);
   static int program_offset = -1;
@@ -202,79 +140,56 @@ static uint ws2812_sm_init(uint pin) {
   pio_sm_set_enabled(rgb_pio, sm, true);
   return sm;
 }
-static void ws2812_send_solid(uint sm, rgb8_t color, uint8_t count) {
-  if (count > WS2812_MAX_LEDS) count = WS2812_MAX_LEDS;
-  uint32_t grb = ((uint32_t)color.g << 16) | ((uint32_t)color.r << 8) | color.b;
-  for (uint32_t i = 0; i < count; ++i) pio_sm_put_blocking(rgb_pio, sm, grb << 8);
-  while (!pio_sm_is_tx_fifo_empty(rgb_pio, sm)) tight_loop_contents();
-  sleep_us(80);
+static int ws2812_dma_init(uint sm) {
+  int channel = dma_claim_unused_channel(true);
+  dma_channel_config c = dma_channel_get_default_config(channel);
+  channel_config_set_transfer_data_size(&c, DMA_SIZE_32);
+  channel_config_set_read_increment(&c, true);
+  channel_config_set_write_increment(&c, false);
+  channel_config_set_dreq(&c, pio_get_dreq(rgb_pio, sm, true));
+  dma_channel_configure(channel, &c, &rgb_pio->txf[sm], NULL, 0, false);
+  return channel;
 }
-
-static bool rgb_equal(rgb8_t a, rgb8_t b) {
-  return a.r == b.r && a.g == b.g && a.b == b.b;
+static uint32_t rgb_word(beef_rgb_t c) {
+  return ((uint32_t)c.g<<24) | ((uint32_t)c.r<<16) | ((uint32_t)c.b<<8);
 }
-
-static void ws2812_update_if_changed(uint sm, rgb8_t color, uint8_t count,
-                                     ws2812_cache_t *cache) {
-  if (count > WS2812_MAX_LEDS) count = WS2812_MAX_LEDS;
-  if (cache->valid && cache->count == count && rgb_equal(cache->color, color)) return;
-
-  ws2812_send_solid(sm, color, count);
-  cache->color = color;
-  cache->count = count;
-  cache->valid = true;
-}
-
-static rgb8_t turntable_color(uint8_t const *cfg, uint32_t now) {
-  if (cfg[CFG_DISABLE_LEDS]) return (rgb8_t){0, 0, 0};
-
-  uint8_t const effect = cfg[CFG_TT_EFFECT];
-  if (effect == TT_EFFECT_DISABLE) return (rgb8_t){0, 0, 0};
-  if (effect == TT_EFFECT_HID) {
-    bool const host_active = host_lighting_seen &&
-        (uint32_t)(now - host_lighting_ms) < 1000u;
-    return host_active
-        ? (rgb8_t){host_tt_rgb[0], host_tt_rgb[1], host_tt_rgb[2]}
-        : (rgb8_t){0, 0, 0};
-  }
-
-  uint32_t offset = CFG_TT_STATIC_HSV;
-  switch (effect) {
-    case 1: offset = CFG_TT_SPIN_HSV; break;
-    case 2: offset = CFG_TT_SHIFT_HSV; break;
-    case 3: offset = CFG_TT_RAINBOW_STATIC_HSV; break;
-    case 4: offset = CFG_TT_RAINBOW_REACT_HSV; break;
-    case 5: offset = CFG_TT_RAINBOW_SPIN_HSV; break;
-    case 6: offset = CFG_TT_REACT_HSV; break;
-    case 7: offset = CFG_TT_BREATHING_HSV; break;
-    default: break;
-  }
-  return config_hsv(cfg, offset);
-}
-
-static rgb8_t center_bar_color(uint8_t const *cfg, uint32_t now) {
-  if (cfg[CFG_DISABLE_LEDS]) return (rgb8_t){0, 0, 0};
-
-  uint8_t const effect = cfg[CFG_BAR_EFFECT];
-  if (effect == BAR_EFFECT_DISABLE) return (rgb8_t){0, 0, 0};
-  if (effect == BAR_EFFECT_HID) {
-    bool const host_active = host_lighting_seen &&
-        (uint32_t)(now - host_lighting_ms) < 1000u;
-    return host_active
-        ? (rgb8_t){host_center_rgb[0], host_center_rgb[1], host_center_rgb[2]}
-        : (rgb8_t){0, 0, 0};
-  }
-  return config_hsv(cfg, CFG_BAR_STATIC_HSV);
-}
-
 static void update_rgb_leds(uint32_t now) {
-  uint8_t const *cfg = beef_config_store_data();
-  ws2812_update_if_changed(rgb_sm_tt,
-                           turntable_color(cfg, now), cfg[CFG_TT_LEDS],
-                           &tt_rgb_cache);
-  ws2812_update_if_changed(rgb_sm_bar,
-                           center_bar_color(cfg, now), cfg[CFG_BAR_LEDS],
-                           &center_rgb_cache);
+  if (rgb_transmitting) {
+    if (dma_channel_is_busy(dma_tt) || dma_channel_is_busy(dma_bar)) return;
+    rgb_transmitting = false; rgb_latching = true; rgb_dma_done_us = time_us_32();
+  }
+  // DMA completion precedes the final FIFO/shifter bits. Allow their 270 us
+  // plus the WS2812 reset low time, without blocking input scanning or USB.
+  if (rgb_latching && (uint32_t)(time_us_32()-rgb_dma_done_us)<400) return;
+  rgb_latching = false;
+  const uint8_t *cfg = beef_config_store_data();
+  if (!beef_lighting_due(now, rgb_last_frame, cfg[CFG_LED_REFRESH])) return;
+  rgb_last_frame = now;
+  bool host_active = host_lighting_seen && (uint32_t)(now-host_lighting_ms)<1000;
+  beef_lighting_render(&lighting,cfg,host_active,host_tt_rgb,host_center_rgb,ring_pixels,bar_pixels);
+  // Send black pixels to the old tail when counts shrink.
+  uint n=cfg[CFG_TT_LEDS]>previous_tt_count?cfg[CFG_TT_LEDS]:previous_tt_count;
+  uint m=cfg[CFG_BAR_LEDS]>previous_bar_count?cfg[CFG_BAR_LEDS]:previous_bar_count;
+  for(uint i=0;i<n;++i)ring_words[i]=rgb_word(ring_pixels[i]);
+  for(uint i=0;i<m;++i)bar_words[i]=rgb_word(bar_pixels[i]);
+  previous_tt_count=cfg[CFG_TT_LEDS]; previous_bar_count=cfg[CFG_BAR_LEDS];
+  dma_channel_set_read_addr(dma_tt,ring_words,false);
+  dma_channel_set_read_addr(dma_bar,bar_words,false);
+  dma_channel_set_trans_count(dma_tt,n,false);
+  dma_channel_set_trans_count(dma_bar,m,false);
+  dma_start_channel_mask((1u<<dma_tt)|(1u<<dma_bar));
+  rgb_transmitting=true;
+}
+static void encoder_irq(uint gpio, uint32_t events) {
+  (void)gpio; (void)events;
+  static const int8_t table[16]={0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
+  uint8_t current=(gpio_get(21)?1u:0u)|(gpio_get(20)?2u:0u);
+  int8_t direction=table[(encoder_prev<<2)|current]; encoder_prev=current;
+  if(direction) {
+    encoder_delta+=direction; ++encoder_transitions;
+    uint32_t now=to_ms_since_boot(get_absolute_time());
+    encoder_interval_ms=now-encoder_last_ms; encoder_last_ms=now;
+  }
 }
 
 static bool led_pwm_tick(repeating_timer_t *timer) {
@@ -297,6 +212,8 @@ static void controller_hardware_init(void) {
   gpio_input_pullup(2);
   rgb_sm_tt = ws2812_sm_init(1);
   rgb_sm_bar = ws2812_sm_init(0);
+  dma_tt=ws2812_dma_init(rgb_sm_tt);
+  dma_bar=ws2812_dma_init(rgb_sm_bar);
   uart_init(uart0, 115200);
   gpio_set_function(18, GPIO_FUNC_UART);
   gpio_set_function(19, GPIO_FUNC_UART);
@@ -304,6 +221,8 @@ static void controller_hardware_init(void) {
   gpio_set_function(22, GPIO_FUNC_UART);
   gpio_set_function(23, GPIO_FUNC_UART);
   encoder_prev = (gpio_get(21) ? 1u : 0u) | (gpio_get(20) ? 2u : 0u);
+  gpio_set_irq_enabled_with_callback(21, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, encoder_irq);
+  gpio_set_irq_enabled(20, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
   add_repeating_timer_us(-100, led_pwm_tick, NULL, &led_timer);
 }
 
@@ -356,125 +275,16 @@ static uint16_t remap_buttons(uint16_t physical) {
   return mapped;
 }
 
-static int8_t read_encoder_transition(void) {
-  static int8_t const transitions[16] = {
-     0, -1, +1,  0,
-    +1,  0,  0, -1,
-    -1,  0,  0, +1,
-     0, +1, -1,  0
-  };
-
-  uint8_t now =
-      (gpio_get(21) ? 1u : 0u) |
-      (gpio_get(20) ? 2u : 0u);
-
-  int8_t direction = transitions[(encoder_prev << 2) | now];
-  encoder_prev = now;
-
-  if (beef_config_store_data()[CFG_REVERSE_TT]) direction = (int8_t)-direction;
-  return direction;
-}
-
-static bool tt_queue_empty(void) {
-  return tt_queue_head == tt_queue_tail;
-}
-
-static void tt_queue_push(int8_t direction, uint32_t due_ms) {
-  uint8_t next = (uint8_t)((tt_queue_head + 1u) % TT_EVENT_QUEUE_SIZE);
-  if (next == tt_queue_tail) {
-    /* Keep the newest turntable data if the host stalls for too long. */
-    tt_queue_tail = (uint8_t)((tt_queue_tail + 1u) % TT_EVENT_QUEUE_SIZE);
-  }
-
-  tt_queue[tt_queue_head].direction = direction;
-  tt_queue[tt_queue_head].due_ms = due_ms;
-  tt_queue_head = next;
-}
-
-static bool tt_time_reached(uint32_t now, uint32_t due) {
-  return (int32_t)(now - due) >= 0;
-}
-
-static void apply_analog_tt_step(int8_t direction) {
-  uint8_t sensitivity = beef_config_store_data()[CFG_TT_RATIO];
-  if (sensitivity < 1u) sensitivity = 1u;
-  if (sensitivity > 10u) sensitivity = 10u;
-
-  tt_sensitivity_accumulator += (int32_t)direction * sensitivity;
-
-  while (tt_sensitivity_accumulator >= 10) {
-    ++tt_x;
-    tt_sensitivity_accumulator -= 10;
-  }
-  while (tt_sensitivity_accumulator <= -10) {
-    --tt_x;
-    tt_sensitivity_accumulator += 10;
-  }
-}
-
-static void apply_tt_event(int8_t direction, uint32_t now, bool synthetic) {
-  uint8_t const *cfg = beef_config_store_data();
-
-  tt_direction = direction;
-  if (!synthetic) {
-    ++tt_transitions;
-    tt_last_transition_ms = now;
-  }
-
-  if (!cfg[CFG_DIGITAL_TT]) {
-    apply_analog_tt_step(direction);
-  }
-
-  uint32_t interval = tt_last_applied_ms == 0u ? 1u : now - tt_last_applied_ms;
-  if (interval < 1u) interval = 1u;
-  if (interval > 20u) interval = 20u;
-  tt_last_applied_ms = now;
-  tt_repeat_due_ms = now + interval;
-
-  uint32_t sustain = cfg[CFG_TT_SUSTAIN_MS];
-  tt_sustain_until_ms = now + sustain;
-}
-
-static bool process_delayed_tt_events(uint32_t now) {
-  bool applied = false;
-
-  while (!tt_queue_empty()) {
-    tt_event_t const *event = &tt_queue[tt_queue_tail];
-    if (!tt_time_reached(now, event->due_ms)) break;
-
-    apply_tt_event(event->direction, now, false);
-    tt_queue_tail = (uint8_t)((tt_queue_tail + 1u) % TT_EVENT_QUEUE_SIZE);
-    applied = true;
-  }
-
-  return applied;
-}
-
 static void process_turntable(uint32_t now) {
-  uint8_t const *cfg = beef_config_store_data();
-  int8_t transition = read_encoder_transition();
-
-  if (transition != 0) {
-    tt_queue_push(transition, now + cfg[CFG_TT_DELAY_MS]);
-  }
-
-  bool applied = process_delayed_tt_events(now);
-
-  if (!applied && cfg[CFG_TT_SUSTAIN_MS] != 0u && tt_direction != 0 &&
-      !cfg[CFG_DIGITAL_TT] &&
-      !tt_time_reached(now, tt_sustain_until_ms) &&
-      tt_time_reached(now, tt_repeat_due_ms)) {
-    apply_tt_event(tt_direction, now, true);
-  }
-
-  if (cfg[CFG_DIGITAL_TT]) {
-    bool hold = applied ||
-                (cfg[CFG_TT_SUSTAIN_MS] != 0u &&
-                 !tt_time_reached(now, tt_sustain_until_ms));
-    if (!hold) tt_direction = 0;
-  } else if (tt_time_reached(now, tt_sustain_until_ms)) {
-    tt_direction = 0;
-  }
+  uint32_t irq=save_and_disable_interrupts();
+  int32_t delta=encoder_delta; encoder_delta=0;
+  restore_interrupts(irq);
+  const uint8_t *cfg=beef_config_store_data();
+  beef_turntable_update(&turntable,cfg,delta,now);
+  if(cfg[CFG_DIGITAL_TT]) {
+    if(turntable.output.direction<0)pending_tt_buttons=1u<<11;
+    if(turntable.output.direction>0)pending_tt_buttons=1u<<12;
+  } else pending_tt_buttons=0;
 }
 
 static uint16_t controller_buttons(void) {
@@ -482,8 +292,8 @@ static uint16_t controller_buttons(void) {
   uint8_t const *cfg = beef_config_store_data();
 
   if (cfg[CFG_DIGITAL_TT]) {
-    if (tt_direction < 0) result |= (uint16_t)(1u << 11);
-    if (tt_direction > 0) result |= (uint16_t)(1u << 12);
+    if (turntable.output.direction < 0) result |= (uint16_t)(1u << 11);
+    if (turntable.output.direction > 0) result |= (uint16_t)(1u << 12);
   }
 
   return result;
@@ -546,16 +356,16 @@ static void update_button_leds(uint32_t now) {
 }
 
 static void update_diagnostics(void) {
-  diagnostics.buttons = logical_buttons;
+  diagnostics.buttons = stable_buttons; // Physical bits; Configurator applies mapping once.
   diagnostics.sensor_ab =
       (gpio_get(21) ? 1u : 0u) |
       (gpio_get(20) ? 2u : 0u);
-  diagnostics.raw_position = tt_x;
-  diagnostics.filtered_position = tt_x;
-  diagnostics.output_position = tt_x;
-  diagnostics.direction = tt_direction;
-  diagnostics.transitions = tt_transitions;
-  diagnostics.last_transition_ms = (uint16_t)tt_last_transition_ms;
+  diagnostics.raw_position = turntable.raw;
+  diagnostics.filtered_position = turntable.filtered;
+  diagnostics.output_position = turntable.output.position;
+  diagnostics.direction = turntable.output.direction;
+  diagnostics.transitions = encoder_transitions;
+  diagnostics.last_transition_ms = encoder_interval_ms > 65535 ? 65535 : (uint16_t)encoder_interval_ms;
 
   for (uint32_t i = 0; i < BUTTON_COUNT; ++i) {
     diagnostics.led_levels[i] = led_pwm_duty[i];
@@ -596,31 +406,24 @@ static void send_controller_report(void) {
   }
 
   if (mode == INPUT_MODE_KEYBOARD) {
-    uint8_t keys[13] = {0};
-    uint32_t used = 0;
-
-    for (uint32_t i = 0; i < BUTTON_COUNT && used < 13u; ++i) {
-      if ((logical_buttons & (1u << i)) != 0u) {
-        uint8_t key = cfg[35u + i];
-        if (key != 0u) keys[used++] = key;
-      }
-    }
+    uint8_t keys[13];
+    beef_keyboard_report(cfg, logical_buttons | pending_tt_buttons, keys);
 
     if (tud_hid_n_ready(BEEF_HID_INSTANCE_KEYBOARD)) {
-      (void)tud_hid_n_report(BEEF_HID_INSTANCE_KEYBOARD, 0, keys, sizeof(keys));
+      if (tud_hid_n_report(BEEF_HID_INSTANCE_KEYBOARD, 0, keys, sizeof(keys))) pending_tt_buttons=0;
     }
   } else {
     uint16_t lower = logical_buttons & 0x007fu;
-    uint16_t upper = logical_buttons >> 7;
+    uint16_t upper = (logical_buttons | pending_tt_buttons) >> 7;
     uint16_t iidx_buttons = lower | (uint16_t)(upper << 8);
 
     gamepad_payload_t report = {
-      .x = cfg[CFG_DIGITAL_TT] ? 127u : tt_x,
+      .x = cfg[CFG_DIGITAL_TT] ? 127u : turntable.output.position,
       .y = 127u,
       .buttons = iidx_buttons
     };
     if (tud_hid_n_ready(BEEF_HID_INSTANCE_GAMEPAD)) {
-      (void)tud_hid_n_report(BEEF_HID_INSTANCE_GAMEPAD, 0, &report, sizeof(report));
+      if (tud_hid_n_report(BEEF_HID_INSTANCE_GAMEPAD, 0, &report, sizeof(report))) pending_tt_buttons=0;
     }
   }
 }
@@ -682,6 +485,7 @@ int main(void) {
       process_turntable(now);
       logical_buttons = controller_buttons();
       update_button_leds(now);
+      beef_lighting_update(&lighting,beef_config_store_data(),now,turntable.output.position,turntable.output.direction,stable_buttons);
       update_rgb_leds(now);
       update_diagnostics();
       send_controller_report();

@@ -5,7 +5,7 @@
 #include "beef_protocol.h"
 
 void beef_config_store_init(void);
-void beef_config_store_reset(void);
+bool beef_config_store_reset(void);
 
 bool beef_config_store_stage(uint8_t const data[BEEF_CONFIG_SIZE]);
 bool beef_config_store_flush(void);

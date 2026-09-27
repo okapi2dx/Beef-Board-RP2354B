@@ -356,7 +356,7 @@ import { defaultUsbIdentity } from '$lib/types/board';
 						<ToolTipLabel forId="tt-leds" label={tr('ターンテーブルLED数', 'Turntable LEDs')}>
 							<p>{tr('ターンテーブルのRGB LED数を設定します。', 'Sets the number of RGB LEDs on the turntable.')}</p>
 							<p>{tr('実際に接続しているLED数に合わせてください。', 'Match this to the number of LEDs actually connected.')}</p>
-							<p>{tr('初期値は24。変更後は「再接続」が必要です。', 'The default is 24. Reconnect is required after changing it.')}</p>
+							<p>{tr('初期値は24。RP2354Bでは変更がすぐに反映されます。', 'The default is 24. Changes apply immediately on RP2354B.')}</p>
 						</ToolTipLabel>
 						<Input
 							class="w-24 shrink-0"
@@ -373,7 +373,7 @@ import { defaultUsbIdentity } from '$lib/types/board';
 							<ToolTipLabel forId="bar-leds" label={tr('センターバーLED数', 'Center Bar LEDs')}>
 								<p>{tr('センターバーのRGB LED数を設定します。', 'Sets the number of RGB LEDs on the center bar.')}</p>
 								<p>{tr('実際に接続しているLED数に合わせてください。', 'Match this to the number of LEDs actually connected.')}</p>
-								<p>{tr('初期値は16。変更後は「再接続」が必要です。', 'The default is 16. Reconnect is required after changing it.')}</p>
+								<p>{tr('初期値は16。RP2354Bでは変更がすぐに反映されます。', 'The default is 16. Changes apply immediately on RP2354B.')}</p>
 							</ToolTipLabel>
 							<Input
 								class="w-24 shrink-0"

@@ -14,7 +14,7 @@
 #define BEEF_FW_VERSION_MINOR 1
 #endif
 #ifndef BEEF_FW_VERSION_PATCH
-#define BEEF_FW_VERSION_PATCH 0
+#define BEEF_FW_VERSION_PATCH 1
 #endif
 
 #define CONFIG_SAVE_DELAY_MS 750u
@@ -129,7 +129,7 @@ void beef_protocol_task(void) {
 
   if (beef_config_store_is_dirty() &&
       (uint32_t)(now - config_changed_ms) >= CONFIG_SAVE_DELAY_MS) {
-    (void)beef_config_store_flush();
+    if (!beef_config_store_flush()) config_changed_ms = now;
   }
 
   if (tud_mounted() &&
@@ -147,8 +147,10 @@ void beef_protocol_task(void) {
     return;
   }
 
+  bool saved = command == BEEF_COMMAND_RESET_CONFIG
+      ? beef_config_store_reset() : beef_config_store_flush();
+  if (!saved) { command_received_ms = now; return; }
   pending_command = BEEF_COMMAND_NONE;
-  (void)beef_config_store_flush();
 
   switch (command) {
     case BEEF_COMMAND_BOOTLOADER:
@@ -156,7 +158,6 @@ void beef_protocol_task(void) {
       break;
 
     case BEEF_COMMAND_RESET_CONFIG:
-      beef_config_store_reset();
       force_usb_bus_disconnect();
       watchdog_reboot(0, 0, 0);
       break;

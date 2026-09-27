@@ -15,7 +15,8 @@
 		"format": "prettier --write .",
 		"sync": "svelte-kit sync",
 		"test:led-emulator": "node --conditions=browser led-emulator.test.mjs",
-		"test": "npm run test:feature-report && npm run test:bar-color && npm run test:key-mapping && npm run test:led-emulator"
+		"test:hid-connection": "node hid-connection.test.mjs",
+		"test": "npm run test:hid-connection && npm run test:feature-report && npm run test:bar-color && npm run test:key-mapping && npm run test:led-emulator"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.12.0",

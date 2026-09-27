@@ -23,7 +23,7 @@ try {
     .replace('$lib/types/feature-report', feature.href);
   let sent;
   globalThis.__barTestState = { device: { sendFeatureReport: async (_id, data) => { sent = data; } } };
-  const { Config, readConfig, updateConfig } = await import((await moduleFile('config', source)).href);
+  const { Config, readConfig, updateConfig, flushPendingConfigWrites } = await import((await moduleFile('config', source)).href);
   const { BarMode, barModeToNumber, ControllerType, controllerTypeToNumber, Hsv } = await import(types.href);
   const received = new Uint8Array(1024);
   received[0] = 33;
@@ -41,6 +41,7 @@ try {
   for (const version of [16, 17, 19, 20, 21, 22, 23, 24]) {
     const bytes = new Uint8Array(1024);
     bytes[0] = version;
+    bytes[80] = 24;
     bytes[4] = version >= 17 ? 8 : 4;
     bytes.set([21, 130, 240], 6); // independent turntable color
     bytes.set([61, 128, 200], 81);
@@ -129,6 +130,47 @@ try {
       }
     }
   }
+  const packet = new Uint8Array(139);
+  packet[0] = 33; packet[80] = 24; packet[138] = 16;
+  const edits = [];
+  let release;
+  const device = {
+    receiveFeatureReport: async () => new DataView(packet.buffer),
+    sendFeatureReport: async (_id, bytes) => {
+      edits.push(bytes.slice());
+      if (edits.length === 1) await new Promise(resolve => { release = resolve; });
+    }
+  };
+  globalThis.__barTestState.device = device;
+  const config = await readConfig();
+  config.tt_delay_ms = 10;
+  const firstWrite = updateConfig(config);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  config.tt_delay_ms = 0; // Return to the previously saved value while B is in flight.
+  const lastWrite = updateConfig(config);
+  assert.equal(edits.length, 1);
+  let flushed = false;
+  const flush = flushPendingConfigWrites().then(() => { flushed = true; });
+  await Promise.resolve();
+  assert.equal(flushed, false);
+  release();
+  await Promise.all([firstWrite, lastWrite, flush]);
+  assert.equal(flushed, true);
+  assert.deepEqual(edits.map(bytes => bytes[86]), [10, 0]);
+  assert(edits.every(bytes => bytes.length === 139));
+  for (const count of [0, -1, 256, 1.5, NaN]) {
+    config.tt_leds = count;
+    await assert.rejects(() => updateConfig(config));
+  }
+  config.tt_leds = 24;
+  let replacementWrites = 0;
+  globalThis.__barTestState.device = {
+    sendFeatureReport: async () => { replacementWrites++; if (replacementWrites === 1) throw new Error('Temporary USB failure'); }
+  };
+  await assert.rejects(() => updateConfig(config));
+  await updateConfig(config);
+  assert.equal(replacementWrites, 2, 'Failed writes must be retryable on another device');
+  console.log('PASS: queued save/revert, exact RP2354B packet size, LED count validation, device-scoped cache and failed-write retry');
   console.log('PASS: static mode, independent color round-trip, and legacy version compatibility');
 } finally {
   delete globalThis.__barTestState;

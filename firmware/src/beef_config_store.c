@@ -1,13 +1,14 @@
 #include "beef_config_store.h"
+#include "beef_runtime.h"
 
 #include <string.h>
 #include "pico/stdlib.h"
 #include "hardware/flash.h"
 #include "pico/flash.h"
 
-#define CONFIG_FLASH_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
+#define CONFIG_FLASH_OFFSET (PICO_FLASH_SIZE_BYTES - 2u * FLASH_SECTOR_SIZE)
 #define CONFIG_FLASH_ADDRESS (XIP_BASE + CONFIG_FLASH_OFFSET)
-#define CONFIG_FLASH_PAGE_SIZE FLASH_SECTOR_SIZE
+#define CONFIG_FLASH_PAGE_SIZE (2u * FLASH_SECTOR_SIZE)
 #define CONFIG_FLASH_MAGIC     0x32464642u
 #define CONFIG_FLASH_FORMAT    2u
 
@@ -21,12 +22,14 @@ typedef struct __attribute__((packed, aligned(4))) {
 } config_record_t;
 
 _Static_assert((sizeof(config_record_t) % 4u) == 0u, "config record must be word aligned");
+_Static_assert(sizeof(config_record_t) <= FLASH_PAGE_SIZE, "config must fit one flash page");
 
 #define CONFIG_SLOT_COUNT (CONFIG_FLASH_PAGE_SIZE / FLASH_PAGE_SIZE)
 
 static uint8_t current_config[BEEF_CONFIG_SIZE];
 static uint32_t next_sequence = 1u;
 static bool config_dirty;
+static uint32_t newest_slot;
 
 static uint32_t checksum_config(uint32_t sequence, uint8_t const *data) {
   uint32_t hash = 2166136261u;
@@ -109,13 +112,14 @@ static config_record_t const *slot_ptr(uint32_t slot) {
 }
 
 static bool slot_is_erased(uint32_t slot) {
-  config_record_t const *rec = slot_ptr(slot);
-  return rec->magic == 0xffffffffu && rec->format == 0xffffffffu;
+  const uint8_t *page = (const uint8_t *)slot_ptr(slot);
+  for (unsigned i=0;i<FLASH_PAGE_SIZE;++i) if(page[i]!=0xff) return false;
+  return true;
 }
 
 static bool record_valid(config_record_t const *rec) {
   if (rec->magic != CONFIG_FLASH_MAGIC || rec->format != CONFIG_FLASH_FORMAT) return false;
-  if (rec->data[0] < 11 || rec->data[0] > 33) return false;
+  if (!beef_config_valid(rec->data)) return false;
   return rec->checksum == checksum_config(rec->sequence, rec->data);
 }
 
@@ -124,7 +128,7 @@ static uint32_t write_offset;
 static bool write_erase;
 static void flash_write_callback(void *arg) {
   (void)arg;
-  if (write_erase) flash_range_erase(CONFIG_FLASH_OFFSET, FLASH_SECTOR_SIZE);
+  if (write_erase) flash_range_erase(CONFIG_FLASH_OFFSET + (write_offset / FLASH_SECTOR_SIZE) * FLASH_SECTOR_SIZE, FLASH_SECTOR_SIZE);
   flash_range_program(CONFIG_FLASH_OFFSET + write_offset, flash_page, FLASH_PAGE_SIZE);
 }
 static bool program_record(uint32_t slot, config_record_t const *rec) {
@@ -139,14 +143,16 @@ static bool program_record(uint32_t slot, config_record_t const *rec) {
 void beef_config_store_init(void) {
   bool found = false;
   uint32_t best_sequence = 0;
+  newest_slot = 0;
 
   for (uint32_t slot = 0; slot < CONFIG_SLOT_COUNT; ++slot) {
     config_record_t const *rec = slot_ptr(slot);
     if (!record_valid(rec)) continue;
 
-    if (!found || rec->sequence > best_sequence) {
+    if (!found || (int32_t)(rec->sequence - best_sequence) > 0) {
       memcpy(current_config, rec->data, BEEF_CONFIG_SIZE);
       best_sequence = rec->sequence;
+      newest_slot = slot;
       found = true;
     }
   }
@@ -166,6 +172,7 @@ uint8_t const *beef_config_store_data(void) {
 }
 
 bool beef_config_store_stage(uint8_t const data[BEEF_CONFIG_SIZE]) {
+  if (!beef_config_valid(data)) return false;
   if (memcmp(current_config, data, BEEF_CONFIG_SIZE) == 0) return false;
 
   memcpy(current_config, data, BEEF_CONFIG_SIZE);
@@ -198,10 +205,16 @@ bool beef_config_store_flush(void) {
   }
 
   write_erase = target_slot == CONFIG_SLOT_COUNT;
-  if (write_erase) target_slot = 0;
+  if (write_erase) {
+    // Never erase the sector containing the newest committed record. A power
+    // loss during erase/program leaves the other sector available at boot.
+    uint32_t slots_per_sector = FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE;
+    target_slot = newest_slot < slots_per_sector ? slots_per_sector : 0;
+  }
   bool ok = program_record(target_slot, &rec);
 
   if (ok) {
+    newest_slot = target_slot;
     ++next_sequence;
     config_dirty = false;
   }
@@ -210,12 +223,13 @@ bool beef_config_store_flush(void) {
 }
 
 bool beef_config_store_write(uint8_t const data[BEEF_CONFIG_SIZE]) {
+  if (!beef_config_valid(data)) return false;
   (void)beef_config_store_stage(data);
   return beef_config_store_flush();
 }
 
-void beef_config_store_reset(void) {
+bool beef_config_store_reset(void) {
   uint8_t defaults[BEEF_CONFIG_SIZE];
   set_defaults(defaults);
-  (void)beef_config_store_write(defaults);
+  return beef_config_store_write(defaults);
 }

@@ -27,8 +27,9 @@ export function createLedEmulator() {
    * @param {any} cfg
    * @param {import('$lib/types/hid').Diagnostics | null} input
    * @param {number} dt
+   * @param {boolean} [useLedTelemetry]
    */
-  return (cfg, input, dt) => {
+  return (cfg, input, dt, useLedTelemetry = false) => {
     time += dt;
     const direction = (input?.direction ?? 0) * (cfg.reverse_tt ? 1 : -1);
     spin = wrap(spin + dt / (direction ? 25 : 50) * (direction === -1 ? -1 : 1), 12);
@@ -61,13 +62,6 @@ export function createLedEmulator() {
     react = wrap(react + dt / 3 * velocity * speed, 256);
     if (direction) { guard = time; hue = direction === 1 ? 0 : 180; }
     const buttons = input?.buttons ?? 0;
-    let logicalButtons = buttons;
-    if (cfg.version >= 28 && Array.isArray(cfg.button_mapping) && cfg.button_mapping.length === 11) {
-      logicalButtons = buttons & ~0x7ff;
-      for (let physical = 0; physical < 11; physical++) {
-        if (buttons & (1 << physical)) logicalButtons |= 1 << cfg.button_mapping[physical];
-      }
-    }
     if (buttons !== lastButtons) { level = Math.min(16, level + 1); decay = time; }
     else if (time - decay >= 30) { level = Math.max(0, level - Math.floor((time-decay)/30)); decay = time; }
     lastButtons = buttons;
@@ -114,11 +108,15 @@ export function createLedEmulator() {
       if (mode.endsWith('(P1)')) bar.reverse();
     }
     const buttonLevels = Array.from({length:11},(_,i)=>{
-      const on = Boolean(logicalButtons & (1<<i)) !== Boolean(cfg.button_led_invert);
+      if (useLedTelemetry && input?.ledLevels?.length === 11) return input.ledLevels[i];
+      // LEDs correspond to physical output pins; input diagnostics are physical.
+      const inverted = Boolean(cfg.button_led_invert) !== Boolean(cfg.button_led_individual && cfg.button_led_inverted?.[i]);
+      const on = Boolean(buttons & (1<<i)) !== inverted;
       if (wasOn[i] && !on) released[i]=time;
       wasOn[i]=on;
-      const fade=cfg.button_led_fade_ms || 0;
-      return cfg.disable_leds ? 0 : (cfg.button_led_brightness ?? 100) * (on ? 1 : fade ? Math.max(0,1-(time-released[i])/fade) : 0);
+      const fade=(cfg.button_led_individual ? cfg.button_led_fade?.[i] : cfg.button_led_fade_ms) || 0;
+      const brightness=(cfg.button_led_individual ? cfg.button_led_level?.[i] : cfg.button_led_brightness) ?? 100;
+      return cfg.disable_leds ? 0 : brightness * (on ? 1 : fade ? Math.max(0,1-(time-released[i])/fade) : 0);
     });
     return {ring:ringPreview,bar,buttonLevels};
   };

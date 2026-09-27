@@ -6,6 +6,10 @@ import * as HIDCodes from '$lib/types/hid-codes';
 
 const packetSize = 1024;
 let lastConfigPacket: Uint8Array | undefined;
+let lastConfigDevice: HIDDevice | null = null;
+let writeQueue: Promise<void> = Promise.resolve();
+let latestWrite: Promise<void> = writeQueue;
+export function flushPendingConfigWrites(): Promise<void> { return latestWrite; }
 
 function samePacket(a: Uint8Array | undefined, b: Uint8Array): boolean {
   if (!a || a.length !== b.length) return false;
@@ -252,7 +256,11 @@ export async function readConfig(): Promise<Config> {
   }
 
   try {
-    const result = await appState.device.receiveFeatureReport(ReportId.Config);
+    const device = appState.device;
+    await writeQueue;
+    if (device !== appState.device) throw new Error('Device changed while reading settings');
+    const result = await device.receiveFeatureReport(ReportId.Config);
+    if (device !== appState.device) throw new Error('Device changed while reading settings');
     const payload = featureReportPayload(result, ReportId.Config);
     const configBytes = new Uint8Array(payload.buffer, payload.byteOffset, payload.byteLength).slice();
     const configData = new DataView(configBytes.buffer);
@@ -263,6 +271,8 @@ export async function readConfig(): Promise<Config> {
     }
 
     lastConfigPacket = configBytes;
+    lastConfigDevice = device;
+    latestWrite = writeQueue;
     return new Config(configData);
   } catch (err) {
     throw new Error(`Failed to read config: ${err}`);
@@ -274,7 +284,7 @@ export async function updateConfig(config: Config): Promise<void> {
     throw new Error('Device not connected');
   }
 
-  console.log("updating config")
+
 
   try {
     const configBuffer = new ArrayBuffer(packetSize);
@@ -378,6 +388,8 @@ export async function updateConfig(config: Config): Promise<void> {
     }
 
     if (config.version >= 16) {
+      if (!Number.isInteger(config.tt_leds) || config.tt_leds < 1 || config.tt_leds > 255)
+        throw new Error('Turntable LED count must be 1–255');
       configView.setUint8(offset++, config.led_refresh);
       configView.setUint8(offset++, config.rainbow_spin_speed);
       configView.setUint8(offset++, config.tt_leds);
@@ -439,9 +451,19 @@ export async function updateConfig(config: Config): Promise<void> {
     // connected firmware. `configBuffer` is intentionally oversized while we
     // serialize, so only send the bytes that belong to this config version.
     const data = new Uint8Array(configBuffer, 0, offset);
-    if (samePacket(lastConfigPacket, data)) return;
-    await appState.device.sendFeatureReport(ReportId.Config, data);
-    lastConfigPacket = data.slice();
+    const device = appState.device;
+    const pending = writeQueue.then(async () => {
+      if (device !== appState.device) throw new Error('Device changed while saving settings');
+      if (lastConfigDevice === device && samePacket(lastConfigPacket, data)) return;
+      await device.sendFeatureReport(ReportId.Config, data);
+      if (device === appState.device) {
+        lastConfigPacket = data.slice();
+        lastConfigDevice = device;
+      }
+    });
+    latestWrite = pending;
+    writeQueue = pending.catch(() => {});
+    await pending;
   } catch (err) {
     throw new Error(`Failed to update config: ${err}`);
   }

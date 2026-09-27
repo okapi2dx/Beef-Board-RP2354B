@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { readDiagnostics, parseDiagnostics, ReportId, type Diagnostics } from '$lib/types/hid';
 	import { appState } from '$lib/types/state.svelte';
+	import { isRp2354bBoard } from '$lib/types/board';
 	import type { Config } from '$lib/types/config.svelte';
 	import { TurntableMode, BarMode, type Hsv } from '$lib/types/types.svelte';
 	import { tr } from '$lib/types/locale.svelte';
@@ -31,7 +32,7 @@
 		[225, 15]
 	];
 	function logicalButtonState(buttons: number): number {
-		if (config.version < 28 || config.iidx_input_mode !== 'Joystick') return buttons;
+		if (config.version < 28 || (!isRp2354bBoard(appState.boardInfo) && config.iidx_input_mode !== 'Joystick')) return buttons;
 		let mapped = buttons & ~0x7ff;
 		for (let physical = 0; physical < 11; physical++) {
 			if (buttons & (1 << physical)) mapped |= 1 << config.button_mapping[physical];
@@ -142,7 +143,7 @@
 		let last = performance.now(),
 			handle: number;
 		function draw(now: number) {
-			frame = emulate(config, data, Math.min(50, now - last));
+			frame = emulate(config, data, Math.min(50, now - last), isRp2354bBoard(appState.boardInfo));
 			last = now;
 			handle = requestAnimationFrame(draw);
 		}
@@ -179,6 +180,7 @@
 			</div>
 			<div class="panel panel-primary">
 				<strong>{tr('LEDプレビュー', 'LED Preview')}</strong>
+                <p class="text-sm text-muted-foreground">{tr('RGBは効果のシミュレーションです。実機の発光タイミングやHID連動色とは異なります。', 'RGB is an effect simulation. Timing and host-controlled HID colors can differ from the board.')}</p>
 				<div class="status-list">
 					<div class="status-row">
 						<span>{tr('ターンテーブル', 'Turntable')}</span><b data-testid="monitor-tt-effect"

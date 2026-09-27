@@ -45,7 +45,7 @@ export function parseDiagnostics(data: DataView): Diagnostics {
     transitions: data.getUint32(7, true), intervalMs: data.getUint16(11, true),
     // v30+ appends the 11 PWM output levels. Keep older diagnostics packets
     // readable so the monitor can still connect before a firmware update.
-    ledLevels: data.byteLength >= 24 ? Array.from({ length: 11 }, (_, i) => data.getUint8(13 + i)) : Array(11).fill(0),
+    ledLevels: data.byteLength >= 24 ? Array.from({ length: 11 }, (_, i) => data.getUint8(13 + i)) : [],
   };
 }
 
@@ -156,11 +156,14 @@ export async function waitForReconnection(
     // treat the restarted board as a new WebHID identity even though Electron's
     // device policy allows it. Re-run the chooser once in the desktop app so
     // the new identity is granted without making the user reconnect the cable.
-    if (!selectedDevice && !expectedIdentity && !requestedNewIdentity && window.beefNative && Date.now() >= requestPermissionAt) {
+    if (!selectedDevice && !requestedNewIdentity && window.beefNative && Date.now() >= requestPermissionAt) {
       requestedNewIdentity = true;
       try {
         selectedDevice = await openVerifiedConfigDevice(
-          await navigator.hid.requestDevice({ filters: beefHidFilters })
+          await navigator.hid.requestDevice({ filters: expectedIdentity
+            ? [{ ...expectedIdentity, usagePage: BEEF_CONFIG_USAGE_PAGE, usage: BEEF_CONFIG_USAGE }]
+            : beefHidFilters }),
+          expectedIdentity
         );
       } catch {
         // Keep polling: getDevices() may become available after enumeration.
@@ -209,7 +212,7 @@ export async function readFirmwareInfo(): Promise<FirmwareInfo> {
 
   try {
     const result = await appState.device.receiveFeatureReport(ReportId.FirmwareVersion);
-    const data = featureReportPayload(result, ReportId.FirmwareVersion, [7]);
+    const data = featureReportPayload(result, ReportId.FirmwareVersion, [4, 7]);
     const hasSemanticVersion = data.byteLength >= 7;
     const version = hasSemanticVersion ? `${data.getUint8(4)}.${data.getUint8(5)}.${data.getUint8(6)}` : null;
     return { version };
@@ -224,8 +227,12 @@ export async function sendCommand(command: Command): Promise<void> {
   }
 
   try {
+    const device = appState.device;
+    const { flushPendingConfigWrites } = await import('$lib/types/config.svelte');
+    await flushPendingConfigWrites();
+    if (device !== appState.device) throw new Error('Device changed before command');
     const commandData = new Uint8Array([command]);
-    await appState.device.sendFeatureReport(ReportId.Command, commandData);
+    await device.sendFeatureReport(ReportId.Command, commandData);
   } catch (err) {
     throw new Error('Failed to send command', { cause: err });
   }

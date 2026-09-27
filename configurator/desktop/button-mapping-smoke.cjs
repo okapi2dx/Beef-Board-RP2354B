@@ -7,7 +7,8 @@ const assert = require('node:assert/strict');
 (async () => {
   const root = path.resolve('../beef-config/build');
   const server = http.createServer((req, res) => {
-    const file = path.join(root, req.url === '/' ? 'index.html' : req.url.split('?')[0]);
+    const entry = fs.existsSync(path.join(root, 'index.html')) ? 'index.html' : '404.html';
+    const file = path.join(root, req.url === '/' ? entry : req.url.split('?')[0]);
     if (!file.startsWith(root + path.sep) || !fs.existsSync(file)) {
       res.writeHead(404);
       res.end();
@@ -40,6 +41,7 @@ const assert = require('node:assert/strict');
 
       window.testWrites = [];
       const device = {
+        collections: [{ usagePage: 0xffeb, usage: 1 }],
         productName: 'BEEF BOARD',
         vendorId: 0xfeed,
         productId: 0,
@@ -64,7 +66,7 @@ const assert = require('node:assert/strict');
     });
 
     await page.goto(`http://127.0.0.1:${server.address().port}`);
-    await page.getByRole('button', { name: '接続 / Connect Device' }).click();
+    await page.getByRole('button', { name: '接続', exact: true }).click();
     await page.waitForTimeout(100);
     assert.equal(await page.evaluate(() => window.testWrites.length), 0, 'connecting must not rewrite config');
     await page.getByRole('button', { name: /^キー割り当て/ }).click();

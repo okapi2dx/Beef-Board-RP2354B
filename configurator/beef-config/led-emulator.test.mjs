@@ -37,3 +37,9 @@ const local=createLedEmulator();let packet={output:20,direction:1};local(cfg,pac
 for(let i=0;i<12;i++)local(cfg,packet,16);
 assert.deepEqual(local(cfg,packet,16),local(cfg,packet,16),'Old packets must not keep motion alive');
 console.log('PASS: position-based speed, bidirectional axis wrapping and stale-input stop');
+
+const levels=[0,10,20,30,40,50,60,70,80,90,100];
+assert.deepEqual(createLedEmulator()(cfg,{ledLevels:levels},16,true).buttonLevels,levels);
+const individual={...cfg,button_led_individual:true,button_led_level:Array(11).fill(37),button_led_inverted:Array(11).fill(false),button_led_fade:Array(11).fill(0)};
+assert.equal(createLedEmulator()(individual,{buttons:1},16).buttonLevels[0],37);
+console.log('PASS: actual PWM telemetry and per-output LED preview');
