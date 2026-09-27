@@ -42,6 +42,18 @@ Beef Board Configurator は、IIDX 系コントローラーの設定・調整・
   - アプリ更新の確認
   - 日本語 / English、ライト / ダークテーマ
 
+### スクリーンショット
+
+| 入力設定 | LED設定 |
+|---|---|
+| ![入力設定](docs/screenshots/01-input-settings.png) | ![LED設定](docs/screenshots/02-led-settings.png) |
+
+| キー割り当て | コントローラーモニター |
+|---|---|
+| ![キー割り当て](docs/screenshots/03-key-mapping.png) | ![コントローラーモニター](docs/screenshots/04-controller-monitor.png) |
+
+画面はConfiguratorの操作例です。モニターに表示される入力やLEDは画面上のサンプル表示で、実機の動作確認を示すものではありません。
+
 ## 旧PHOENIXWAN UART
 
 RP2354B基板のUART端子は、**旧PHOENIXWANのターンテーブルリングとセンターバーLEDを接続して制御する用途**です。ターンテーブルリングはJ42、センターバーはJ43に接続し、ConfiguratorのLED設定に合わせて制御します。このUART機能はAT90USB1286基板にはありません。
