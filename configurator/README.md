@@ -15,10 +15,10 @@ RP2354B 用 UF2 は、表示された ROM USB ドライブに手動でコピー�
 
 | マイコン | 基板と対応内容 | ファームウェアの書き込み |
 |---|---|---|
-| RP2354B | 新しいBeef Board基板。ボタン、ターンテーブル、LEDを制御します。従来型PHOENIXWANのターンテーブルリングとセンターバーをUARTで制御できます | BOOTSELモードにしてUF2をUSBドライブへ手動コピー |
+| RP2354B | 新しいBeef Board基板。ボタン、ターンテーブル、LEDを制御します。旧PHOENIXWANのターンテーブルリングとセンターバーをUARTで制御できます | BOOTSELモードにしてUF2をUSBドライブへ手動コピー |
 | AT90USB1286 | 従来のBeef Board基板。Configuratorから設定、診断、ボタン配置変更を利用できます | HEXをConfiguratorから書き込み |
 
-PHOENIXWAN UART制御はRP2354B専用で、AT90USB1286では使用できません。UARTの対応範囲と制限は [`../firmware/README.md`](../firmware/README.md) を参照してください。実機でのPHOENIXWAN接続確認は未実施です。
+旧PHOENIXWANのUART制御はRP2354B専用で、AT90USB1286では使用できません。UARTの対応範囲と制限は [`../firmware/README.md`](../firmware/README.md) を参照してください。旧PHOENIXWAN実機での接続確認は未実施です。
 
 ## 開発とソースコードの由来
 

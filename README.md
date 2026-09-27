@@ -25,11 +25,11 @@ Beef Board Configurator は、IIDX 系コントローラーの設定・調整・
 
 基板により、使用できる入出力や書き込み方法が異なります。Windows版Configuratorのビルド方法は [`configurator/README.md`](configurator/README.md) を参照してください。ポータブルEXEはリポジトリに含めていません。
 
-## PHOENIXWAN UART
+## 旧PHOENIXWAN UART
 
-RP2354B基板のUART端子は、**従来型PHOENIXWANのターンテーブルリングとセンターバーLEDを接続して制御する用途**です。ターンテーブルリングはJ42、センターバーはJ43に接続し、ConfiguratorのLED設定に合わせて制御します。このUART機能はAT90USB1286基板にはありません。
+RP2354B基板のUART端子は、**旧PHOENIXWANのターンテーブルリングとセンターバーLEDを接続して制御する用途**です。ターンテーブルリングはJ42、センターバーはJ43に接続し、ConfiguratorのLED設定に合わせて制御します。このUART機能はAT90USB1286基板にはありません。
 
-UARTプロトコルで設定できる色や発光パターンには制限があります。対応する制御内容と接続上の注意は [`firmware/README.md`](firmware/README.md) を参照してください。実機でのPHOENIXWAN接続確認は未実施です。
+UARTプロトコルで設定できる色や発光パターンには制限があります。対応する制御内容と接続上の注意は [`firmware/README.md`](firmware/README.md) を参照してください。旧PHOENIXWAN実機での接続確認は未実施です。
 
 ## 開発とソースコードの由来
 
