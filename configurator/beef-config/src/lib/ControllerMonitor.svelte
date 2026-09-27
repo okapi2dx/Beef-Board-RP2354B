@@ -17,6 +17,11 @@
 		buttonLevels: Array(11).fill(0)
 	});
 	const labels = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'E1', 'E2', 'E3', 'E4'];
+	const destinationLabels = [
+		...[0, 1, 2, 3, 4, 5, 6].map((bit) => ({ label: `B${bit + 1}`, bit })),
+		{ label: 'B8', bit: 13 },
+		...[7, 8, 9, 10].map((bit, index) => ({ label: `B${index + 9}`, bit }))
+	];
 	const legacyMonitorPollMs = 75;
 	const positions = [
 		[45, 175],
@@ -32,15 +37,18 @@
 		[225, 15]
 	];
 	function logicalButtonState(buttons: number): number {
-		if (config.version < 28 || (!isRp2354bBoard(appState.boardInfo) && config.iidx_input_mode !== 'Joystick')) return buttons;
+		if (config.version < 28 || config.iidx_input_mode !== 'Joystick') return buttons;
 		let mapped = buttons & ~0x7ff;
-		for (let physical = 0; physical < 11; physical++) {
-			if (buttons & (1 << physical)) mapped |= 1 << config.button_mapping[physical];
+		for (let physical = 0; physical < config.button_mapping.length; physical++) {
+			if (buttons & (1 << physical)) {
+				const destination = config.button_mapping[physical];
+				mapped |= destination === 11 ? 1 << 13 : 1 << destination;
+			}
 		}
 		return mapped;
 	}
 	const displayedButtons = $derived(data ? logicalButtonState(data.buttons) : 0);
-	const pressed = $derived(labels.filter((_, i) => displayedButtons & (1 << i)));
+	const pressed = $derived(destinationLabels.filter(({ bit }) => displayedButtons & (1 << bit)).map(({ label }) => label));
 	const effectLabels: Record<string, string> = {
 		Static: '固定',
 		Spin: '回転',
@@ -143,7 +151,7 @@
 		let last = performance.now(),
 			handle: number;
 		function draw(now: number) {
-			frame = emulate(config, data, Math.min(50, now - last), isRp2354bBoard(appState.boardInfo));
+			frame = emulate(config, data, Math.min(50, now - last), isRp2354bBoard(appState.boardInfo), displayedButtons);
 			last = now;
 			handle = requestAnimationFrame(draw);
 		}
@@ -174,13 +182,12 @@
 						>
 					</div>
 					<div class="status-row pressed-row">
-						<span>{tr('押下中', 'Pressed')}</span><b class="pressed-value">{pressed.join('・') || '—'}</b>
+						<span>{tr('割当先', 'Destination')}</span><b class="pressed-value">{pressed.join('・') || '—'}</b>
 					</div>
 				</div>
 			</div>
 			<div class="panel panel-primary">
 				<strong>{tr('LEDプレビュー', 'LED Preview')}</strong>
-                <p class="text-sm text-muted-foreground">{tr('RGBは効果のシミュレーションです。実機の発光タイミングやHID連動色とは異なります。', 'RGB is an effect simulation. Timing and host-controlled HID colors can differ from the board.')}</p>
 				<div class="status-list">
 					<div class="status-row">
 						<span>{tr('ターンテーブル', 'Turntable')}</span><b data-testid="monitor-tt-effect"
@@ -237,7 +244,7 @@
 							style:left={`${(positions[i][0] / 310) * 100}%`}
 							style:top={`${(positions[i][1] / 260) * 100}%`}
 							role="img"
-							aria-label={`${label}: ${displayedButtons & (1 << i) ? tr('押下', 'Pressed') : tr('離している', 'Released')}`}
+							aria-label={`${label}: ${((data?.buttons ?? 0) & (1 << i)) ? tr('押下', 'Pressed') : tr('離している', 'Released')}`}
 						>
 							<div
 								class="key-light"

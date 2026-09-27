@@ -40,6 +40,8 @@
 
 
 #define BUTTON_COUNT 11u
+#define B8_REMAP_VALUE 11u
+#define B8_LOGICAL_MASK (1u << 13)
 
 typedef unsigned int gpio_pin_t;
 
@@ -276,12 +278,14 @@ static void update_button_debounce(uint32_t now) {
 
 static uint16_t remap_buttons(uint16_t physical) {
   uint8_t const *cfg = beef_config_store_data();
+  if (cfg[CFG_IIDX_INPUT_MODE] != INPUT_MODE_JOYSTICK) return physical;
   uint16_t mapped = 0;
 
   for (uint32_t i = 0; i < BUTTON_COUNT; ++i) {
     if ((physical & (1u << i)) == 0u) continue;
     uint8_t logical = cfg[CFG_BUTTON_MAPPING_BASE + i];
     if (logical < BUTTON_COUNT) mapped |= (uint16_t)(1u << logical);
+    else if (logical == B8_REMAP_VALUE) mapped |= B8_LOGICAL_MASK;
   }
 
   return mapped;
@@ -431,8 +435,10 @@ static void send_controller_report(void) {
     }
   } else {
     uint16_t lower = logical_buttons & 0x007fu;
-    uint16_t upper = (logical_buttons | pending_tt_buttons) >> 7;
+    uint16_t gamepad_logical = logical_buttons & (uint16_t)~B8_LOGICAL_MASK;
+    uint16_t upper = (gamepad_logical | pending_tt_buttons) >> 7;
     uint16_t iidx_buttons = lower | (uint16_t)(upper << 8);
+    if (logical_buttons & B8_LOGICAL_MASK) iidx_buttons |= 1u << 7;
 
     gamepad_payload_t report = {
       .x = cfg[CFG_DIGITAL_TT] ? 127u : turntable.output.position,

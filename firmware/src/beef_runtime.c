@@ -7,7 +7,7 @@ bool beef_config_valid(const uint8_t *c) {
       c[78] < 1 || c[78] > 60 || c[79] < 1 || c[80] < 1 || c[138] < 1 ||
       c[88] > 100 || c[124] > 2 || ((uint16_t)c[125] + 256u*c[126]) > 1000) return false;
   for (unsigned i = 0; i < 11; ++i)
-    if (c[102+i] > 100 || c[127+i] >= 11) return false;
+    if (c[102+i] > 100 || c[127+i] > 11) return false;
   return true;
 }
 

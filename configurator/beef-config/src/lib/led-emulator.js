@@ -28,8 +28,9 @@ export function createLedEmulator() {
    * @param {import('$lib/types/hid').Diagnostics | null} input
    * @param {number} dt
    * @param {boolean} [useLedTelemetry]
+   * @param {number} [displayButtons] Mapped destinations for the monitor preview.
    */
-  return (cfg, input, dt, useLedTelemetry = false) => {
+  return (cfg, input, dt, useLedTelemetry = false, displayButtons) => {
     time += dt;
     const direction = (input?.direction ?? 0) * (cfg.reverse_tt ? 1 : -1);
     spin = wrap(spin + dt / (direction ? 25 : 50) * (direction === -1 ? -1 : 1), 12);
@@ -61,7 +62,7 @@ export function createLedEmulator() {
     const speed = cfg.rainbow_spin_speed ?? 3;
     react = wrap(react + dt / 3 * velocity * speed, 256);
     if (direction) { guard = time; hue = direction === 1 ? 0 : 180; }
-    const buttons = input?.buttons ?? 0;
+    const buttons = displayButtons ?? input?.buttons ?? 0;
     if (buttons !== lastButtons) { level = Math.min(16, level + 1); decay = time; }
     else if (time - decay >= 30) { level = Math.max(0, level - Math.floor((time-decay)/30)); decay = time; }
     lastButtons = buttons;

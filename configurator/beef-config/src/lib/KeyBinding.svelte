@@ -27,7 +27,24 @@
 		tt_ccw: 'TT-',
 		tt_cw: 'TT+'
 	};
-	const BUTTON_LAYOUT_LABELS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'E1', 'E2', 'E3', 'E4'];
+	// Physical inputs keep their board labels. Remap destinations use B9-B12
+	// for the four function inputs. B8 uses the spare HID Button 8 position while
+	// keeping existing stored values for B9-B12 unchanged.
+	const PHYSICAL_BUTTON_LABELS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'E1', 'E2', 'E3', 'E4'];
+	const BUTTON_DESTINATIONS = [
+		{ label: 'B1', value: 0 },
+		{ label: 'B2', value: 1 },
+		{ label: 'B3', value: 2 },
+		{ label: 'B4', value: 3 },
+		{ label: 'B5', value: 4 },
+		{ label: 'B6', value: 5 },
+		{ label: 'B7', value: 6 },
+		{ label: 'B8', value: 11 },
+		{ label: 'B9', value: 7 },
+		{ label: 'B10', value: 8 },
+		{ label: 'B11', value: 9 },
+		{ label: 'B12', value: 10 }
+	];
 
 	function startKeyCapture(button: number) {
 		selectedButton = button;
@@ -66,7 +83,7 @@
 
 	function resetKeys() {
 		config.iidx_keys = new IIDXKeyMapping();
-		config.button_mapping = BUTTON_LAYOUT_LABELS.map((_, i) => i);
+		config.button_mapping = PHYSICAL_BUTTON_LABELS.map((_, i) => i);
 		selectedButton = null;
 		window.removeEventListener('keydown', handleKeyDown);
 		resetOpen = false;
@@ -75,7 +92,7 @@
 	function changeButtonMapping(physical: number, value: string | null | undefined) {
 		if (value == null) return;
 		const logical = Number(value);
-		if (!Number.isInteger(logical) || logical < 0 || logical >= BUTTON_LAYOUT_LABELS.length) return;
+		if (!Number.isInteger(logical) || !BUTTON_DESTINATIONS.some((destination) => destination.value === logical)) return;
 		if (config.button_mapping[physical] === logical) return;
 
 		// Multiple physical buttons may intentionally produce the same logical
@@ -142,7 +159,7 @@
 				</div>
 				<div class="remap-stage">
 					<div class="remap-keyboard">
-						{#each BUTTON_LAYOUT_LABELS as physicalLabel, i}
+						{#each PHYSICAL_BUTTON_LABELS as physicalLabel, i}
 							<div
 								class="remap-key"
 								class:black={i < 7 && i % 2 === 1}
@@ -159,12 +176,12 @@
 									onValueChange={(value) => changeButtonMapping(i, value)}
 								>
 									<Select.Trigger class="remap-select">
-										{BUTTON_LAYOUT_LABELS[config.button_mapping[i]]}
+										{BUTTON_DESTINATIONS.find((destination) => destination.value === config.button_mapping[i])?.label}
 									</Select.Trigger>
 									<Select.Content>
 										<Select.Group>
-											{#each BUTTON_LAYOUT_LABELS as logicalLabel, logical}
-												<Select.Item value={String(logical)}>{logicalLabel}</Select.Item>
+											{#each BUTTON_DESTINATIONS as destination}
+												<Select.Item value={String(destination.value)}>{destination.label}</Select.Item>
 											{/each}
 										</Select.Group>
 									</Select.Content>

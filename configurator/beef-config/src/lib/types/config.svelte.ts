@@ -438,7 +438,7 @@ export async function updateConfig(config: Config): Promise<void> {
     }
     if (config.version >= 28) {
       if (config.button_mapping.length !== 11 ||
-          config.button_mapping.some((v) => !Number.isInteger(v) || v < 0 || v >= 11))
+          config.button_mapping.some((v) => !Number.isInteger(v) || v < 0 || v > 11))
         throw new Error('Button mapping entries must be valid button indices');
       for (const value of config.button_mapping) configView.setUint8(offset++, value);
     }
