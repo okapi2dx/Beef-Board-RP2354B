@@ -37,23 +37,6 @@ UARTプロトコルで設定できる色や発光パターンには制限があ�
 
 Configurator は [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を基にした Beef Board ソフトウェアのフォーク／派生コードを出発点として、RP2354B 対応を加えています。
 
-## 内容
-
-| 場所 | 内容 |
-|---|---|
-| `hardware/Beef-Board-RP2354B.kicad_pro` | KiCad 10 プロジェクト |
-| `hardware/Beef-Board-RP2354B.kicad_pcb` | 指定された基板の配線整理版 |
-| `hardware/Beef-Board-RP2354B.kicad_sch` | 基板に合わせた回路図 |
-| `hardware/BEEF-BOARD.pretty/` | プロジェクト用フットプリント |
-| `hardware/BOM-budget.csv` | 暫定部品表と概算価格 |
-| `hardware/ROUTING.md` | 配線整理の変更量と残る確認事項 |
-| `hardware/DRC.json` | 現在の KiCad DRC 結果 |
-| `hardware/routing-changes.json` | 採用した配線変更の記録 |
-| `firmware/Beef-Board-RP2354B.uf2` | BOOTSEL 書き込み用ファームウェア |
-| `firmware/Beef-Board-AT90USB1286.hex` | AT90USB1286 用 HEX ファームウェア |
-| `firmware/src/` | ファームウェアのソースコード |
-| `configurator/` | RP2354B 対応 Configurator のソース一式（Web UI・Windows デスクトップ版） |
-
 ## 電源選択（J2）
 
 J2「POWER SELECT」のショート位置で、USBケーブル1本または2本の使い方を選べます。
