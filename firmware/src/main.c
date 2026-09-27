@@ -94,9 +94,9 @@ static int dma_tt, dma_bar;
 static uint8_t previous_tt_count, previous_bar_count;
 static uint32_t rgb_last_frame, rgb_dma_done_us;
 static bool rgb_transmitting, rgb_latching;
-static int8_t uart_tt_direction;
-static uint32_t uart_tt_motion_ms;
+static uint32_t uart_tt_previous_raw_ms;
 static uint16_t uart_tt_interval_ms;
+static uint8_t uart_bar_pairs;
 
 static diagnostics_t diagnostics;
 static uint8_t previous_input_mode = 0xffu;
@@ -171,6 +171,13 @@ static void update_rgb_leds(uint32_t now) {
   rgb_last_frame = now;
   bool host_active = host_lighting_seen && (uint32_t)(now-host_lighting_ms)<1000;
   beef_lighting_render(&lighting,cfg,host_active,host_tt_rgb,host_center_rgb,ring_pixels,bar_pixels);
+  // The UART bar can only illuminate center pairs. Derive its lit count from
+  // the same frame used by the WS2812 output, including link/HID/off modes.
+  unsigned lit = 0;
+  for (unsigned i = 0; i < cfg[CFG_BAR_LEDS]; ++i)
+    if (bar_pixels[i].r || bar_pixels[i].g || bar_pixels[i].b) ++lit;
+  uart_bar_pairs = (uint8_t)((lit * 8u + cfg[CFG_BAR_LEDS] / 2u) / cfg[CFG_BAR_LEDS]);
+  if (lit && !uart_bar_pairs) uart_bar_pairs = 1;
   // Send black pixels to the old tail when counts shrink.
   uint n=cfg[CFG_TT_LEDS]>previous_tt_count?cfg[CFG_TT_LEDS]:previous_tt_count;
   uint m=cfg[CFG_BAR_LEDS]>previous_bar_count?cfg[CFG_BAR_LEDS]:previous_bar_count;
@@ -286,10 +293,9 @@ static void process_turntable(uint32_t now) {
   restore_interrupts(irq);
   const uint8_t *cfg=beef_config_store_data();
   if (delta) {
-    uint32_t interval = now - uart_tt_motion_ms;
+    uint32_t interval = now - uart_tt_previous_raw_ms;
     uart_tt_interval_ms = interval > 65535u ? 65535u : (uint16_t)interval;
-    uart_tt_motion_ms = now;
-    uart_tt_direction = (delta > 0) != (cfg[1] != 0) ? 1 : -1;
+    uart_tt_previous_raw_ms = now;
   }
   beef_turntable_update(&turntable,cfg,delta,now);
   if(cfg[CFG_DIGITAL_TT]) {
@@ -489,11 +495,15 @@ int main(void) {
     beef_protocol_task();
 
     uint32_t now = to_ms_since_boot(get_absolute_time());
-    bool host_active = host_lighting_seen &&
-        (uint32_t)(now - host_lighting_ms) < 1000u;
-    phoenixwan_uart_task(now, beef_config_store_data(), uart_tt_direction,
-                         now - uart_tt_motion_ms, uart_tt_interval_ms,
-                         lighting.level, host_active);
+    // The existing lighting state includes encoder delay, reversal and the
+    // motion timeout. Feed those same motion decisions to the UART ring.
+    int8_t uart_direction = lighting.target_velocity > 0.0f ? -1 :
+                            lighting.target_velocity < 0.0f ? 1 : 0;
+    uint32_t uart_motion_age = lighting.motion_seen ?
+        now - lighting.last_motion : UINT32_MAX;
+    phoenixwan_uart_task(now, beef_config_store_data(), uart_direction,
+                         uart_motion_age, uart_tt_interval_ms,
+                         uart_bar_pairs);
     if (now != last_scan_ms) {
       last_scan_ms = now;
 

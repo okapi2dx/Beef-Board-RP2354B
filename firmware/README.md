@@ -1,4 +1,4 @@
-# Beef Board V2 RP2354B firmware (prototype 0.1.2)
+# Beef Board V2 RP2354B firmware (prototype 0.1.3)
 
 This is native RP2354B firmware built with the Pico SDK. It preserves the Beef Board HID configuration and controller behavior. The GPIO mapping was checked against the RP2354B PCB and matching schematic on 2026-09-25. The later routing cleanup keeps all footprints and vias in place.
 
@@ -25,13 +25,13 @@ The following GPIO mapping comes from the PCB/schematic pair:
 | Buttons | 46, 44, 43, 36, 34, 32, 31, 7, 6, 24, 17 |
 | Button LEDs | 47, 45, 33, 35, 42, 30, 29, 4, 5, 26, 25 |
 
-## Phoenixwan UART lighting (0.1.2)
+## Phoenixwan UART lighting (0.1.3)
 
 Connect the ring's RX to J42 TX and its TX to J42 RX; connect the center bar's RX to J43 TX and its TX to J43 RX. Use a shared ground and confirm the peripheral voltage before connecting. The ring and bar each perform the initialization exchange described by the [turntable](https://github.com/veroxzik/djdao-documentation/blob/main/iidx/phoenixwan/turntable-control.md) and [center bar](https://github.com/veroxzik/djdao-documentation/blob/main/iidx/phoenixwan/center-light-bar.md) notes. UART receive processing is bounded so the USB controller remains responsive.
 
-The ring uses native modes 1–7 for the Configurator's Static, Spin, Shift, Rainbow Static, Rainbow Reactive/Spin, Reactive and Breathing effects. Spin and synchronous rainbow receive motion direction; synchronous rainbow also receives an estimated speed. The center bar uses its native off and center 2–16 LED commands: Static lights all 16, key spectrum varies the count, and tape mode lights one center pair. WS2812 outputs continue to use the complete Configurator effects.
+The ring uses native modes 1–7 for the Configurator's Static, Spin, Shift, Rainbow Static, Rainbow Reactive/Spin, Reactive and Breathing effects. Spin and synchronous rainbow receive motion direction; synchronous rainbow also receives an estimated speed. The center bar's off and center 2–16 LED commands follow the number of lit pixels in the same frame rendered for WS2812, including linked, HID and Off settings. Its native display is always centered, so left/right position and moving tape patterns are approximate. Changes to Configurator HSV settings send the documented relative hue/saturation/brightness commands, quantized at 16 configuration units per UART step. WS2812 outputs continue to use the complete Configurator effects.
 
-The published UART command list has relative H/S/B steps but no absolute color query, color reset or step size. It also has no ring off or direct HID RGB command, and the center bar has no moving pattern or per-pixel RGB command. Therefore the UART devices cannot exactly reproduce Configurator colors, Off/HID ring modes, or moving center-bar effects. For these effects use the board's WS2812 outputs. Physical Phoenixwan hardware has not yet been connected for validation.
+The published UART command list has relative H/S/B steps but no absolute color query, color reset or step size. On connection, firmware treats the peripheral's current color as the starting point; subsequent setting changes adjust it relatively. The selected color cannot be guaranteed after power cycling or peripheral reset. The protocol also has no ring off or direct HID RGB command, and the center bar has no moving pattern or per-pixel RGB command. Therefore the UART devices cannot exactly reproduce Configurator colors, Off/HID ring modes, or moving center-bar effects. For exact output use the board's WS2812 outputs. Physical Phoenixwan hardware has not yet been connected for validation.
 
 ## Build
 

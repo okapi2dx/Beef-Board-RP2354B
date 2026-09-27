@@ -1,6 +1,7 @@
 #include "phoenixwan_uart.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 #include "hardware/uart.h"
 
 // Both Phoenixwan peripherals use TTL UART, 115200 8N1. Process a bounded
@@ -10,6 +11,11 @@ static uint8_t tt_state, tt_challenge, tt_mode, tt_motion;
 static uint8_t bar_state, bar_count;
 static uint32_t tt_progress_ms, bar_progress_ms;
 static uint32_t last_trigger_ms;
+static uint8_t tt_color[3], bar_color[3], tt_color_cursor, bar_color_cursor;
+static int16_t tt_color_pending[3], bar_color_pending[3];
+static bool tt_color_seen, bar_color_seen;
+
+enum { COLOR_CONFIG_STEP = 16 };
 
 static bool send_byte(uart_inst_t *port, uint8_t byte) {
   if (!uart_is_writable(port)) return false;
@@ -31,10 +37,12 @@ void phoenixwan_uart_init(void) {
   uart_set_hw_flow(uart1, false, false);
   tt_state = bar_state = WAIT_START;
   tt_mode = tt_motion = bar_count = 0xff;
+  tt_color_seen = bar_color_seen = false;
 }
 
 static void receive_turntable(uint32_t now) {
-  if (tt_state != WAIT_START && (uint32_t)(now - tt_progress_ms) > 500u) {
+  if ((tt_state == WAIT_MARKER || tt_state == WAIT_REPLY) &&
+      (uint32_t)(now - tt_progress_ms) > 500u) {
     tt_state = WAIT_START;
   }
   for (unsigned n = 0; n < 32 && uart_is_readable(uart0); ++n) {
@@ -62,6 +70,7 @@ static void receive_turntable(uint32_t now) {
         if (send_byte(uart0, 0xa5)) {
           tt_state = READY;
           tt_mode = tt_motion = 0xff;
+          tt_color_seen = false;
         } else tt_state = WAIT_START;
       } else if (!send_byte(uart0, 0x00)) {
         tt_state = WAIT_START;
@@ -83,6 +92,7 @@ static void receive_bar(uint32_t now) {
     } else if (bar_state == WAIT_MARKER && byte == 0x5a) {
       bar_state = READY;
       bar_count = 0xff;
+      bar_color_seen = false;
     }
   }
 }
@@ -96,32 +106,59 @@ static uint8_t desired_tt_mode(const uint8_t *cfg) {
   return modes[effect];
 }
 
-static uint8_t desired_bar_count(const uint8_t *cfg, uint8_t level,
-                                  bool host_active) {
-  if (cfg[5]) return 0x4c;
-  if (cfg[84]) return cfg[2] == 9 ? 0x4c : 0x6f;
-  switch (cfg[4]) {
-    case 8: return 0x6f; // Static: all 16 LEDs
-    case 1: case 2: {
-      unsigned pairs = ((unsigned)level + 1u) / 2u;
-      if (pairs > 8u) pairs = 8u;
-      return pairs ? (uint8_t)(0x67u + pairs) : 0x4c;
+static void update_color_target(const uint8_t target[3], uint8_t previous[3],
+                                int16_t pending[3], bool *seen) {
+  if (!*seen) {
+    for (unsigned i = 0; i < 3; ++i) {
+      previous[i] = target[i];
+      pending[i] = 0;
     }
-    case 5: case 6: return 0x68; // Moving tape approximated by center pair
-    case 4: return host_active ? 0x6f : 0x4c;
-    default: return 0x4c;
+    *seen = true;
+    return;
+  }
+  for (unsigned i = 0; i < 3; ++i) {
+    int delta = (int)target[i] - (int)previous[i];
+    if (i == 0) {
+      if (delta > 127) delta -= 256;
+      if (delta < -128) delta += 256;
+    }
+    int total = pending[i] + delta;
+    if (total > 2048) total = 2048;
+    if (total < -2048) total = -2048;
+    pending[i] = (int16_t)total;
+    previous[i] = target[i];
+  }
+}
+
+static void send_color_step(uart_inst_t *port, int16_t pending[3],
+                            uint8_t enabled_mask, uint8_t *cursor) {
+  for (unsigned n = 0; n < 3; ++n) {
+    unsigned i = (*cursor + n) % 3u;
+    if (!(enabled_mask & (1u << i))) continue;
+    int16_t amount = pending[i];
+    if (amount < COLOR_CONFIG_STEP && amount > -COLOR_CONFIG_STEP) continue;
+    uint8_t command = (uint8_t)((amount > 0 ? 0x81u : 0x91u) + i);
+    if (send_byte(port, command)) {
+      pending[i] -= amount > 0 ? COLOR_CONFIG_STEP : -COLOR_CONFIG_STEP;
+      *cursor = (uint8_t)((i + 1u) % 3u);
+    }
+    break;
   }
 }
 
 void phoenixwan_uart_task(uint32_t now, const uint8_t *cfg,
                           int8_t direction, uint32_t motion_age_ms,
                           uint16_t motion_interval_ms,
-                          uint8_t level, bool host_active) {
+                          uint8_t bar_pairs) {
   receive_turntable(now);
   receive_bar(now);
 
   if (tt_state == READY) {
     uint8_t mode = desired_tt_mode(cfg);
+    if (mode) {
+      const uint8_t *color = &cfg[6u + 3u * cfg[2]];
+      update_color_target(color, tt_color, tt_color_pending, &tt_color_seen);
+    }
     if (mode && mode != tt_mode) {
       if (send_byte(uart0, mode)) {
         tt_mode = mode;
@@ -146,10 +183,22 @@ void phoenixwan_uart_task(uint32_t now, const uint8_t *cfg,
       }
       if (motion != tt_motion && send_byte(uart0, motion)) tt_motion = motion;
     }
+    if (mode && mode == tt_mode) {
+      uint8_t color_mask = mode == 0x31 ? 0x07u :
+          mode == 0x32 ? 0x01u :
+          mode >= 0x33 && mode <= 0x35 ? 0x06u : 0x03u;
+      send_color_step(uart0, tt_color_pending, color_mask, &tt_color_cursor);
+    }
   }
 
   if (bar_state == READY) {
-    uint8_t count = desired_bar_count(cfg, level, host_active);
+    const uint8_t *color = NULL;
+    if (cfg[84] && cfg[2] <= 7u) color = &cfg[6u + 3u * cfg[2]];
+    else if (cfg[4] == 8u) color = &cfg[81];
+    if (color) update_color_target(color, bar_color, bar_color_pending, &bar_color_seen);
+    uint8_t count = bar_pairs ? (uint8_t)(0x67u + bar_pairs) : 0x4c;
     if (count != bar_count && send_byte(uart1, count)) bar_count = count;
+    if (color) send_color_step(uart1, bar_color_pending, 0x07u,
+                               &bar_color_cursor);
   }
 }
