@@ -2,6 +2,12 @@
 
 Beef Board RP2354B の基板設計、ファームウェア、Windows 用 Configurator をまとめたプロジェクトです。Configurator は、RP2354B と従来の AT90USB1286 の2種類のマイコンを搭載した基板に対応します。
 
+## 開発とソースコードの由来
+
+基板、ファームウェア、Configurator の設計・実装・デバッグ・文書作成に AI を活用しています。仕様と設計の採用判断はプロジェクト管理者が行います。実機での確認状況は各ファームウェアの README に記載しています。
+
+Configurator は [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を基にした Beef Board ソフトウェアのフォーク／派生コードを出発点として、RP2354B 対応を加えています。
+
 ## Configurator
 
 Beef Board Configurator は、IIDX 系コントローラーの設定・調整・診断を行う Windows アプリです。基板を USB 接続し、入力方式やターンテーブル、LED、キー割り当てを設定できます。コントローラーモニターでボタンやターンテーブルの入力状態も確認できます。
@@ -30,12 +36,6 @@ Beef Board Configurator は、IIDX 系コントローラーの設定・調整・
 RP2354B基板のUART端子は、**旧PHOENIXWANのターンテーブルリングとセンターバーLEDを接続して制御する用途**です。ターンテーブルリングはJ42、センターバーはJ43に接続し、ConfiguratorのLED設定に合わせて制御します。このUART機能はAT90USB1286基板にはありません。
 
 UARTプロトコルで設定できる色や発光パターンには制限があります。対応する制御内容と接続上の注意は [`firmware/README.md`](firmware/README.md) を参照してください。旧PHOENIXWAN実機での接続確認は未実施です。
-
-## 開発とソースコードの由来
-
-基板、ファームウェア、Configurator の設計・実装・デバッグ・文書作成に AI を活用しています。仕様と設計の採用判断はプロジェクト管理者が行います。実機で確認できている範囲は「状態」と各ファームウェアの README に記載しています。
-
-Configurator は [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を基にした Beef Board ソフトウェアのフォーク／派生コードを出発点として、RP2354B 対応を加えています。
 
 ## 電源選択（J2）
 
