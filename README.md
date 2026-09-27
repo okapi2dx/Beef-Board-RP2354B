@@ -1,31 +1,35 @@
 # Beef Board RP2354B
 
-RP2354B を搭載した Beef Board V2 の設計・ファームウェアと、Windows 用 Configurator のソースをまとめたプロジェクトです。基板データ、部品表、書き込み手順も公開しています。
+Beef Board V2 の基板設計、ファームウェア、Windows 用 Configurator をまとめたプロジェクトです。Configurator は、RP2354B と従来の AT90USB1286 の2種類のマイコンを搭載した基板に対応します。
 
-## このプロジェクトでできること
+## Configurator
 
-- RP2354B 基板の回路図・基板レイアウト・部品表を確認する
-- RP2354B 用ファームウェアを使い、BOOTSEL から UF2 を書き込む
-- Configurator で RP2354B または AT90USB1286 の設定や入力状態を確認する
+Beef Board Configurator は、IIDX 系コントローラーの設定・調整・診断を行う Windows アプリです。基板を USB 接続し、入力方式やターンテーブル、LED、キー割り当てを設定できます。コントローラーモニターでボタンやターンテーブルの入力状態も確認できます。
 
-Configurator は、IIDX 系コントローラーの入力・LED・キー割り当てを設定する Windows アプリです。ボタンやターンテーブルの動作を画面で確認でき、基板に応じたファームウェア更新も行えます。
+主な機能:
 
-| 機能 | 内容 |
-|---|---|
-| 入力 | Joystick / Keyboard、ターンテーブルの方向・感度・デッドゾーン・入力時間・ディレイ、ボタンのデバウンス |
-| LED | ボタン、ターンテーブル、センターバーの発光効果・色・明るさ・フェード・反転 |
-| キー割り当て | キーボードのキー変更、物理ボタンの配置変更。B8も割り当て先に選べますが、実物のボタンやLEDはありません |
-| モニター | ボタン、ターンテーブル、ファームウェア診断情報の表示 |
-| ファームウェア | AT90USB1286 は HEX 書き込み、RP2354B は UF2 書き込みを案内 |
+- 入力方式（Joystick / Keyboard）、ターンテーブルの感度・方向・デッドゾーン・入力時間の調整
+- ボタン、ターンテーブル、センターバーのLED効果・色・明るさの設定
+- キーボード割り当てと物理ボタン配置の変更。B8も割り当て先に選べますが、基板にB8ボタンやLEDはありません
+- ボタン、ターンテーブル、ファームウェア診断情報のモニター
+- 基板に応じたファームウェア書き込み
 
 ## 対応基板
 
-| 基板 | ファームウェア | 書き込み方法 |
-|---|---|---|
-| RP2354B | [`Beef-Board-RP2354B.uf2`](firmware/Beef-Board-RP2354B.uf2) | BOOTSEL で ROM USB ドライブを開き、UF2 を手動でコピー |
-| AT90USB1286 | [`Beef-Board-AT90USB1286.hex`](firmware/Beef-Board-AT90USB1286.hex) | Configurator から HEX を書き込み |
+このプロジェクトは、異なる2種類のマイコンを搭載した基板を扱います。
 
-基板ごとに使える機能や書き込み方法が異なります。PHOENIXWAN UART を使ったターンテーブル／センターバー LED 制御は RP2354B 専用です。Configurator のポータブル EXE は配布・管理の都合でリポジトリに含めていません。Windows 版のビルド方法は [`configurator/README.md`](configurator/README.md) を参照してください。
+| マイコン／基板 | 説明 | ファームウェア／書き込み |
+|---|---|---|
+| **RP2354B** | このリポジトリの基板設計とファームウェア。11個のボタン入力、ターンテーブル用エンコーダー、ボタンLED、RGB LED出力に対応 | [UF2](firmware/Beef-Board-RP2354B.uf2)をBOOTSELのUSBドライブへ手動でコピー |
+| **AT90USB1286** | 従来のBeef Board基板。Configuratorから設定・診断できるレガシー対応 | [HEX](firmware/Beef-Board-AT90USB1286.hex)をConfiguratorから書き込み。ソースコードはこのリポジトリに含みません |
+
+基板により、使用できる入出力や書き込み方法が異なります。Windows版Configuratorのビルド方法は [`configurator/README.md`](configurator/README.md) を参照してください。ポータブルEXEはリポジトリに含めていません。
+
+## PHOENIXWAN UART
+
+RP2354B基板のUART端子は、**従来型PHOENIXWANのターンテーブルリングとセンターバーLEDを接続して制御する用途**です。ターンテーブルリングはJ42、センターバーはJ43に接続し、ConfiguratorのLED設定に合わせて制御します。このUART機能はAT90USB1286基板にはありません。
+
+UARTプロトコルで設定できる色や発光パターンには制限があります。対応する制御内容と接続上の注意は [`firmware/README.md`](firmware/README.md) を参照してください。実機でのPHOENIXWAN接続確認は未実施です。
 
 ## 開発とソースコードの由来
 

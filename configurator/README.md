@@ -1,6 +1,6 @@
 # Beef Board RP2354B Configurator
 
-RP2354B と従来の AT90USB1286 に対応した、Beef Board 用 Configurator のソースです。Windows デスクトップアプリと Web UI を含みます。
+Beef Board Configurator は、IIDX 系コントローラーの設定・調整・診断を行う Windows アプリです。入力、ターンテーブル、LED、キー割り当てを設定し、コントローラーモニターで動作を確認できます。このアプリは RP2354B と従来の AT90USB1286 の両方に対応します。
 
 ## できること
 
@@ -10,6 +10,15 @@ RP2354B と従来の AT90USB1286 に対応した、Beef Board 用 Configurator �
 - RP2354B 用 UF2 の取得と BOOTSEL モードへの切り替え案内
 
 RP2354B 用 UF2 は、表示された ROM USB ドライブに手動でコピーしてください。Configurator は UF2 をドライブへ自動転送しません。STM32 用の接続・書き込み機能はありません。
+
+## 対応マイコン
+
+| マイコン | 基板と対応内容 | ファームウェアの書き込み |
+|---|---|---|
+| RP2354B | 新しいBeef Board基板。ボタン、ターンテーブル、LEDを制御します。従来型PHOENIXWANのターンテーブルリングとセンターバーをUARTで制御できます | BOOTSELモードにしてUF2をUSBドライブへ手動コピー |
+| AT90USB1286 | 従来のBeef Board基板。Configuratorから設定、診断、ボタン配置変更を利用できます | HEXをConfiguratorから書き込み |
+
+PHOENIXWAN UART制御はRP2354B専用で、AT90USB1286では使用できません。UARTの対応範囲と制限は [`../firmware/README.md`](../firmware/README.md) を参照してください。実機でのPHOENIXWAN接続確認は未実施です。
 
 ## 開発とソースコードの由来
 
