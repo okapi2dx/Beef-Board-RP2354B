@@ -18,7 +18,7 @@
 
 import { readConfig, updateConfig, type Config } from '$lib/types/config.svelte';
 import { restartAndWaitForReconnection } from '$lib/types/hid';
-import { BoardType, defaultUsbIdentity } from '$lib/types/board';
+import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board';
 	import { appState } from '$lib/types/state.svelte';
 	import { TurntableMode, BarMode, ControllerType, InputMode } from '$lib/types/types.svelte';
 	import WarningAlert from '$lib/WarningAlert.svelte';
@@ -50,6 +50,24 @@ import { BoardType, defaultUsbIdentity } from '$lib/types/board';
 		try {
 			config.controller_type = mode;
 			await updateConfig(config);
+			// The AT90 acknowledges SET_REPORT before its EEPROM update finishes.
+			// Windows rejects GET_REPORT during that interval, so wait for a
+			// successful readback before requesting the USB identity change.
+			let saved: Config | undefined;
+			let readError: unknown;
+			const saveDeadline = Date.now() + 5000;
+			while (Date.now() < saveDeadline) {
+				try {
+					saved = await readConfig();
+					if (saved.controller_type === mode) break;
+				} catch (err) {
+					readError = err;
+				}
+				await new Promise(resolve => setTimeout(resolve, 150));
+			}
+			if (saved?.controller_type !== mode) {
+				throw new Error(`Controller mode was not saved${readError ? `: ${readError}` : ''}`);
+			}
 
 			// The board info report is unavailable on some Windows IIDX identities.
 			// Accept either supported default identity, then verify its config HID.
@@ -83,7 +101,7 @@ import { BoardType, defaultUsbIdentity } from '$lib/types/board';
 </script>
 
 {#if config}
-	{#if config.version < 33}
+	{#if config.version < 33 && isRp2354bBoard(appState.boardInfo)}
 		<WarningAlert
 			title={tr('ファームウェアが古いです', 'Outdated Firmware')}
 			description={tr('角度式デッドゾーンを使うには、最新のファームウェアへ更新してください。', 'Update the firmware to use the angle-based deadzone.')}

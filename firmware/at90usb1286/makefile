@@ -16,7 +16,7 @@ FASTLED_SRC = FastLED/src
 SRC = $(wildcard *.c) $(wildcard *.cpp) $(wildcard devices/iidx/*.cpp) \
 	$(FASTLED_SRC)/colorutils.cpp $(FASTLED_SRC)/FastLED.cpp $(FASTLED_SRC)/hsv2rgb.cpp $(FASTLED_SRC)/lib8tion.cpp \
 	$(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
-LUFA_PATH = LUFA
+LUFA_PATH = LUFA/LUFA
 CC_FLAGS = -DUSE_LUFA_CONFIG_HEADER -IConfig/ -include fastled_shim.h \
 	-DFASTLED_NO_PINMAP \
 	-DLIGHT_BAR_LEDS=$(LIGHT_BAR_LEDS) \

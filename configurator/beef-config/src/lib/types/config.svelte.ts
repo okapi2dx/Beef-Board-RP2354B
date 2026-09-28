@@ -8,8 +8,17 @@ const packetSize = 1024;
 let lastConfigPacket: Uint8Array | undefined;
 let lastConfigDevice: HIDDevice | null = null;
 let writeQueue: Promise<void> = Promise.resolve();
-let latestWrite: Promise<void> = writeQueue;
-export function flushPendingConfigWrites(): Promise<void> { return latestWrite; }
+export function flushPendingConfigWrites(): Promise<void> { return writeQueue; }
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+    promise.then(
+      value => { clearTimeout(timer); resolve(value); },
+      error => { clearTimeout(timer); reject(error); }
+    );
+  });
+}
 
 function samePacket(a: Uint8Array | undefined, b: Uint8Array): boolean {
   if (!a || a.length !== b.length) return false;
@@ -244,7 +253,7 @@ export class Config {
     if (this.version >= 28) {
       this.button_mapping = Array.from({ length: 11 }, () => configData.getUint8(offset++));
     }
-    if (this.version >= 32) {
+    if (this.version >= 32 && offset < configData.byteLength) {
       this.bar_leds = configData.getUint8(offset++);
     }
   }
@@ -259,7 +268,7 @@ export async function readConfig(): Promise<Config> {
     const device = appState.device;
     await writeQueue;
     if (device !== appState.device) throw new Error('Device changed while reading settings');
-    const result = await device.receiveFeatureReport(ReportId.Config);
+    const result = await withTimeout(device.receiveFeatureReport(ReportId.Config), 1500, 'Config report');
     if (device !== appState.device) throw new Error('Device changed while reading settings');
     const payload = featureReportPayload(result, ReportId.Config);
     const configBytes = new Uint8Array(payload.buffer, payload.byteOffset, payload.byteLength).slice();
@@ -272,7 +281,6 @@ export async function readConfig(): Promise<Config> {
 
     lastConfigPacket = configBytes;
     lastConfigDevice = device;
-    latestWrite = writeQueue;
     return new Config(configData);
   } catch (err) {
     throw new Error(`Failed to read config: ${err}`);
@@ -382,8 +390,7 @@ export async function updateConfig(config: Config): Promise<void> {
 
     if (config.version >= 15) {
       configView.setUint8(offset++, config.iidx_buttons_debounce);
-      // Keep the legacy packet field so older firmware also uses one setting.
-      configView.setUint8(offset++, config.iidx_buttons_debounce);
+      configView.setUint8(offset++, config.iidx_effectors_debounce);
       configView.setUint8(offset++, config.sdvx_buttons_debounce);
     }
 
@@ -455,13 +462,12 @@ export async function updateConfig(config: Config): Promise<void> {
     const pending = writeQueue.then(async () => {
       if (device !== appState.device) throw new Error('Device changed while saving settings');
       if (lastConfigDevice === device && samePacket(lastConfigPacket, data)) return;
-      await device.sendFeatureReport(ReportId.Config, data);
+      await withTimeout(device.sendFeatureReport(ReportId.Config, data), 2000, 'Config write');
       if (device === appState.device) {
         lastConfigPacket = data.slice();
         lastConfigDevice = device;
       }
     });
-    latestWrite = pending;
     writeQueue = pending.catch(() => {});
     await pending;
   } catch (err) {

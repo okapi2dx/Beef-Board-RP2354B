@@ -6,6 +6,8 @@
 
 # Local firmware build directories
 firmware/build/
+firmware/build-codex/
+firmware/build-output/
 **/node_modules/
 configurator/beef-config/.svelte-kit/
 configurator/beef-config/build/

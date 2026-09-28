@@ -11,6 +11,16 @@ import {
   type BoardInfo
 } from '$lib/types/board';
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); }
+    );
+  });
+}
+
 export enum ReportId {
   Config = 1,
   Command = 2,
@@ -90,7 +100,11 @@ export async function readBoardInfo(device: HIDDevice): Promise<BoardInfo> {
   // devices when the Entry/Premium USB identity is shared.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const result = await device.receiveFeatureReport(ReportId.BoardInfo);
+      const result = await withTimeout(
+        device.receiveFeatureReport(ReportId.BoardInfo),
+        750,
+        'Board info report'
+      );
 
       // WebHID normally returns only the report payload. Accept an older
       // Chromium/Electron layout with the report ID byte included as well.
@@ -110,6 +124,20 @@ export async function readBoardInfo(device: HIDDevice): Promise<BoardInfo> {
     if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 80));
   }
 
+  // Windows can reject Board Info on the shared IIDX VID/PID. The current RP
+  // config report has 139 payload bytes, while AT90 has 138, so the config
+  // interface still identifies the board without relying on that report.
+  if (device.vendorId === 0x1ccf) {
+    try {
+      const report = await withTimeout(device.receiveFeatureReport(ReportId.Config), 1500, 'Config report');
+      // A 139-byte response is ambiguous: it is either RP's 139-byte
+      // payload or AT90's 138-byte payload prefixed by report ID 1.
+      const payload = featureReportPayload(report, ReportId.Config);
+      if (payload.byteLength === 139) {
+        return { ...inferBoardInfo({ vendorId: RP2354B_BEEF_VENDOR_ID, productId: RP2354B_BEEF_PRODUCT_ID }), source: 'config-report' };
+      }
+    } catch { /* Legacy firmware may not expose the newer config length. */ }
+  }
   return fallback;
 }
 
@@ -118,22 +146,24 @@ export type ReconnectIdentity = HidDeviceIdentity | HidDeviceIdentity[];
 
 async function openVerifiedConfigDevice(
   devices: HIDDevice[],
-  expectedIdentities?: HidDeviceIdentity[]
+  expectedIdentities?: HidDeviceIdentity[],
+  previousDevice?: HIDDevice | null
 ): Promise<HIDDevice | null> {
   for (const device of devices.filter((candidate) =>
+    candidate !== previousDevice &&
     isBeefDevice(candidate) &&
     (!expectedIdentities || expectedIdentities.some(identity =>
       candidate.vendorId === identity.vendorId && candidate.productId === identity.productId))
   )) {
     try {
-      if (!device.opened) await device.open();
-      await device.receiveFeatureReport(ReportId.Config);
-      if (isUnsupportedBoard(await readBoardInfo(device))) {
+      if (!device.opened) await withTimeout(device.open(), 1500, 'HID open');
+      await withTimeout(device.receiveFeatureReport(ReportId.Config), 1500, 'Config report');
+      if (isUnsupportedBoard(await withTimeout(readBoardInfo(device), 3000, 'Board detection'))) {
         throw new Error('Unsupported board');
       }
       return device;
     } catch {
-      try { await device.close(); } catch { /* Try the next authorized interface. */ }
+      try { await withTimeout(device.close(), 750, 'HID close'); } catch { /* Try the next authorized interface. */ }
     }
   }
   return null;
@@ -141,7 +171,8 @@ async function openVerifiedConfigDevice(
 
 export async function waitForReconnection(
   timeoutMs = 15000,
-  expectedIdentity?: ReconnectIdentity
+  expectedIdentity?: ReconnectIdentity,
+  previousDevice: HIDDevice | null = appState.device
 ): Promise<void> {
   await onDisconnect();
   const expectedIdentities = expectedIdentity
@@ -151,11 +182,19 @@ export async function waitForReconnection(
   let nextPermissionRequestAt = Date.now() + 1500;
   let permissionRequestAttempts = 0;
   let lastPermissionError: unknown;
+  let lastDiscoveryError: unknown;
   let lastAuthorizedCount = 0;
   while (Date.now() < deadline) {
-    const authorizedDevices = await navigator.hid.getDevices();
+    let authorizedDevices: HIDDevice[];
+    try {
+      authorizedDevices = await withTimeout(navigator.hid.getDevices(), 1500, 'HID discovery');
+    } catch (err) {
+      lastDiscoveryError = err;
+      await new Promise(resolve => setTimeout(resolve, 250));
+      continue;
+    }
     lastAuthorizedCount = authorizedDevices.length;
-    let selectedDevice = await openVerifiedConfigDevice(authorizedDevices, expectedIdentities);
+    let selectedDevice = await openVerifiedConfigDevice(authorizedDevices, expectedIdentities, previousDevice);
     // Changing controller mode also changes VID/PID. Chromium may therefore
     // treat the restarted board as a new WebHID identity even though Electron's
     // device policy allows it. Retry discovery while USB enumeration settles;
@@ -165,11 +204,13 @@ export async function waitForReconnection(
       try {
         if (expectedIdentities?.length) {
           const identity = expectedIdentities[(permissionRequestAttempts - 1) % expectedIdentities.length];
-          await window.beefNative.authorizeHidIdentity(identity);
-          selectedDevice = await openVerifiedConfigDevice(await navigator.hid.getDevices(), expectedIdentities);
+          await withTimeout(window.beefNative.authorizeHidIdentity(identity), 2500, 'HID authorization');
+          selectedDevice = await openVerifiedConfigDevice(
+            await withTimeout(navigator.hid.getDevices(), 1500, 'HID discovery'), expectedIdentities, previousDevice);
         } else {
           selectedDevice = await openVerifiedConfigDevice(
-            await navigator.hid.requestDevice({ filters: beefHidFilters }));
+            await withTimeout(navigator.hid.requestDevice({ filters: beefHidFilters }), 2500, 'HID authorization'),
+            undefined, previousDevice);
         }
       } catch (err) {
         // A mode change re-enumerates USB asynchronously. Retry while the
@@ -192,7 +233,8 @@ export async function waitForReconnection(
     ? ` expected ${expectedIdentities.map(id => `0x${id.vendorId.toString(16)}:0x${id.productId.toString(16)}`).join(' or ')};`
     : '';
   const reason = lastPermissionError ? ` permission error: ${lastPermissionError};` : '';
-  throw new Error(`Controller restarted, but automatic reconnection timed out (${identity} authorized devices: ${lastAuthorizedCount}; permission attempts: ${permissionRequestAttempts};${reason})`);
+  const discovery = lastDiscoveryError ? ` discovery error: ${lastDiscoveryError};` : '';
+  throw new Error(`Controller restarted, but automatic reconnection timed out (${identity} authorized devices: ${lastAuthorizedCount}; permission attempts: ${permissionRequestAttempts};${reason}${discovery})`);
 }
 
 export async function restartAndWaitForReconnection(
@@ -202,40 +244,24 @@ export async function restartAndWaitForReconnection(
   const oldDevice = appState.device;
   if (!oldDevice) throw new Error('Device not connected');
 
-  let lastSendError: unknown;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (appState.device !== oldDevice) break;
-    try {
-      await sendCommand(Command.Restart);
-    } catch (err) {
-      // A successful restart can disconnect USB before SET_REPORT resolves.
-      lastSendError = err;
-    }
-
-    const disconnectDeadline = Date.now() + 1800;
-    while (Date.now() < disconnectDeadline && appState.device === oldDevice) {
-      const devices = await navigator.hid.getDevices();
-      if (!devices.some(device =>
-        device.vendorId === oldDevice.vendorId &&
-        device.productId === oldDevice.productId && hasConfigCollection(device))) break;
-      await new Promise(resolve => setTimeout(resolve, 150));
-    }
-    if (appState.device !== oldDevice) break;
-    const devices = await navigator.hid.getDevices();
-    if (!devices.some(device =>
-      device.vendorId === oldDevice.vendorId &&
-      device.productId === oldDevice.productId && hasConfigCollection(device))) break;
+  let sendError: unknown;
+  try {
+    await sendCommand(Command.Restart);
+  } catch (err) {
+    sendError = err;
+    // A successful restart can tear down the USB interface before Chromium
+    // resolves SET_REPORT. Continue into reconnection detection instead of
+    // treating the send error as proof that the restart failed.
   }
 
-  if (appState.device === oldDevice) {
-    const devices = await navigator.hid.getDevices();
-    if (devices.some(device =>
-      device.vendorId === oldDevice.vendorId &&
-      device.productId === oldDevice.productId && hasConfigCollection(device))) {
-      throw new Error(`Controller did not restart${lastSendError ? `: ${lastSendError}` : ''}`);
-    }
+  // navigator.hid.getDevices() contains authorized devices, and Windows can
+  // keep the old USB identity in that list briefly after re-enumeration. Do
+  // not use presence of the old identity as a restart-failure signal.
+  try {
+    await waitForReconnection(timeoutMs, expectedIdentity, oldDevice);
+  } catch (err) {
+    throw new Error(`${err}${sendError ? `; restart command: ${sendError}` : ''}`);
   }
-  await waitForReconnection(timeoutMs, expectedIdentity);
 }
 
 export async function detectAuthorizedDevice(): Promise<HIDDevice | null> {
@@ -286,11 +312,26 @@ export async function sendCommand(command: Command): Promise<void> {
   try {
     const device = appState.device;
     const { flushPendingConfigWrites } = await import('$lib/types/config.svelte');
-    await flushPendingConfigWrites();
+    await withTimeout(flushPendingConfigWrites(), 2000, 'Pending config write');
+    if (device !== appState.device) throw new Error('Device changed before command');
+    // On AT90, SET_REPORT can acknowledge the config write before the MCU has
+    // finished updating EEPROM. A readback is serviced only after that work
+    // completes; sending Restart immediately can fail while USB is busy.
+    let ready = false;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        await withTimeout(device.receiveFeatureReport(ReportId.Config), 1200, 'Config readback');
+        ready = true;
+        break;
+      } catch {
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+    }
+    if (!ready) throw new Error('Controller did not finish saving settings');
     if (device !== appState.device) throw new Error('Device changed before command');
     const commandData = new Uint8Array([command]);
-    await device.sendFeatureReport(ReportId.Command, commandData);
+    await withTimeout(device.sendFeatureReport(ReportId.Command, commandData), 1500, 'Command report');
   } catch (err) {
-    throw new Error('Failed to send command', { cause: err });
+    throw new Error(`Failed to send command: ${err}`, { cause: err });
   }
 }

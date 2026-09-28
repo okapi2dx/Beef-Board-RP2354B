@@ -5,12 +5,14 @@
 #include <stdio.h>
 #include "beef_runtime.h"
 #include "beef_lighting.h"
+#include "button_debounce.h"
 typedef unsigned uint;
 static uint8_t cfg[139];
 static const uint8_t *beef_config_store_data(void){return cfg;}
 static beef_turntable_t turntable;
 static beef_lighting_t lighting;
 static uint16_t stable_buttons,logical_buttons,pending_tt_buttons,host_led_buttons;
+static uint16_t reported_buttons;
 static uint8_t previous_input_mode=0xff;
 static bool host_lighting_seen,led_active[11],led_fading[11];
 static uint32_t host_lighting_ms,led_released_ms[11];
@@ -19,6 +21,7 @@ static uint8_t host_tt_rgb[3],host_center_rgb[3];
 static beef_rgb_t ring_pixels[255],bar_pixels[255];
 static uint32_t ring_words[255],bar_words[255];
 static uint8_t previous_tt_count,previous_bar_count;
+static uint8_t uart_bar_pairs;
 static uint32_t rgb_last_frame,rgb_dma_done_us,fake_us;
 static bool rgb_transmitting,rgb_latching,dma_busy,usb_ready;
 static int dma_tt=0,dma_bar=1;

@@ -28,6 +28,7 @@ namespace IIDX {
   AnalogTurntable analog_turntable;
   TurntableGate turntable_gate;
   uint8_t delayed_position = 0;
+  int8_t latest_tt_report = 0;
 
   uint32_t current_milliseconds() {
     uint32_t now;
@@ -99,6 +100,9 @@ namespace IIDX {
         HID_Device_USBTask(&keyboard_hid_report.HID_Interface);
         break;
     }
+    // WS2812 output can block the CPU longer than one USB poll interval.
+    // Queue the current input report before spending time on LED output.
+    RgbManager::update(latest_tt_report, led_data);
   }
 
   void UsbHandler::update(const config &config) {
@@ -132,7 +136,7 @@ namespace IIDX {
     }
 
     update_button_lighting(led_data.buttons);
-    RgbManager::update(tt1_report, led_data);
+    latest_tt_report = tt1_report;
   }
 
   void UsbHandler::config_update(const config &new_config) {

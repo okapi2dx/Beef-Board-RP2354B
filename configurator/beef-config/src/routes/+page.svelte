@@ -71,6 +71,18 @@
 
 	async function resetConfiguration(): Promise<void> {
 		if (appState.connecting) return;
+		const deviceBeforeReset = appState.device;
+		const reconnectIdentities = deviceBeforeReset
+			? [
+				{ vendorId: deviceBeforeReset.vendorId, productId: deviceBeforeReset.productId },
+				// ResetConfig restores controller mode to Default. When the board is
+				// currently using an IIDX VID/PID, Board Info can be unavailable on
+				// Windows, so appState.boardInfo may have fallen back to AT90 even for
+				// an RP2354B. Accept both supported default identities after reset.
+				{ vendorId: 0xfeed, productId: 0x0000 },
+				{ vendorId: RP2354B_BEEF_VENDOR_ID, productId: RP2354B_BEEF_PRODUCT_ID }
+			]
+			: undefined;
 		// Dismiss the confirmation immediately; USB reset/re-enumeration can take
 		// several seconds and must not keep the modal open while it completes.
 		resetDialogOpen = false;
@@ -83,7 +95,7 @@
 				// Reset reboots USB immediately; the report can reject after the
 				// board has already accepted the command. Still wait for it to return.
 			}
-			await waitForReconnection(20000);
+			await waitForReconnection(20000, reconnectIdentities, deviceBeforeReset);
 		} catch (err) {
 			appState.error = `${tr('初期化後に基板へ再接続できませんでした', 'Could not reconnect to the board after reset')}: ${err}`;
 		} finally {
@@ -133,7 +145,7 @@
 </script>
 
 <main class="app-shell">
-	<title>Beef Board Configurator{appVersion ? ` ${formatDisplayVersion(appVersion)}` : ''}</title>
+	<title>Beef Board Configurator</title>
 	<div class="app-header">
 		<div class="header-title-row">
 			<h1 class="flex items-baseline gap-2 text-2xl font-bold">

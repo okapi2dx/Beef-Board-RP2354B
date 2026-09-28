@@ -13,6 +13,14 @@ class AppState {
 
 export const appState = new AppState();
 
+async function closeDeviceBestEffort(device: HIDDevice | null, timeoutMs = 750): Promise<void> {
+  if (!device) return;
+  await Promise.race([
+    device.close().catch(() => {}),
+    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs))
+  ]);
+}
+
 export async function onDisconnect(event?: HIDConnectionEvent): Promise<void> {
   // Ignore a late disconnect event from the old USB instance after a restart.
   // Otherwise it can tear down the newly re-enumerated/reconnected device.
@@ -22,7 +30,7 @@ export async function onDisconnect(event?: HIDConnectionEvent): Promise<void> {
   const device = appState.device;
   appState.device = null;
   appState.boardInfo = null;
-  try { await device?.close(); } catch { /* Device may already be unplugged. */ }
+  await closeDeviceBestEffort(device);
   appState.disableConfigTab = false;
   appState.error = undefined;
 }

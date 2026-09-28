@@ -1,0 +1,6 @@
+[submodule "firmware/at90usb1286/LUFA"]
+	path = firmware/at90usb1286/LUFA
+	url = https://github.com/abcminiuser/lufa.git
+[submodule "firmware/at90usb1286/FastLED"]
+	path = firmware/at90usb1286/FastLED
+	url = https://github.com/FastLED/FastLED.git

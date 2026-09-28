@@ -5,6 +5,10 @@ int main(void){
  usb_ready=false;send_controller_report();assert(pending_tt_buttons && report_count==0);
  usb_ready=true;send_controller_report();assert(report[0]==0x52 && pending_tt_buttons==0);
  send_controller_report();assert(report[0]==0);
+ stable_buttons=1;logical_buttons=1;usb_ready=false;
+ assert(!send_controller_report() && reported_buttons==0);
+ usb_ready=true;assert(send_controller_report() && reported_buttons==1);
+ stable_buttons=0;logical_buttons=0;assert(send_controller_report());
  cfg[32]=0;send_controller_report();assert(report_instance==BEEF_HID_INSTANCE_GAMEPAD);
  cfg[127]=4;stable_buttons=1;logical_buttons=controller_buttons();assert(logical_buttons==(1u<<4));
  update_diagnostics();assert(diagnostics.buttons==1); // No double remapping in UI.

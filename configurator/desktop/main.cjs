@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const { pathToFileURL } = require('node:url');
 const { ORIGIN, trusted, allowedDevice } = require('./policy.cjs');
+const { waitForHidDevice } = require('./hid-chooser.cjs');
 const { createFlasher } = require('./native-flash.cjs');
 const { checkForUpdate } = require('./update-check.cjs');
 
@@ -65,14 +66,6 @@ if (!hasInstanceLock) {
   });
 }
 app.on('window-all-closed', () => app.quit());
-
-function formatDisplayVersion(version) {
-  const match = /^(\d+)\.(\d+)(?:\.(\d+))?$/.exec(String(version).trim());
-  if (!match) return String(version);
-  const [, major, minor, patch = '0'] = match;
-  const base = `V${major}.${minor.padStart(2, '0')}`;
-  return Number(patch) === 0 ? base : `${base}.${Number(patch)}`;
-}
 
 async function loadUiWithRetry(targetUrl, attempts = 3) {
   let lastError;
@@ -169,9 +162,12 @@ async function start() {
           message: 'DFU機器が見つかりません。起動モードとWinUSBドライバーを確認して、再接続してください。' });
         return;
       }
-      // HID reconnection can request the new USB identity before Windows has
-      // finished enumerating it. Return an empty selection immediately so the
-      // renderer can keep polling instead of interrupting the wait with a dialog.
+      // The new VID/PID may appear after requestDevice starts. Keep this HID
+      // chooser alive briefly so Electron can deliver hid-device-added.
+      if (!devices.length && type === 'hid') {
+        waitForHidDevice(ses, callback, device => allowedDevice('hid', device));
+        return;
+      }
       if (!devices.length) return callback('');
       if (devices.length === 1) return callback(devices[0].deviceId);
       try {
@@ -184,7 +180,7 @@ async function start() {
   }
   startupLog('creating BrowserWindow');
   window = new BrowserWindow({ width: 980, height: 740, minWidth: 720, minHeight: 560, show: false,
-    title: `Beef Board Configurator ${formatDisplayVersion(app.getVersion())}`, autoHideMenuBar: true,
+    title: 'Beef Board Configurator', autoHideMenuBar: true,
     webPreferences: { session: ses, preload: path.join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true } });
 
   let rendererRecoveryCount = 0;

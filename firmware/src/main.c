@@ -18,6 +18,7 @@
 
 #include "beef_config_store.h"
 #include "beef_protocol.h"
+#include "button_debounce.h"
 
 #define CFG_DISABLE_LEDS              5u
 #define CFG_IIDX_INPUT_MODE          32u
@@ -39,7 +40,7 @@
 #define INPUT_MODE_KEYBOARD 1u
 
 
-#define BUTTON_COUNT 11u
+#define BUTTON_COUNT BEEF_BUTTON_COUNT
 #define B8_REMAP_VALUE 11u
 #define B8_LOGICAL_MASK (1u << 13)
 
@@ -77,11 +78,11 @@ static uint rgb_sm_tt;
 static uint rgb_sm_bar;
 static repeating_timer_t led_timer;
 
-static uint16_t raw_buttons;
 static uint16_t stable_buttons;
 static uint16_t logical_buttons;
-static uint16_t previous_raw_buttons;
-static uint32_t button_changed_ms[BUTTON_COUNT];
+static beef_button_debouncer_t button_debouncer;
+static uint8_t button_debounce_ms;
+static uint16_t reported_buttons;
 
 static volatile uint8_t encoder_prev;
 static volatile int32_t encoder_delta;
@@ -205,6 +206,20 @@ static void encoder_irq(uint gpio, uint32_t events) {
   }
 }
 
+static void input_gpio_irq(uint gpio, uint32_t events) {
+  if (gpio == 20u || gpio == 21u) {
+    encoder_irq(gpio, events);
+    return;
+  }
+  for (unsigned i = 0; i < BUTTON_COUNT; ++i) {
+    if (gpio == button_inputs[i]) {
+      beef_button_debouncer_edge(&button_debouncer, i, !gpio_get(gpio),
+                                  time_us_32(), button_debounce_ms);
+      return;
+    }
+  }
+}
+
 static bool led_pwm_tick(repeating_timer_t *timer) {
   (void)timer;
   uint8_t phase = (uint8_t)(led_pwm_phase + 1u);
@@ -235,7 +250,7 @@ static void controller_hardware_init(void) {
   gpio_set_function(23, GPIO_FUNC_UART);
   phoenixwan_uart_init();
   encoder_prev = (gpio_get(21) ? 1u : 0u) | (gpio_get(20) ? 2u : 0u);
-  gpio_set_irq_enabled_with_callback(21, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, encoder_irq);
+  gpio_set_irq_enabled_with_callback(21, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, input_gpio_irq);
   gpio_set_irq_enabled(20, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
   add_repeating_timer_us(-100, led_pwm_tick, NULL, &led_timer);
 }
@@ -250,30 +265,18 @@ static uint16_t sample_raw_buttons(void) {
   return state;
 }
 
-static void update_button_debounce(uint32_t now) {
-  uint8_t const *cfg = beef_config_store_data();
-  uint32_t debounce_ms = cfg[CFG_IIDX_BUTTONS_DEBOUNCE];
-
-  raw_buttons = sample_raw_buttons();
-
-  for (uint32_t i = 0; i < BUTTON_COUNT; ++i) {
-    uint16_t mask = (uint16_t)(1u << i);
-    bool raw = (raw_buttons & mask) != 0;
-    bool previous_raw = (previous_raw_buttons & mask) != 0;
-    bool stable = (stable_buttons & mask) != 0;
-
-    if (raw != previous_raw) {
-      button_changed_ms[i] = now;
-      if (raw) previous_raw_buttons |= mask;
-      else previous_raw_buttons &= (uint16_t)~mask;
-    }
-
-    if (raw != stable && (debounce_ms == 0u ||
-        (uint32_t)(now - button_changed_ms[i]) >= debounce_ms)) {
-      if (raw) stable_buttons |= mask;
-      else stable_buttons &= (uint16_t)~mask;
-    }
+static void refresh_button_debounce(void) {
+  uint8_t const window = beef_config_store_data()[CFG_IIDX_BUTTONS_DEBOUNCE];
+  uint32_t const irq = save_and_disable_interrupts();
+  if (window != button_debounce_ms) {
+    button_debounce_ms = window;
+    button_debouncer.cooling = 0;
+    button_debouncer.pending_release = 0;
+    button_debouncer.accepted = button_debouncer.raw;
   }
+  beef_button_debouncer_tick(&button_debouncer, time_us_32(), window);
+  stable_buttons = button_debouncer.accepted;
+  restore_interrupts(irq);
 }
 
 static uint16_t remap_buttons(uint16_t physical) {
@@ -395,8 +398,8 @@ static void update_diagnostics(void) {
   beef_protocol_set_diagnostics((uint8_t const *)&diagnostics);
 }
 
-static void send_controller_report(void) {
-  if (!tud_mounted()) return;
+static bool send_controller_report(void) {
+  if (!tud_mounted()) return false;
 
   uint8_t const *cfg = beef_config_store_data();
   uint8_t mode = cfg[CFG_IIDX_INPUT_MODE];
@@ -422,7 +425,7 @@ static void send_controller_report(void) {
       }
     }
 
-    if (!released) return;
+    if (!released) return false;
     previous_input_mode = mode;
   }
 
@@ -431,7 +434,11 @@ static void send_controller_report(void) {
     beef_keyboard_report(cfg, logical_buttons | pending_tt_buttons, keys);
 
     if (tud_hid_n_ready(BEEF_HID_INSTANCE_KEYBOARD)) {
-      if (tud_hid_n_report(BEEF_HID_INSTANCE_KEYBOARD, 0, keys, sizeof(keys))) pending_tt_buttons=0;
+      if (tud_hid_n_report(BEEF_HID_INSTANCE_KEYBOARD, 0, keys, sizeof(keys))) {
+        pending_tt_buttons=0;
+        reported_buttons=stable_buttons;
+        return true;
+      }
     }
   } else {
     uint16_t lower = logical_buttons & 0x007fu;
@@ -446,9 +453,14 @@ static void send_controller_report(void) {
       .buttons = iidx_buttons
     };
     if (tud_hid_n_ready(BEEF_HID_INSTANCE_GAMEPAD)) {
-      if (tud_hid_n_report(BEEF_HID_INSTANCE_GAMEPAD, 0, &report, sizeof(report))) pending_tt_buttons=0;
+      if (tud_hid_n_report(BEEF_HID_INSTANCE_GAMEPAD, 0, &report, sizeof(report))) {
+        pending_tt_buttons=0;
+        reported_buttons=stable_buttons;
+        return true;
+      }
     }
   }
+  return false;
 }
 
 uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id,
@@ -486,9 +498,22 @@ int main(void) {
   controller_hardware_init();
   beef_protocol_init();
 
-  raw_buttons = sample_raw_buttons();
-  stable_buttons = raw_buttons;
-  previous_raw_buttons = raw_buttons;
+  uint32_t const setup_irq = save_and_disable_interrupts();
+  stable_buttons = sample_raw_buttons();
+  beef_button_debouncer_init(&button_debouncer, stable_buttons);
+  button_debounce_ms = beef_config_store_data()[CFG_IIDX_BUTTONS_DEBOUNCE];
+  reported_buttons = stable_buttons;
+  for (unsigned i = 0; i < BUTTON_COUNT; ++i)
+    gpio_set_irq_enabled(button_inputs[i], GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
+  // Capture a change that happened between the initial read and IRQ enable.
+  uint16_t const initial_buttons = sample_raw_buttons();
+  for (unsigned i = 0; i < BUTTON_COUNT; ++i)
+    beef_button_debouncer_edge(&button_debouncer, i,
+                               (initial_buttons & (1u << i)) != 0,
+                               time_us_32(), button_debounce_ms);
+  stable_buttons = button_debouncer.accepted;
+  reported_buttons = stable_buttons;
+  restore_interrupts(setup_irq);
   logical_buttons = remap_buttons(stable_buttons);
 
   tusb_rhport_init_t dev_init = {.role = TUSB_ROLE_DEVICE, .speed = TUSB_SPEED_AUTO};
@@ -498,6 +523,11 @@ int main(void) {
 
   while (1) {
     tud_task();
+    refresh_button_debounce();
+    if (stable_buttons != reported_buttons) {
+      logical_buttons = controller_buttons();
+      (void)send_controller_report();
+    }
     beef_protocol_task();
 
     uint32_t now = to_ms_since_boot(get_absolute_time());
@@ -513,7 +543,7 @@ int main(void) {
     if (now != last_scan_ms) {
       last_scan_ms = now;
 
-      update_button_debounce(now);
+      refresh_button_debounce();
       process_turntable(now);
       logical_buttons = controller_buttons();
       update_button_leds(now);

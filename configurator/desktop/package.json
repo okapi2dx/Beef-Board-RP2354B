@@ -8,7 +8,7 @@
   "scripts": {
     "build:ui": "npm --prefix ../beef-config run sync && node ../beef-config/build-desktop.mjs",
     "start": "electron .",
-    "test": "node --test policy.test.cjs firmware.test.cjs native-flash.test.cjs update-check.test.cjs",
+    "test": "node --test policy.test.cjs firmware.test.cjs native-flash.test.cjs update-check.test.cjs hid-chooser.test.cjs",
     "dist": "npm run build:ui && electron-builder --win portable --x64",
     "version:sync": "node ../scripts/sync-version.mjs",
     "version:check": "node ../scripts/sync-version.mjs --check",
@@ -24,6 +24,7 @@
     "files": [
       "main.cjs",
       "policy.cjs",
+      "hid-chooser.cjs",
       "native-flash.cjs",
       "update-check.cjs",
       "preload.cjs",

@@ -11,7 +11,7 @@ This is native RP2354B firmware built with the Pico SDK. It preserves the Beef B
 
 ## Implemented
 
-- 11 button inputs with the original debounce, button mapping, keyboard/joystick HID reports and diagnostics.
+- 11 button inputs with GPIO interrupt sampling and immediate first-press detection. A release inside the configured debounce window is held until the window ends, preventing contact bounce from losing a held press; later releases are immediate. Button mapping, keyboard/joystick HID reports and diagnostics remain supported.
 - 11 button LED outputs with the original brightness, fade and host-lighting logic. Software PWM runs at 100 Hz.
 - Encoder 1 turntable handling on GP21/GP20. Encoder 2 pins GP3/GP2 are initialized but have no behavior in the original firmware either.
 - Two WS2812 outputs on GP1/GP0, using PIO and nonblocking DMA, with 1–255 LEDs on each output. J42 (UART A, GP18/GP19) drives a Phoenixwan turntable ring and J43 (UART B, GP22/GP23) drives a Phoenixwan center bar at 115200 baud.
@@ -44,6 +44,8 @@ cmake --build build --target beef_board_rp2354b
 
 The CMake configuration targets the RP2350B pinout, Arm core and 2 MB flash size. The output UF2 is `build/beef_board_rp2354b.uf2`.
 
+The checked-in UF2 and ELF include the GPIO interrupt and debounce changes. Measuring physical input latency still requires a board and host.
+
 ## Flashing and current limits
 
 For first flashing, short J61 (BOOTSEL to GND), reset the board through J60 or reconnect power, then remove the J61 short after the ROM USB drive appears. Copy the UF2 to that drive. Use the USB device connector J1.
@@ -75,4 +77,4 @@ It covers the production input/lighting/storage logic and extracted hardware-ada
 
 These checks do not replace physical-board validation of USB enumeration, GPIO/encoder signals, WS2812 timing and persistent settings after an actual power cycle. Update both the UF2 and Configurator to use this revision together.
 
-The V1.00 validation run also passed Svelte type checking, web/desktop builds, all app regression suites, 11 desktop unit tests, and headless UI checks for turntable feedback, button mapping, interrupt diagnostics and RP2354B settings/UF2/BOOTSEL. The packaged Electron app started successfully and served the exact matching UF2 through its local protocol. UI checks use mocked HID devices and do not flash hardware.
+The V1.00 validation run also passed Svelte type checking, web/desktop builds, all app regression suites, 13 desktop unit tests, and headless UI checks for turntable feedback, button mapping, interrupt diagnostics and RP2354B settings/UF2/BOOTSEL. The packaged Electron app started successfully and served the exact matching UF2 through its local protocol. UI checks use mocked HID devices and do not flash hardware.

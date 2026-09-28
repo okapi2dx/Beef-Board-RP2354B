@@ -34,7 +34,7 @@ export type BoardInfo = {
   hardwareRevision: string | null;
   capabilities: number;
   bootloader: BootloaderType;
-  source: 'board-info-report' | 'usb-identity';
+  source: 'board-info-report' | 'config-report' | 'usb-identity';
 };
 
 export const BOARD_INFO_MAGIC = [0x42, 0x45, 0x45, 0x46] as const; // "BEEF"

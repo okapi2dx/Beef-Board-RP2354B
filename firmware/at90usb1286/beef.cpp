@@ -60,6 +60,15 @@ ISR(TIMER1_COMPA_vect) {
   milliseconds++;
 }
 
+static uint16_t sample_physical_buttons() {
+  uint16_t state = 0;
+  for (uint8_t i = 0; i < BUTTONS; ++i) {
+    const bool pressed = ~*buttons[i].INPUT_PORT.PIN & (1 << buttons[i].input_pin);
+    state |= uint16_t(pressed) << i;
+  }
+  return state;
+}
+
 void application_jump_check() {
   // Check if the reset source was from the watchdog
   // and if we received a command/button combo to reset to bootloader
@@ -371,12 +380,10 @@ void set_hid_standby_lighting() {
 }
 
 void process_buttons() {
-  button_state = 0;
-  for (uint8_t i = 0; i < BUTTONS; i++) {
-    process_button(buttons[i].INPUT_PORT.PIN,
-                   i,
-                   buttons[i].input_pin);
-  }
+  // Sample every physical input in one pass on every main-loop iteration.
+  // B1-B7 therefore use exactly the same low-latency input path regardless
+  // of which AVR port each switch is wired to.
+  button_state = sample_physical_buttons();
 
   // Ignore button inputs after startup
   ignore_buttons = ignore_buttons && button_state;
