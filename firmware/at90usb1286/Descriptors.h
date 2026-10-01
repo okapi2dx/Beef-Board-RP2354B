@@ -156,7 +156,8 @@ enum {
   HID_REPORTID_Command = 0x02,
   HID_REPORTID_FirmwareVersion = 0x03,
   HID_REPORTID_Diagnostics = 0x04,
-  HID_REPORTID_DiagnosticsStream = 0x05
+  HID_REPORTID_DiagnosticsStream = 0x05,
+  HID_REPORTID_ChatterCounts = 0x07
 };
 
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM KeyboardHIDReport[] = {
@@ -228,6 +229,12 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM ConfigHIDReport[] {
     HID_RI_REPORT_ID(8, HID_REPORTID_DiagnosticsStream),
     HID_RI_USAGE(8, 0x05),
     HID_RI_REPORT_COUNT(8, sizeof(diagnostics_report)),
+    HID_RI_REPORT_SIZE(8, 0x08),
+    HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+
+    HID_RI_REPORT_ID(8, HID_REPORTID_ChatterCounts),
+    HID_RI_USAGE(8, 0x07),
+    HID_RI_REPORT_COUNT(8, sizeof(chatter_counts_report)),
     HID_RI_REPORT_SIZE(8, 0x08),
     HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
   HID_RI_END_COLLECTION(0)

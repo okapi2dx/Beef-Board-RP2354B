@@ -17,7 +17,7 @@ try {
  let source=await readFile(new URL('./src/lib/types/hid.ts',import.meta.url),'utf8');
  source=source.replace("import { appState, onDisconnect } from '$lib/types/state.svelte';",'const appState=globalThis.__hidState; const onDisconnect=async()=>{appState.device=null;};')
   .replace('$lib/types/feature-report',feature).replace('$lib/types/board',board);
- const {waitForReconnection,readBoardInfo,readDiagnostics,readFirmwareInfo,parseDiagnostics}=await import(await moduleFile('hid',source));
+ const {waitForReconnection,readBoardInfo,readDiagnostics,readFirmwareInfo,parseDiagnostics,parseChatterCounts}=await import(await moduleFile('hid',source));
  const info=Uint8Array.from([0x42,0x45,0x45,0x46,1,3,2,0,63,0,4]);
  const device={vendorId:0x1ccf,productId:0x1018,productName:'BEEF BOARD',opened:true,
   collections:[{usagePage:0xffeb,usage:1}], receiveFeatureReport:async id=>new DataView((id===6?info:new Uint8Array(139)).buffer)};
@@ -124,6 +124,54 @@ try {
   assert.equal((await readFirmwareInfo()).version,null);
  }
  assert.deepEqual(parseDiagnostics(new DataView(new Uint8Array(13).buffer)).ledLevels,[]);
+ const chatterDiagnostics=new Uint8Array(62);
+ chatterDiagnostics[24]=0x34;chatterDiagnostics[25]=0x12;
+ chatterDiagnostics[48]=5;chatterDiagnostics[50]=0x80;
+ for(const prefix of [false,true]) {
+  state.device={receiveFeatureReport:async()=>new DataView((prefix?Uint8Array.from([4,...chatterDiagnostics]):chatterDiagnostics).buffer)};
+  const report=await readDiagnostics();
+  assert.equal(report.chatterEdges.length,11);
+  assert.equal(report.chatterEdges[0],0x1234);
+  assert.equal(report.edgeSequence,5);
+  assert.equal(report.edgeEvents[0],0x80);
+ }
+ const extendedDiagnostics=new Uint8Array(60);
+ const extendedView=new DataView(extendedDiagnostics.buffer);
+ extendedView.setUint16(24,0x1234,true);
+ extendedView.setUint16(38,7,true);
+ extendedView.setUint16(40,5,true);
+ extendedDiagnostics[42]=0x80;
+ extendedView.setUint16(43,9999,true);
+ for(const prefix of [false,true]) {
+  state.device={receiveFeatureReport:async()=>new DataView((prefix?Uint8Array.from([4,...extendedDiagnostics]):extendedDiagnostics).buffer)};
+  const report=await readDiagnostics();
+  assert.equal(report.chatterEdges.length,7);
+  assert.equal(report.chatterEdges[0],0x1234);
+  assert.equal(report.rawButtons,7);
+  assert.equal(report.edgeSequence,5);
+  assert.equal(report.edgeEvents[0],0x80);
+  assert.equal(report.edgeEvents[1] | (report.edgeEvents[2]<<8),9999);
+ }
+ {
+  const packet = new DataView(new ArrayBuffer(60));
+  packet.setUint16(43,0xc002,true);
+  packet.setUint16(46,0x4002,true);
+  packet.setUint16(49,2,true);
+  const parsed=parseDiagnostics(packet);
+  assert.deepEqual(parsed.edgeDetected.slice(0,3),[true,false,undefined]);
+  for(const slot of [0,3,6]) assert.equal(parsed.edgeEvents[slot+1] | parsed.edgeEvents[slot+2]<<8,2);
+ }
+ assert.deepEqual(parseDiagnostics(new DataView(new Uint8Array(24).buffer)).chatterEdges,[]);
+ const counterBytes=new Uint8Array(28);
+ const counterView=new DataView(counterBytes.buffer);
+ counterView.setUint16(0,1234,true);counterView.setUint16(14,12,true);
+ assert.equal(parseChatterCounts(counterView).edges[0],1234);
+ assert.equal(parseChatterCounts(counterView).detected[0],12);
+ const paddedCounterBytes=new Uint8Array(60);
+ paddedCounterBytes.set(counterBytes);
+ assert.equal(parseChatterCounts(new DataView(paddedCounterBytes.buffer)).edges[0],1234);
+ assert.equal(parseChatterCounts(new DataView(paddedCounterBytes.buffer)).detected[0],12);
+ assert.throws(()=>parseChatterCounts(new DataView(new Uint8Array(27).buffer)));
  console.log('PASS: delayed USB identity permission/reconnect; diagnostic/version layouts; legacy LED telemetry');
 } finally {
  Date.now=originalNow;globalThis.setTimeout=originalTimer;globalThis.window=originalWindow;

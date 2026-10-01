@@ -24,6 +24,25 @@ int main(void){
  for(unsigned i=0;i<100;i++){c[6]=i;assert(beef_config_store_write(c));beef_config_store_init();assert(beef_config_store_data()[6]==i);}
  c[80]=0;assert(!beef_config_store_stage(c));assert(beef_config_store_data()[80]==24);
  assert(beef_config_store_reset());beef_config_store_init();assert(beef_config_store_data()[6]==0);
+ // v36 millisecond settings migrate to v41 tenths without changing duration.
+ memcpy(c,beef_config_store_data(),sizeof(c));c[0]=36;c[48]=3;c[64]=7;
+ assert(beef_config_store_write(c));beef_config_store_init();
+ assert(beef_config_store_data()[0]==41 && beef_config_store_data()[48]==30 && beef_config_store_data()[64]==70);
+ memcpy(c,beef_config_store_data(),sizeof(c));c[0]=37;c[48]=17;c[64]=1;
+ assert(beef_config_store_write(c));beef_config_store_init();
+ assert(beef_config_store_data()[0]==41 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
+ memcpy(c,beef_config_store_data(),sizeof(c));c[0]=38;
+ assert(beef_config_store_write(c));beef_config_store_init();
+ assert(beef_config_store_data()[0]==41 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
+ memcpy(c,beef_config_store_data(),sizeof(c));c[0]=39;
+ assert(beef_config_store_write(c));beef_config_store_init();
+ assert(beef_config_store_data()[0]==41 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
+ memcpy(c,beef_config_store_data(),sizeof(c));c[0]=40;
+ assert(beef_config_store_write(c));beef_config_store_init();assert(beef_config_store_data()[0]==41);
+ memcpy(c,beef_config_store_data(),sizeof(c));c[48]=1;c[64]=159;
+ assert(beef_config_store_write(c));beef_config_store_init();
+ assert(beef_config_store_data()[48]==1 && beef_config_store_data()[64]==159);
+ c[48]=161;assert(!beef_config_store_stage(c));
  // Existing releases used the last sector only. Import that format in place.
  memset(fake_flash,255,sizeof(fake_flash));config_record_t rec;
  memset(&rec,255,sizeof(rec));rec.magic=CONFIG_FLASH_MAGIC;rec.format=CONFIG_FLASH_FORMAT;

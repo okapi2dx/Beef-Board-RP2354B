@@ -15,6 +15,7 @@
 	import ToolTipLabel from '$lib/ToolTipLabel.svelte';
 	import TurntableTest from '$lib/TurntableTest.svelte';
 	import ControllerMonitor from '$lib/ControllerMonitor.svelte';
+	import ChatterTest from '$lib/ChatterTest.svelte';
 
 import { readConfig, updateConfig, type Config } from '$lib/types/config.svelte';
 import { restartAndWaitForReconnection } from '$lib/types/hid';
@@ -110,11 +111,12 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 
 <Tabs.Root bind:value={settingsTab}>
   {#if showTabs}
-  <Tabs.List class="mb-5 grid h-auto w-full grid-cols-4" aria-label={tr('設定カテゴリ', 'Settings categories')}>
+  <Tabs.List class="mb-5 grid h-auto w-full grid-cols-5" aria-label={tr('設定カテゴリ', 'Settings categories')}>
     <Tabs.Trigger value="input">{tr('入力設定', 'Input')}</Tabs.Trigger>
     <Tabs.Trigger value="led">{tr('LED設定', 'LEDs')}</Tabs.Trigger>
     <Tabs.Trigger value="keys">{tr('キー割り当て', 'Key Bindings')}</Tabs.Trigger>
     <Tabs.Trigger value="monitor">{tr('モニター', 'Monitor')}</Tabs.Trigger>
+    <Tabs.Trigger value="chatter">{tr('チャタリングテスト', 'Chatter Test')}</Tabs.Trigger>
   </Tabs.List>
   {/if}
   <Tabs.Content value="input" class="settings-card">
@@ -226,7 +228,7 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 				streaming={config.version >= 30}
 			/>
 
-			{#if config.version >= 15}
+			{#if config.version >= 15 && config.version < 34}
 				<Separator class="mb-4" />
 
 				<h3 class="mb-2 text-xl font-bold">{tr('チャタリング防止', 'Debouncing')}</h3>
@@ -411,6 +413,7 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 	{/if}
 </Tabs.Content>
   <Tabs.Content value="monitor" class="settings-card"><ControllerMonitor {config} active={active && settingsTab === 'monitor'} /></Tabs.Content>
+  <Tabs.Content value="chatter" class="settings-card chatter-card"><ChatterTest {config} active={active && settingsTab === 'chatter'} /></Tabs.Content>
 </Tabs.Root>
 
 {/if}
@@ -421,5 +424,10 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
   :global(.settings-card h2), :global(.settings-card h3) { font-size: 1.125rem; margin-top: 0.75rem; margin-bottom: 0.75rem; }
   :global(.settings-card label) { line-height: 1.5; }
   :global(.keys-card) { padding-top: 0.75rem; padding-bottom: 0.9rem; }
+  :global(.chatter-card) { padding: 0.75rem; }
+  @media (max-height: 740px) { :global(.chatter-card) { padding: 0.4rem; } }
+  @media (max-height: 650px) { :global(.chatter-card) { padding: 0.1rem; } }
+  :global(.app-content:has(.chatter-card[data-state="active"]) > .flex.flex-col.gap-2) { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+  :global(.chatter-card[data-state="active"]) { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
 </style>
 

@@ -59,12 +59,13 @@ enum class TurntableCurve : uint8_t { Linear, Precision, Dynamic };
 // Key mapping structures
 struct IIDXKeyMapping {
   uint8_t key_codes[13];
-  uint8_t padding[7];
+  uint8_t button_debounce[7];
 };
 
 struct SDVXKeyMapping {
   uint8_t key_codes[9];
-  uint8_t padding[11];
+  uint8_t button_release_debounce[7];
+  uint8_t padding[4];
 };
 
 // Do not reorder these fields

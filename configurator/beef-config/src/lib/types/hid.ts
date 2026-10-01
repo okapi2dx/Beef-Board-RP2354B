@@ -27,7 +27,8 @@ export enum ReportId {
   FirmwareVersion = 3,
   Diagnostics = 4,
   DiagnosticsStream = 5,
-  BoardInfo = 6
+  BoardInfo = 6,
+  ChatterCounts = 7
 }
 
 export enum Command {
@@ -46,9 +47,27 @@ export type Diagnostics = {
   transitions: number;
   intervalMs: number;
   ledLevels: number[];
+  chatterEdges: number[];
+  rawButtons: number;
+  edgeSequence: number;
+  edgeEvents: number[];
+  edgeDetected?: (boolean | undefined)[];
 };
 
+export type ChatterCounts = { edges: number[]; detected: number[] };
+
+export function parseChatterCounts(data: DataView): ChatterCounts {
+  // Windows HID pads shorter reports on this interface to the longest input
+  // report (60 bytes). Only the first 28 bytes belong to report ID 7.
+  if (data.byteLength < 28) throw new Error('Invalid chatter counts report');
+  return {
+    edges: Array.from({ length: 7 }, (_, i) => data.getUint16(i * 2, true)),
+    detected: Array.from({ length: 7 }, (_, i) => data.getUint16(14 + i * 2, true)),
+  };
+}
+
 export function parseDiagnostics(data: DataView): Diagnostics {
+  const extended = data.byteLength === 60;
   return {
     buttons: data.getUint16(0, true), sensorAB: data.getUint8(2), raw: data.getUint8(3),
     filtered: data.getUint8(4), output: data.getUint8(5), direction: data.getInt8(6),
@@ -56,13 +75,24 @@ export function parseDiagnostics(data: DataView): Diagnostics {
     // v30+ appends the 11 PWM output levels. Keep older diagnostics packets
     // readable so the monitor can still connect before a firmware update.
     ledLevels: data.byteLength >= 24 ? Array.from({ length: 11 }, (_, i) => data.getUint8(13 + i)) : [],
+    chatterEdges: extended ? Array.from({ length: 7 }, (_, i) => data.getUint16(24 + i * 2, true))
+      : data.byteLength >= 46 ? Array.from({ length: 11 }, (_, i) => data.getUint16(24 + i * 2, true)) : [],
+    rawButtons: extended ? data.getUint16(38, true) : data.byteLength >= 48 ? data.getUint16(46, true) : data.getUint16(0, true),
+    edgeSequence: extended ? data.getUint16(40, true) : data.byteLength >= 62 ? data.getUint16(48, true) : 0,
+    // v38 packs six [state/button, interval low, interval high] records.
+    edgeDetected: extended ? Array.from({ length: 6 }, (_, i) => {
+      const word = data.getUint16(43 + i * 3, true);
+      return word & 0x4000 ? Boolean(word & 0x8000) : undefined;
+    }) : [],
+    edgeEvents: extended ? Array.from({ length: 18 }, (_, i) => data.getUint8(42 + i) & (i % 3 === 2 ? 0x3f : 0xff))
+      : data.byteLength >= 62 ? Array.from({ length: 12 }, (_, i) => data.getUint8(50 + i)) : [],
   };
 }
 
 export async function readDiagnostics(): Promise<Diagnostics> {
   if (!appState.device) throw new Error('Device not connected');
   const result = await appState.device.receiveFeatureReport(ReportId.Diagnostics);
-  const data = featureReportPayload(result, ReportId.Diagnostics, [13, 24]);
+  const data = featureReportPayload(result, ReportId.Diagnostics, [13, 24, 46, 48, 60, 62]);
   return parseDiagnostics(data);
 }
 

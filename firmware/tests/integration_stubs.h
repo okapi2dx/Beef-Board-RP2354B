@@ -6,9 +6,11 @@
 #include "beef_runtime.h"
 #include "beef_lighting.h"
 #include "button_debounce.h"
+#include "button_chatter.h"
 typedef unsigned uint;
 static uint8_t cfg[139];
 static const uint8_t *beef_config_store_data(void){return cfg;}
+static beef_button_debouncer_t button_debouncer;
 static beef_turntable_t turntable;
 static beef_lighting_t lighting;
 static uint16_t stable_buttons,logical_buttons,pending_tt_buttons,host_led_buttons;
@@ -17,6 +19,9 @@ static uint8_t previous_input_mode=0xff;
 static bool host_lighting_seen,led_active[11],led_fading[11];
 static uint32_t host_lighting_ms,led_released_ms[11];
 static uint8_t led_pwm_duty[11];
+static beef_button_chatter_t button_chatter;
+static uint32_t save_and_disable_interrupts(void){return 0;}
+static void restore_interrupts(uint32_t irq){(void)irq;}
 static uint8_t host_tt_rgb[3],host_center_rgb[3];
 static beef_rgb_t ring_pixels[255],bar_pixels[255];
 static uint32_t ring_words[255],bar_words[255];
@@ -42,9 +47,14 @@ typedef struct __attribute__((packed)){uint8_t x,y;uint16_t buttons;} gamepad_pa
 typedef struct __attribute__((packed)){
  uint16_t buttons;uint8_t sensor_ab,raw_position,filtered_position,output_position;
  int8_t direction;uint32_t transitions;uint16_t last_transition_ms;uint8_t led_levels[11];
+ uint16_t chatter_edges[7],raw_buttons,edge_sequence;
+ uint8_t edge_events[BEEF_CHATTER_EVENT_COUNT * 3u];
 } diagnostics_t;
 static diagnostics_t diagnostics;
+typedef struct __attribute__((packed)){uint16_t edges[7],detected[7];} chatter_counts_t;
+static chatter_counts_t chatter_counts;
 static uint32_t encoder_transitions,encoder_interval_ms;
 static bool gpio_get(unsigned pin){(void)pin;return false;}
 void beef_protocol_set_diagnostics(const uint8_t data[BEEF_DIAGNOSTICS_SIZE]){(void)data;}
+void beef_protocol_set_chatter_counts(const uint8_t data[BEEF_CHATTER_COUNTS_SIZE]){(void)data;}
 

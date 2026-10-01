@@ -83,6 +83,12 @@ bool validate_config(const config &self) {
   if (self.button_led_individual > 1 || self.tt_curve > TurntableCurve::Dynamic) return false;
   for (uint8_t i = 0; i < BUTTONS; ++i)
     if (self.button_led_level[i] > 100 || self.button_led_inverted[i] > 1) return false;
+  if (self.version >= 34)
+    for (uint8_t i = 0; i < 7; ++i)
+      if (self.iidx_keys.button_debounce[i] > (self.version >= 37 ? 160 : 50)) return false;
+  if (self.version >= 36)
+    for (uint8_t i = 0; i < 7; ++i)
+      if (self.sdvx_keys.button_release_debounce[i] > (self.version >= 37 ? 160 : 50)) return false;
   uint16_t mapped_buttons = 0;
   for (uint8_t i = 0; i < BUTTONS; ++i) {
     if (self.button_mapping[i] >= BUTTONS) return false;
@@ -276,9 +282,44 @@ void config_update(config* self) {
       if (self->tt_ratio < RATIO_MIN) self->tt_ratio = RATIO_MIN;
       if (self->tt_ratio > RATIO_MAX) self->tt_ratio = RATIO_MAX;
       self->version++;
+    case 31:
+      self->version++;
+    case 32:
+      self->version++;
+    case 33:
+      // Reuse the former IIDX key padding for individual B1-B7 debounce.
+      for (uint8_t i = 0; i < 7; ++i)
+        self->iidx_keys.button_debounce[i] = self->iidx_buttons_debounce > 50 ? 50 : self->iidx_buttons_debounce;
+      self->version++;
+    case 34:
+      // Chatter diagnostics now include per-edge intervals using the
+      // individual debounce thresholds; the config layout is unchanged.
+      self->version++;
+    case 35:
+      for (uint8_t i = 0; i < 7; ++i)
+        self->sdvx_keys.button_release_debounce[i] = self->iidx_keys.button_debounce[i];
+      self->version++;
+    case 36:
+      // v37 stores tenths of a millisecond in the same seven-byte fields.
+      for (uint8_t i = 0; i < 7; ++i) {
+        self->iidx_keys.button_debounce[i] = 10u * (self->iidx_keys.button_debounce[i] > 16 ? 16u : self->iidx_keys.button_debounce[i]);
+        self->sdvx_keys.button_release_debounce[i] = 10u * (self->sdvx_keys.button_release_debounce[i] > 16 ? 16u : self->sdvx_keys.button_release_debounce[i]);
+      }
+      self->version++;
+    case 37:
+      // Extended edge intervals use a new diagnostics report layout.
+      self->version++;
+    case 38:
+      // Add per-button edge and detection counters as a separate HID input report.
+      self->version++;
+    case 39:
+      // Attribute bounce edges to the initiating press or release operation.
+      self->version++;
+    case 40:
+      // Count only opposite bounce edges and apply immediate release guards.
+      self->version++;
     default: break;
   }
-
   eeprom_update_block(self, CONFIG_BASE_ADDR, sizeof(config));
 }
 
@@ -287,18 +328,41 @@ void config_update_setting(uint8_t* addr, const uint8_t val) {
 }
 
 void config_save(const config &new_config) {
-  if (!validate_config(new_config)) {
+  config normalized = new_config;
+  if (normalized.version == 33) {
+    uint8_t const legacy_window = normalized.iidx_buttons_debounce > 50 ? 50 : normalized.iidx_buttons_debounce;
+    for (uint8_t i = 0; i < 7; ++i) normalized.iidx_keys.button_debounce[i] = legacy_window;
+    normalized.version = 34;
+  }
+  if (normalized.version == 34) normalized.version = 35;
+  if (normalized.version == 35) {
+    for (uint8_t i = 0; i < 7; ++i)
+      normalized.sdvx_keys.button_release_debounce[i] = normalized.iidx_keys.button_debounce[i];
+    normalized.version = 36;
+  }
+  if (normalized.version == 36) {
+    for (uint8_t i = 0; i < 7; ++i) {
+      normalized.iidx_keys.button_debounce[i] = 10u * (normalized.iidx_keys.button_debounce[i] > 16 ? 16u : normalized.iidx_keys.button_debounce[i]);
+      normalized.sdvx_keys.button_release_debounce[i] = 10u * (normalized.sdvx_keys.button_release_debounce[i] > 16 ? 16u : normalized.sdvx_keys.button_release_debounce[i]);
+    }
+    normalized.version = 37;
+  }
+  if (normalized.version == 37) normalized.version = 38;
+  if (normalized.version == 38) normalized.version = 39;
+  if (normalized.version == 39) normalized.version = 40;
+  if (normalized.version == 40) normalized.version = 41;
+  if (!validate_config(normalized)) {
     return;
   }
 
-  if (new_config.disable_leds) {
+  if (normalized.disable_leds) {
     FastLED.clear(true);
   }
 
-  RgbHelper::update(new_config);
-  usb_handler->config_update(new_config);
+  RgbHelper::update(normalized);
+  usb_handler->config_update(normalized);
 
-  memcpy(&current_config, &new_config, sizeof(config));
+  memcpy(&current_config, &normalized, sizeof(config));
   current_config.reverse_tt &= 1;
   current_config.disable_leds &= 1;
   current_config.link_bar_effect &= 1;

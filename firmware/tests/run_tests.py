@@ -32,13 +32,18 @@ with tempfile.TemporaryDirectory(prefix="beef-tests-") as directory:
     temp = Path(directory)
     adapter = temp / "integration.c"
     adapter.write_text(integration, encoding="utf-8")
+    protocol_source = (src / "beef_protocol.c").read_text(encoding="utf-8")
+    protocol_source = re.sub(r'^#include "(?:pico/[^\"]+|hardware/[^\"]+|tusb.h)"\s*$', '', protocol_source, flags=re.M)
+    (temp / "protocol_under_test.c").write_text(protocol_source, encoding="utf-8")
     for name, sources in [
         ("button_debounce", [tests / "button_debounce_test.c"]),
+        ("button_chatter", [tests / "button_chatter_test.c"]),
+        ("protocol_stream", [tests / "protocol_stream_test.c"]),
         ("runtime", [tests / "runtime_test.c", src / "beef_runtime.c", src / "beef_lighting.c"]),
         ("storage", [tests / "storage_test.c", src / "beef_runtime.c"]),
         ("integration", [adapter, src / "beef_runtime.c", src / "beef_lighting.c"]),
     ]:
         executable = temp / (name + (".exe" if os.name == "nt" else ""))
         subprocess.run([compiler, "-std=c11", "-Wall", "-Wextra", "-Werror", "-I" + str(src),
-                        "-I" + str(tests / "stubs"), *map(str, sources), "-lm", "-o", str(executable)], check=True)
+                        "-I" + str(tests / "stubs"), "-I" + str(temp), *map(str, sources), "-lm", "-o", str(executable)], check=True)
         subprocess.run([str(executable)], check=True)

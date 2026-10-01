@@ -231,8 +231,11 @@
 						<span class="nav-title">{tr('コントローラーモニター', 'Controller Monitor')}</span>
 						<span class="nav-subtitle">{tr('入力状態をリアルタイム表示', 'Live input status')}</span>
 					</button>
-
 					<div class="sidebar-label sidebar-label-spaced">{tr('メンテナンス', 'MAINTENANCE')}</div>
+					<button class:active={activeTab === Tab.Config && settingsSection === 'chatter'} class="sidebar-item" disabled={!appState.device || appState.disableConfigTab} onclick={() => { activeTab = Tab.Config; settingsSection = 'chatter'; }}>
+						<span class="nav-title">{tr('チャタリングテスト', 'Chatter Test')}</span>
+						<span class="nav-subtitle">{tr('個別設定・入力エッジ・ログ', 'Per-button settings & input log')}</span>
+					</button>
 					<button class:active={activeTab === Tab.Firmware} class="sidebar-item" onclick={() => { activeTab = Tab.Firmware; }}>
 						<span class="nav-title firmware-nav-title">
 							<span>{tr('ファームウェア', 'Firmware')}</span>

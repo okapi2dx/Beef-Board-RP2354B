@@ -11,7 +11,7 @@ This is native RP2354B firmware built with the Pico SDK. It preserves the Beef B
 
 ## Implemented
 
-- 11 button inputs with GPIO interrupt sampling and immediate first-press detection. A release inside the configured debounce window is held until the window ends, preventing contact bounce from losing a held press; later releases are immediate. Button mapping, keyboard/joystick HID reports and diagnostics remain supported.
+- 11 button inputs with GPIO interrupt sampling and immediate press/release detection. B1–B7 have separate press and release debounce settings from 0.0 to 16.0 ms in 0.1 ms steps. The press window rejects brief OFF edges; the release window rejects brief ON edges, including ON pulses that end after the window expires. A short tap's OFF is applied when the press window expires if it remains OFF. Button mapping, keyboard/joystick HID reports and diagnostics remain supported.
 - 11 button LED outputs with the original brightness, fade and host-lighting logic. Software PWM runs at 100 Hz.
 - Encoder 1 turntable handling on GP21/GP20. Encoder 2 pins GP3/GP2 are initialized but have no behavior in the original firmware either.
 - Two WS2812 outputs on GP1/GP0, using PIO and nonblocking DMA, with 1–255 LEDs on each output. J42 (UART A, GP18/GP19) drives a Phoenixwan turntable ring and J43 (UART B, GP22/GP23) drives a Phoenixwan center bar at 115200 baud.

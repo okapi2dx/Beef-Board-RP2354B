@@ -50,7 +50,7 @@ static uint32_t checksum_config(uint32_t sequence, uint8_t const *data) {
 static void set_defaults(uint8_t *c) {
   memset(c, 0, BEEF_CONFIG_SIZE);
 
-  c[0] = 33;
+  c[0] = 41;
   c[1] = 0;
   c[2] = 0;
   c[3] = 0;
@@ -68,6 +68,8 @@ static void set_defaults(uint8_t *c) {
   c[32] = 0;
   c[33] = 0;
   c[34] = 0;
+  for (uint32_t i = 0; i < 7; ++i) c[48 + i] = 0;
+  for (uint32_t i = 0; i < 7; ++i) c[64 + i] = 0;
 
   static uint8_t const iidx_keys[13] = {
     0x16, 0x07, 0x09, 0x2c, 0x0d, 0x0e, 0x0f,
@@ -142,6 +144,7 @@ static bool program_record(uint32_t slot, config_record_t const *rec) {
 
 void beef_config_store_init(void) {
   bool found = false;
+  bool migrate = false;
   uint32_t best_sequence = 0;
   newest_slot = 0;
 
@@ -159,12 +162,55 @@ void beef_config_store_init(void) {
 
   if (found) {
     next_sequence = best_sequence + 1u;
+    if (current_config[0] == 33) {
+      uint8_t const legacy_window = current_config[75] > 50 ? 50 : current_config[75];
+      for (uint32_t i = 0; i < 7; ++i) current_config[48 + i] = legacy_window;
+      current_config[0] = 34;
+      migrate = true;
+    }
+    if (current_config[0] == 34) {
+      current_config[0] = 35;
+      migrate = true;
+    }
+    if (current_config[0] == 35) {
+      for (uint32_t i = 0; i < 7; ++i) current_config[64 + i] = current_config[48 + i];
+      current_config[0] = 36;
+      migrate = true;
+    }
+    if (current_config[0] == 36) {
+      for (uint32_t i = 0; i < 7; ++i) {
+        current_config[48 + i] = (uint8_t)(10u * (current_config[48 + i] > 16 ? 16u : current_config[48 + i]));
+        current_config[64 + i] = (uint8_t)(10u * (current_config[64 + i] > 16 ? 16u : current_config[64 + i]));
+      }
+      current_config[0] = 37;
+      migrate = true;
+    }
+    if (current_config[0] == 37) {
+      current_config[0] = 38;
+      migrate = true;
+    }
+    if (current_config[0] == 38) {
+      current_config[0] = 39;
+      migrate = true;
+    }
+    if (current_config[0] == 39) {
+      current_config[0] = 40;
+      migrate = true;
+    }
+    if (current_config[0] == 40) {
+      current_config[0] = 41;
+      migrate = true;
+    }
   } else {
     set_defaults(current_config);
     next_sequence = 1u;
   }
 
   config_dirty = false;
+  if (migrate) {
+    config_dirty = true;
+    (void)beef_config_store_flush();
+  }
 }
 
 uint8_t const *beef_config_store_data(void) {
@@ -172,7 +218,55 @@ uint8_t const *beef_config_store_data(void) {
 }
 
 bool beef_config_store_stage(uint8_t const data[BEEF_CONFIG_SIZE]) {
-  if (!beef_config_valid(data)) return false;
+  uint8_t migrated[BEEF_CONFIG_SIZE];
+  if (data[0] == 33) {
+    memcpy(migrated, data, sizeof(migrated));
+    migrated[0] = 34;
+    uint8_t const legacy_window = migrated[75] > 50 ? 50 : migrated[75];
+    for (uint32_t i = 0; i < 7; ++i) migrated[48 + i] = legacy_window;
+    data = migrated;
+  }
+  if (data[0] == 34) {
+    memcpy(migrated, data, sizeof(migrated));
+    migrated[0] = 35;
+    data = migrated;
+  }
+  if (data[0] == 35) {
+    memcpy(migrated, data, sizeof(migrated));
+    for (uint32_t i = 0; i < 7; ++i) migrated[64 + i] = migrated[48 + i];
+    migrated[0] = 36;
+    data = migrated;
+  }
+  if (data[0] == 36) {
+    if (data != migrated) memcpy(migrated, data, sizeof(migrated));
+    for (uint32_t i = 0; i < 7; ++i) {
+      migrated[48 + i] = (uint8_t)(10u * (migrated[48 + i] > 16 ? 16u : migrated[48 + i]));
+      migrated[64 + i] = (uint8_t)(10u * (migrated[64 + i] > 16 ? 16u : migrated[64 + i]));
+    }
+    migrated[0] = 37;
+    data = migrated;
+  }
+  if (data[0] == 37) {
+    if (data != migrated) memcpy(migrated, data, sizeof(migrated));
+    migrated[0] = 38;
+    data = migrated;
+  }
+  if (data[0] == 38) {
+    if (data != migrated) memcpy(migrated, data, sizeof(migrated));
+    migrated[0] = 39;
+    data = migrated;
+  }
+  if (data[0] == 39) {
+    if (data != migrated) memcpy(migrated, data, sizeof(migrated));
+    migrated[0] = 40;
+    data = migrated;
+  }
+  if (data[0] == 40) {
+    if (data != migrated) memcpy(migrated, data, sizeof(migrated));
+    migrated[0] = 41;
+    data = migrated;
+  }
+  if (data[0] != 41 || !beef_config_valid(data)) return false;
   if (memcmp(current_config, data, BEEF_CONFIG_SIZE) == 0) return false;
 
   memcpy(current_config, data, BEEF_CONFIG_SIZE);

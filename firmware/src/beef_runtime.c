@@ -2,10 +2,14 @@
 #include <string.h>
 
 bool beef_config_valid(const uint8_t *c) {
-  if (c[0] != 33 || c[2] > 9 || c[3] > 30 || c[4] > 8 ||
+  if ((c[0] != 33 && c[0] != 34 && c[0] != 35 && c[0] != 36 && c[0] != 37 && c[0] != 38 && c[0] != 39 && c[0] != 40 && c[0] != 41) || c[2] > 9 || c[3] > 30 || c[4] > 8 ||
       c[30] < 1 || c[30] > 10 || c[31] > 2 || c[32] > 1 || c[33] > 1 ||
       c[78] < 1 || c[78] > 60 || c[79] < 1 || c[80] < 1 || c[138] < 1 ||
       c[88] > 100 || c[124] > 2 || ((uint16_t)c[125] + 256u*c[126]) > 1000) return false;
+  if (c[0] >= 34)
+    for (unsigned i = 0; i < 7; ++i) if (c[48+i] > (c[0] >= 37 ? 160 : 50)) return false;
+  if (c[0] >= 36)
+    for (unsigned i = 0; i < 7; ++i) if (c[64+i] > (c[0] >= 37 ? 160 : 50)) return false;
   for (unsigned i = 0; i < 11; ++i)
     if (c[102+i] > 100 || c[127+i] > 11) return false;
   return true;

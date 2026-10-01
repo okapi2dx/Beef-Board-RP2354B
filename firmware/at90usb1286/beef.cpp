@@ -18,10 +18,13 @@
 #include "button_led_envelope.h"
 #include "button_led_pwm.h"
 #include "diagnostics.h"
+#include "../src/button_chatter.h"
 #include <util/atomic.h>
 
 ButtonLedEnvelope button_led_envelopes[BUTTONS];
 volatile diagnostics_report diagnostics{};
+volatile chatter_counts_report chatter_counts{};
+static beef_button_chatter_t button_chatter;
 
 // bit-field storing button state. bits 0-10 map to buttons 1-11
 // bits 11 and 12 map to digital tt -/+
@@ -109,6 +112,9 @@ void handle_command() {
     case Command::ResetConfig:
       current_config.version = 0;
       config_update(&current_config);
+      current_config.tt_ratio = 10;
+      current_config.tt_sustain_ms = 0;
+      config_save(current_config);
       // TODO: find out why device re-enumeration doesn't work
       reboot();
       break;
@@ -124,6 +130,7 @@ int main() {
   config_init(&current_config);
   RgbHelper::init(current_config);
   usb_init(current_config);
+  beef_button_chatter_init(&button_chatter, sample_physical_buttons());
 
   timer_arm(&joystick_out_state.hid_expiry_timer, 0);
   timer_arm(&lights_out_state.hid_expiry_timer, 0);
@@ -281,12 +288,28 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
   switch (ReportType) {
     case HID_REPORT_ITEM_In:
       if (HIDInterfaceInfo == &config_hid_report.HID_Interface) {
+        static uint32_t last_counts_ms = 0;
+        static bool send_diag_after_counts = false;
+        uint32_t now_ms;
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { now_ms = milliseconds; }
+        if (!send_diag_after_counts && (uint32_t)(now_ms - last_counts_ms) >= 20u) {
+          last_counts_ms = now_ms;
+          send_diag_after_counts = true;
+          *ReportID = HID_REPORTID_ChatterCounts;
+          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+            memcpy(ReportData, (const void*)&chatter_counts, sizeof(chatter_counts));
+          }
+          *ReportSize = sizeof(chatter_counts);
+          return true;
+        }
         *ReportID = HID_REPORTID_DiagnosticsStream;
         ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
           memcpy(ReportData, (const void*)&diagnostics, sizeof(diagnostics));
         }
         *ReportSize = sizeof(diagnostics);
-        return false;
+        bool const force_send = send_diag_after_counts;
+        send_diag_after_counts = false;
+        return force_send;
       }
       return usb_handler->create_hid_report(HIDInterfaceInfo,
                                             ReportID,
@@ -384,6 +407,26 @@ void process_buttons() {
   // B1-B7 therefore use exactly the same low-latency input path regardless
   // of which AVR port each switch is wired to.
   button_state = sample_physical_buttons();
+  if (button_state != button_chatter.raw) {
+    uint32_t const now_100us = button_time_100us_now();
+    uint16_t press_thresholds[BUTTONS], release_thresholds[BUTTONS];
+    for (uint8_t i = 0; i < BUTTONS; ++i) {
+      press_thresholds[i] = i < 7 ? current_config.iidx_keys.button_debounce[i]
+                                  : uint16_t(current_config.iidx_buttons_debounce) * 10u;
+      release_thresholds[i] = i < 7 ? current_config.sdvx_keys.button_release_debounce[i]
+                                    : uint16_t(current_config.iidx_buttons_debounce) * 10u;
+    }
+    beef_button_chatter_sample(&button_chatter, button_state, now_100us * 100u,
+                               press_thresholds, release_thresholds);
+    for (uint8_t i = 0; i < 7; ++i) {
+      diagnostics.chatter_edges[i] = button_chatter.close_edges[i];
+      chatter_counts.edges[i] = button_chatter.edge_count[i];
+      chatter_counts.detected[i] = button_chatter.close_edges[i];
+    }
+    diagnostics.edge_sequence = button_chatter.event_sequence;
+    memcpy((void*)diagnostics.edge_events, button_chatter.events, sizeof(diagnostics.edge_events));
+  }
+  diagnostics.raw_buttons = button_state;
 
   // Ignore button inputs after startup
   ignore_buttons = ignore_buttons && button_state;

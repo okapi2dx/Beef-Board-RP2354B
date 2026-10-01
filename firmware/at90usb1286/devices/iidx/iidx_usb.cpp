@@ -158,7 +158,8 @@ namespace IIDX {
       RgbManager::Bar::force_update = true;
     }
     update_tt_transitions(new_config.reverse_tt);
-    buttons_debounce.init(new_config.iidx_buttons_debounce);
+    buttons_debounce.init(new_config.iidx_keys.button_debounce,
+                          new_config.sdvx_keys.button_release_debounce, 7);
     effectors_debounce.init(new_config.iidx_effectors_debounce);
   }
 
@@ -173,7 +174,8 @@ namespace IIDX {
     turntable_gate.reset(tt_x.get(), delayed_position, current_milliseconds());
     analog_turntable.reset(delayed_position, current_milliseconds());
     turntable_delay.reset(current_milliseconds(), {delayed_position, 0}, config.tt_delay_ms);
-    buttons_debounce.init(config.iidx_buttons_debounce);
+    buttons_debounce.init(config.iidx_keys.button_debounce,
+                          config.sdvx_keys.button_release_debounce, 7);
     effectors_debounce.init(config.iidx_effectors_debounce);
 
     update_tt_transitions(config.reverse_tt);

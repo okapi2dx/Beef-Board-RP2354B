@@ -10,7 +10,7 @@ LIGHT_BAR_LEDS ?= 16
 FW_VER = 0x$(shell git rev-parse --short=8 HEAD)
 FW_VERSION_MAJOR ?= 1
 FW_VERSION_MINOR ?= 0
-FW_VERSION_PATCH ?= 1
+FW_VERSION_PATCH ?= 0
 
 FASTLED_SRC = FastLED/src
 SRC = $(wildcard *.c) $(wildcard *.cpp) $(wildcard devices/iidx/*.cpp) \

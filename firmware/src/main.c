@@ -19,6 +19,7 @@
 #include "beef_config_store.h"
 #include "beef_protocol.h"
 #include "button_debounce.h"
+#include "button_chatter.h"
 
 #define CFG_DISABLE_LEDS              5u
 #define CFG_IIDX_INPUT_MODE          32u
@@ -62,10 +63,22 @@ typedef struct __attribute__((packed)) {
   uint32_t transitions;
   uint16_t last_transition_ms;
   uint8_t led_levels[BUTTON_COUNT];
+  uint16_t chatter_edges[7];
+  uint16_t raw_buttons;
+  uint16_t edge_sequence;
+  uint8_t edge_events[BEEF_CHATTER_EVENT_COUNT * 3u];
 } diagnostics_t;
 
 _Static_assert(sizeof(diagnostics_t) == BEEF_DIAGNOSTICS_SIZE,
-               "diagnostics layout must remain 24 bytes");
+               "diagnostics layout must fit the HID endpoint");
+
+typedef struct __attribute__((packed)) {
+  uint16_t edges[7];
+  uint16_t detected[7];
+} chatter_counts_t;
+
+_Static_assert(sizeof(chatter_counts_t) == BEEF_CHATTER_COUNTS_SIZE,
+               "chatter counts must fit the HID endpoint");
 
 static gpio_pin_t const button_inputs[BUTTON_COUNT] = {
   46, 44, 43, 36, 34, 32, 31, 7, 6, 24, 17
@@ -81,7 +94,9 @@ static repeating_timer_t led_timer;
 static uint16_t stable_buttons;
 static uint16_t logical_buttons;
 static beef_button_debouncer_t button_debouncer;
-static uint8_t button_debounce_ms;
+static beef_button_chatter_t button_chatter;
+static uint16_t button_press_debounce_100us[BUTTON_COUNT];
+static uint16_t button_release_debounce_100us[BUTTON_COUNT];
 static uint16_t reported_buttons;
 
 static volatile uint8_t encoder_prev;
@@ -102,6 +117,7 @@ static uint16_t uart_tt_interval_ms;
 static uint8_t uart_bar_pairs;
 
 static diagnostics_t diagnostics;
+static chatter_counts_t chatter_counts;
 static uint8_t previous_input_mode = 0xffu;
 
 static uint16_t host_led_buttons;
@@ -213,8 +229,13 @@ static void input_gpio_irq(uint gpio, uint32_t events) {
   }
   for (unsigned i = 0; i < BUTTON_COUNT; ++i) {
     if (gpio == button_inputs[i]) {
-      beef_button_debouncer_edge(&button_debouncer, i, !gpio_get(gpio),
-                                  time_us_32(), button_debounce_ms);
+      bool const pressed = !gpio_get(gpio);
+      uint32_t const now_us = time_us_32();
+      beef_button_debouncer_edge(&button_debouncer, i, pressed,
+                                  now_us, button_press_debounce_100us[i],
+                                  button_release_debounce_100us[i]);
+      beef_button_chatter_edge(&button_chatter, i, pressed, now_us,
+          button_press_debounce_100us[i], button_release_debounce_100us[i]);
       return;
     }
   }
@@ -266,15 +287,25 @@ static uint16_t sample_raw_buttons(void) {
 }
 
 static void refresh_button_debounce(void) {
-  uint8_t const window = beef_config_store_data()[CFG_IIDX_BUTTONS_DEBOUNCE];
+  uint8_t const *cfg = beef_config_store_data();
   uint32_t const irq = save_and_disable_interrupts();
-  if (window != button_debounce_ms) {
-    button_debounce_ms = window;
-    button_debouncer.cooling = 0;
-    button_debouncer.pending_release = 0;
-    button_debouncer.accepted = button_debouncer.raw;
+  for (unsigned i = 0; i < BUTTON_COUNT; ++i) {
+    uint16_t const press_window = i < 7u ? cfg[48u + i] : (uint16_t)cfg[CFG_IIDX_BUTTONS_DEBOUNCE] * 10u;
+    uint16_t const release_window = i < 7u ? cfg[64u + i] : (uint16_t)cfg[CFG_IIDX_BUTTONS_DEBOUNCE] * 10u;
+    if (press_window != button_press_debounce_100us[i] ||
+        release_window != button_release_debounce_100us[i]) {
+      uint16_t const bit = (uint16_t)(1u << i);
+      button_press_debounce_100us[i] = press_window;
+      button_release_debounce_100us[i] = release_window;
+      button_debouncer.press_guard &= (uint16_t)~bit;
+      button_debouncer.release_guard &= (uint16_t)~bit;
+      button_debouncer.press_window_100us[i] = press_window;
+      button_debouncer.release_window_100us[i] = release_window;
+      if (button_debouncer.raw & bit) button_debouncer.accepted |= bit;
+      else button_debouncer.accepted &= (uint16_t)~bit;
+    }
+    beef_button_debouncer_tick_button(&button_debouncer, i, time_us_32());
   }
-  beef_button_debouncer_tick(&button_debouncer, time_us_32(), window);
   stable_buttons = button_debouncer.accepted;
   restore_interrupts(irq);
 }
@@ -381,6 +412,7 @@ static void update_button_leds(uint32_t now) {
 
 static void update_diagnostics(void) {
   diagnostics.buttons = stable_buttons; // Physical bits; Configurator applies mapping once.
+  diagnostics.raw_buttons = button_debouncer.raw;
   diagnostics.sensor_ab =
       (gpio_get(21) ? 1u : 0u) |
       (gpio_get(20) ? 2u : 0u);
@@ -394,8 +426,18 @@ static void update_diagnostics(void) {
   for (uint32_t i = 0; i < BUTTON_COUNT; ++i) {
     diagnostics.led_levels[i] = led_pwm_duty[i];
   }
+  uint32_t const irq = save_and_disable_interrupts();
+  for (uint32_t i = 0; i < 7u; ++i) {
+    diagnostics.chatter_edges[i] = button_chatter.close_edges[i];
+    chatter_counts.edges[i] = button_chatter.edge_count[i];
+    chatter_counts.detected[i] = button_chatter.close_edges[i];
+  }
+  diagnostics.edge_sequence = button_chatter.event_sequence;
+  memcpy(diagnostics.edge_events, button_chatter.events, sizeof(diagnostics.edge_events));
+  restore_interrupts(irq);
 
   beef_protocol_set_diagnostics((uint8_t const *)&diagnostics);
+  beef_protocol_set_chatter_counts((uint8_t const *)&chatter_counts);
 }
 
 static bool send_controller_report(void) {
@@ -501,16 +543,27 @@ int main(void) {
   uint32_t const setup_irq = save_and_disable_interrupts();
   stable_buttons = sample_raw_buttons();
   beef_button_debouncer_init(&button_debouncer, stable_buttons);
-  button_debounce_ms = beef_config_store_data()[CFG_IIDX_BUTTONS_DEBOUNCE];
+  beef_button_chatter_init(&button_chatter, stable_buttons);
+  uint8_t const *cfg = beef_config_store_data();
+  for (unsigned i = 0; i < BUTTON_COUNT; ++i) {
+    button_press_debounce_100us[i] = i < 7u ? cfg[48u + i] : (uint16_t)cfg[CFG_IIDX_BUTTONS_DEBOUNCE] * 10u;
+    button_release_debounce_100us[i] = i < 7u ? cfg[64u + i] : (uint16_t)cfg[CFG_IIDX_BUTTONS_DEBOUNCE] * 10u;
+  }
   reported_buttons = stable_buttons;
   for (unsigned i = 0; i < BUTTON_COUNT; ++i)
     gpio_set_irq_enabled(button_inputs[i], GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
   // Capture a change that happened between the initial read and IRQ enable.
   uint16_t const initial_buttons = sample_raw_buttons();
   for (unsigned i = 0; i < BUTTON_COUNT; ++i)
+    beef_button_chatter_edge(&button_chatter, i,
+                             (initial_buttons & (1u << i)) != 0,
+                             time_us_32(), button_press_debounce_100us[i],
+                             button_release_debounce_100us[i]);
+  for (unsigned i = 0; i < BUTTON_COUNT; ++i)
     beef_button_debouncer_edge(&button_debouncer, i,
                                (initial_buttons & (1u << i)) != 0,
-                               time_us_32(), button_debounce_ms);
+                               time_us_32(), button_press_debounce_100us[i],
+                               button_release_debounce_100us[i]);
   stable_buttons = button_debouncer.accepted;
   reported_buttons = stable_buttons;
   restore_interrupts(setup_irq);

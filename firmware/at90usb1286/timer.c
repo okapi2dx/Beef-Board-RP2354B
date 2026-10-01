@@ -1,6 +1,23 @@
 #include "timer.h"
+#include <avr/io.h>
+#include <util/atomic.h>
 
 volatile uint32_t milliseconds = 0;
+
+uint32_t button_time_100us_now(void) {
+  uint32_t ms;
+  uint16_t ticks;
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    ms = milliseconds;
+    ticks = TCNT1;
+    if (TIFR1 & _BV(OCF1A)) {
+      ticks = TCNT1;
+      if (ticks < OCR1A) ++ms;
+    }
+  }
+  // Timer1 uses F_CPU/64 = 250 kHz, or 25 ticks per 100us.
+  return ms * 10u + ticks / 25u;
+}
 
 void timer_init(timer* self) {
   self->armed = false;

@@ -31,7 +31,7 @@ export class IIDXKeyMapping {
   public function_buttons = $state<number[]>([]);
   public tt_ccw = $state(0);
   public tt_cw = $state(0);
-  public padding: number[];
+  public button_debounce: number[];
 
   constructor() {
     this.main_buttons = [
@@ -51,7 +51,7 @@ export class IIDXKeyMapping {
     ];
     this.tt_ccw = HIDCodes.HID_KEYBOARD_SC_DOWN_ARROW; // TT-
     this.tt_cw = HIDCodes.HID_KEYBOARD_SC_UP_ARROW; // TT+
-    this.padding = Array(7).fill(0);
+    this.button_debounce = Array(7).fill(0);
   }
 }
 
@@ -60,6 +60,7 @@ export class SDVXKeyMapping {
   public fx_buttons = $state<number[]>([]);
   public padding_1: number[];
   public start = $state(0);
+  public button_release_debounce = $state<number[]>(Array(7).fill(0));
   public padding_2: number[];
 
   constructor() {
@@ -75,7 +76,7 @@ export class SDVXKeyMapping {
     ];
     this.padding_1 = Array(2).fill(0);
     this.start = HIDCodes.HID_KEYBOARD_SC_ENTER; // Start
-    this.padding_2 = Array(11).fill(0);
+    this.padding_2 = Array(4).fill(0);
   }
 }
 
@@ -102,6 +103,7 @@ export class Config {
   iidx_keys = $state(new IIDXKeyMapping());
   sdvx_keys = $state(new SDVXKeyMapping());
   iidx_buttons_debounce = $state(0);
+  iidx_button_debounce = $state<number[]>(Array(7).fill(0));
   iidx_effectors_debounce = $state(0);
   sdvx_buttons_debounce = $state(0);
   led_refresh = $state(0);
@@ -193,8 +195,9 @@ export class Config {
       this.iidx_keys.tt_ccw = configData.getUint8(offset++);
       this.iidx_keys.tt_cw = configData.getUint8(offset++);
 
-      // Skip padding
-      offset += this.iidx_keys.padding.length;
+      if (this.version >= 34) {
+        this.iidx_button_debounce = Array.from({ length: 7 }, () => Math.min(this.version >= 37 ? 160 : 16, configData.getUint8(offset++)));
+      } else offset += this.iidx_keys.button_debounce.length;
 
       // Read SDVX key mappings
       for (let i = 0; i < this.sdvx_keys.bt_buttons.length; i++) {
@@ -209,8 +212,13 @@ export class Config {
 
       this.sdvx_keys.start = configData.getUint8(offset++);
 
-      // Skip padding
-      offset += this.sdvx_keys.padding_2.length;
+      if (this.version >= 36) {
+        this.sdvx_keys.button_release_debounce = Array.from({ length: 7 }, () => Math.min(this.version >= 37 ? 160 : 16, configData.getUint8(offset++)));
+        offset += this.sdvx_keys.padding_2.length;
+      } else {
+        this.sdvx_keys.button_release_debounce = [...this.iidx_button_debounce];
+        offset += 11;
+      }
     }
 
     if (this.version >= 15) {
@@ -218,6 +226,7 @@ export class Config {
       this.iidx_effectors_debounce = configData.getUint8(offset++);
       this.sdvx_buttons_debounce = configData.getUint8(offset++);
     }
+    if (this.version < 34) this.iidx_button_debounce = Array(7).fill(this.iidx_buttons_debounce);
 
     if (this.version >= 16) {
       this.led_refresh = configData.getUint8(offset++);
@@ -367,8 +376,14 @@ export async function updateConfig(config: Config): Promise<void> {
       configView.setUint8(offset++, config.iidx_keys.tt_ccw);
       configView.setUint8(offset++, config.iidx_keys.tt_cw);
 
-      // Skip padding
-      offset += config.iidx_keys.padding.length;
+      if (config.version >= 34) {
+        if (config.iidx_button_debounce.length !== 7 ||
+            config.iidx_button_debounce.some((v) => !Number.isInteger(v) || v < 0 || v > (config.version >= 37 ? 160 : 16)))
+          throw new Error('B1–B7 debounce values must be within the supported range');
+        for (const value of config.iidx_button_debounce) configView.setUint8(offset++, value);
+      } else {
+        offset += config.iidx_keys.button_debounce.length;
+      }
 
       // Write SDVX key mappings
       for (let i = 0; i < config.sdvx_keys.bt_buttons.length; i++) {
@@ -384,8 +399,15 @@ export async function updateConfig(config: Config): Promise<void> {
 
       configView.setUint8(offset++, config.sdvx_keys.start);
 
-      // Skip padding
-      offset += config.sdvx_keys.padding_2.length;
+      if (config.version >= 36) {
+        if (config.sdvx_keys.button_release_debounce.length !== 7 ||
+            config.sdvx_keys.button_release_debounce.some((v) => !Number.isInteger(v) || v < 0 || v > (config.version >= 37 ? 160 : 16)))
+          throw new Error('B1–B7 release debounce values must be within the supported range');
+        for (const value of config.sdvx_keys.button_release_debounce) configView.setUint8(offset++, value);
+        offset += config.sdvx_keys.padding_2.length;
+      } else {
+        offset += 11;
+      }
     }
 
     if (config.version >= 15) {

@@ -29,7 +29,10 @@ static volatile uint8_t pending_command = BEEF_COMMAND_NONE;
 static uint32_t command_received_ms;
 static uint32_t config_changed_ms;
 static uint32_t diagnostics_ms;
+static uint16_t diagnostics_sent_buttons;
 static uint8_t diagnostics_data[BEEF_DIAGNOSTICS_SIZE];
+static uint8_t chatter_counts_data[BEEF_CHATTER_COUNTS_SIZE];
+static bool chatter_counts_pending;
 
 static uint16_t copy_report(uint8_t *dst, uint16_t requested,
                             uint8_t const *src, uint16_t size) {
@@ -55,11 +58,18 @@ void beef_protocol_init(void) {
   command_received_ms = 0;
   config_changed_ms = 0;
   diagnostics_ms = 0;
+  diagnostics_sent_buttons = 0;
   memset(diagnostics_data, 0, sizeof(diagnostics_data));
+  memset(chatter_counts_data, 0, sizeof(chatter_counts_data));
+  chatter_counts_pending = false;
 }
 
 void beef_protocol_set_diagnostics(uint8_t const data[BEEF_DIAGNOSTICS_SIZE]) {
   memcpy(diagnostics_data, data, BEEF_DIAGNOSTICS_SIZE);
+}
+
+void beef_protocol_set_chatter_counts(uint8_t const data[BEEF_CHATTER_COUNTS_SIZE]) {
+  memcpy(chatter_counts_data, data, BEEF_CHATTER_COUNTS_SIZE);
 }
 
 uint16_t beef_protocol_get_report(uint8_t report_id, uint8_t *buffer, uint16_t reqlen) {
@@ -132,13 +142,23 @@ void beef_protocol_task(void) {
     if (!beef_config_store_flush()) config_changed_ms = now;
   }
 
-  if (tud_mounted() &&
-      tud_hid_n_ready(BEEF_HID_INSTANCE_CONFIG) &&
-      (uint32_t)(now - diagnostics_ms) >= 20u) {
-    diagnostics_ms = now;
-    (void)tud_hid_n_report(BEEF_HID_INSTANCE_CONFIG,
-                           BEEF_REPORT_DIAGNOSTICS_STREAM,
-                           diagnostics_data, sizeof(diagnostics_data));
+  if (tud_mounted() && tud_hid_n_ready(BEEF_HID_INSTANCE_CONFIG)) {
+    if (chatter_counts_pending) {
+      if (tud_hid_n_report(BEEF_HID_INSTANCE_CONFIG,
+                           BEEF_REPORT_CHATTER_COUNTS,
+                           chatter_counts_data, sizeof(chatter_counts_data)))
+        chatter_counts_pending = false;
+    } else if (((uint16_t)(diagnostics_data[0] | ((uint16_t)diagnostics_data[1] << 8)) != diagnostics_sent_buttons ||
+                (uint32_t)(now - diagnostics_ms) >= 20u) &&
+               tud_hid_n_report(BEEF_HID_INSTANCE_CONFIG,
+                                BEEF_REPORT_DIAGNOSTICS_STREAM,
+                                diagnostics_data, sizeof(diagnostics_data))) {
+      diagnostics_sent_buttons = (uint16_t)(diagnostics_data[0] | ((uint16_t)diagnostics_data[1] << 8));
+      if ((uint32_t)(now - diagnostics_ms) >= 20u) {
+        diagnostics_ms = now;
+        chatter_counts_pending = true;
+      }
+    }
   }
 
   uint8_t const command = pending_command;

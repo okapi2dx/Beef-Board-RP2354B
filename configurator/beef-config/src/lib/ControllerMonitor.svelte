@@ -103,7 +103,8 @@
 			const onInput = (event: HIDInputReportEvent) => {
 				if (event.reportId !== ReportId.DiagnosticsStream) return;
 				try {
-					data = parseDiagnostics(event.data);
+					const next = parseDiagnostics(event.data);
+					data = next;
 					stale = false;
 				} catch {
 					stale = true;
@@ -182,7 +183,19 @@
 						>
 					</div>
 					<div class="status-row pressed-row">
-						<span>{tr('割当先', 'Destination')}</span><b class="pressed-value">{pressed.join('・') || '—'}</b>
+						<span>{tr('割当先', 'Destination')}</span>
+						<b class="pressed-value">
+							{#if pressed.length}
+								{#if pressed.length > 7}
+									<span class="pressed-line">{#each pressed.slice(0, 7) as label}<span>{label}</span>{/each}</span>
+									<span class="pressed-line">{#each pressed.slice(7) as label}<span>{label}</span>{/each}</span>
+								{:else}
+									<span class="pressed-line">{#each pressed as label}<span>{label}</span>{/each}</span>
+								{/if}
+							{:else}
+								—
+							{/if}
+						</b>
 					</div>
 				</div>
 			</div>
@@ -436,11 +449,29 @@
 		font-variant-numeric: tabular-nums;
 	}
 	.pressed-row {
+		gap: 4px;
 		min-height: 46px;
 	}
 	.pressed-value {
+		display: flex;
+		flex: 1 1 0;
+		flex-direction: column;
+		align-content: flex-start;
+		min-width: 0;
+		text-align: right;
+		font-size: 11px;
 		line-height: 1.45;
 		min-height: 2.9em;
+	}
+	.pressed-value span {
+		color: inherit;
+		white-space: nowrap;
+	}
+	.pressed-line {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		column-gap: 3px;
 	}
 	.panel button {
 		border: 1px solid var(--border);
@@ -460,7 +491,7 @@
 		background: var(--primary);
 		color: var(--primary-foreground);
 	}
-	@media (max-width: 800px) {
+	@media (max-width: 899px) {
 		.monitor-panels {
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));

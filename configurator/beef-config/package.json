@@ -16,7 +16,9 @@
 		"sync": "svelte-kit sync",
 		"test:led-emulator": "node --conditions=browser led-emulator.test.mjs",
 		"test:hid-connection": "node hid-connection.test.mjs",
-		"test": "npm run test:hid-connection && npm run test:feature-report && npm run test:bar-color && npm run test:key-mapping && npm run test:led-emulator"
+		"test:chatter-events": "node chatter-events.test.mjs",
+		"test:wave-history": "node wave-history.test.mjs",
+		"test": "npm run test:hid-connection && npm run test:feature-report && npm run test:bar-color && npm run test:key-mapping && npm run test:led-emulator && npm run test:chatter-events && npm run test:wave-history"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.12.0",

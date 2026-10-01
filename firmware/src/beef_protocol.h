@@ -3,7 +3,8 @@
 #include <stdint.h>
 
 #define BEEF_CONFIG_SIZE 139u
-#define BEEF_DIAGNOSTICS_SIZE 24u
+#define BEEF_DIAGNOSTICS_SIZE 60u
+#define BEEF_CHATTER_COUNTS_SIZE 28u
 
 #define BEEF_HID_INSTANCE_GAMEPAD  0u
 #define BEEF_HID_INSTANCE_KEYBOARD 1u
@@ -15,7 +16,8 @@ enum beef_report_id {
   BEEF_REPORT_FIRMWARE_VERSION = 3,
   BEEF_REPORT_DIAGNOSTICS = 4,
   BEEF_REPORT_DIAGNOSTICS_STREAM = 5,
-  BEEF_REPORT_BOARD_INFO = 6
+  BEEF_REPORT_BOARD_INFO = 6,
+  BEEF_REPORT_CHATTER_COUNTS = 7
 };
 
 enum beef_command {
@@ -31,3 +33,4 @@ void beef_protocol_task(void);
 uint16_t beef_protocol_get_report(uint8_t report_id, uint8_t *buffer, uint16_t reqlen);
 void beef_protocol_set_report(uint8_t report_id, uint8_t const *buffer, uint16_t size);
 void beef_protocol_set_diagnostics(uint8_t const data[BEEF_DIAGNOSTICS_SIZE]);
+void beef_protocol_set_chatter_counts(uint8_t const data[BEEF_CHATTER_COUNTS_SIZE]);

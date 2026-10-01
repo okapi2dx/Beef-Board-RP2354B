@@ -87,6 +87,7 @@ const assert = require('node:assert/strict');
 
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.getByRole('button', { name: '接続', exact: true }).click();
+    await page.getByRole('button', { name: /^入力設定/ }).click();
 
     const meter = page.getByRole('meter', { name: '設定反映後のX軸', exact: true });
     await meter.waitFor();

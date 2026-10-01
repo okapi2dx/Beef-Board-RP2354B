@@ -7,6 +7,8 @@ extern "C" {
 #include <stdint.h>
 
 extern volatile uint32_t milliseconds;
+// Timer1's 4us hardware ticks give a 100us clock without changing the 1ms ISR.
+uint32_t button_time_100us_now(void);
 typedef struct {
   bool armed;
   uint32_t time_to_expire;
