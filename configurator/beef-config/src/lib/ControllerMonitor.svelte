@@ -10,7 +10,6 @@
 	let side = $state('1P'),
 		stale = $state(true);
 	import { createLedEmulator } from '$lib/led-emulator.js';
-	const emulate = createLedEmulator();
 	let frame = $state({
 		ring: Array(24).fill('#000000'),
 		bar: Array(16).fill('#000000'),
@@ -148,11 +147,16 @@
 		};
 	});
 	$effect(() => {
-		if (!active) return;
+		// Reset the local phase on connection changes. Keep advancing while another
+		// settings tab is open; only publishing the rendered frame is paused.
+		const device = appState.device;
+		if (!device) return;
+		const emulate = createLedEmulator();
 		let last = performance.now(),
 			handle: number;
 		function draw(now: number) {
-			frame = emulate(config, data, Math.min(50, now - last), isRp2354bBoard(appState.boardInfo), displayedButtons);
+			const next = emulate(config, data, now - last, isRp2354bBoard(appState.boardInfo), displayedButtons);
+			if (active) frame = next;
 			last = now;
 			handle = requestAnimationFrame(draw);
 		}
@@ -275,6 +279,7 @@
 <style>
 	.bar {
 		background: #263244;
+		outline: 2px solid #000;
 		border-radius: 6px !important;
 		width: 3% !important;
 		align-self: stretch;

@@ -220,7 +220,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM ConfigHIDReport[] {
 
     HID_RI_REPORT_ID(8, HID_REPORTID_Diagnostics),
     HID_RI_USAGE(8, 0x04),
-    HID_RI_REPORT_COUNT(8, sizeof(diagnostics_report)),
+    HID_RI_REPORT_COUNT(8, DIAGNOSTICS_LEGACY_SIZE),
     HID_RI_REPORT_SIZE(8, 0x08),
     HID_RI_FEATURE(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 

@@ -162,6 +162,17 @@ try {
   for(const slot of [0,3,6]) assert.equal(parsed.edgeEvents[slot+1] | parsed.edgeEvents[slot+2]<<8,2);
  }
  assert.deepEqual(parseDiagnostics(new DataView(new Uint8Array(24).buffer)).chatterEdges,[]);
+ const rgbStream=new Uint8Array(63);
+ rgbStream.set(extendedDiagnostics);
+ rgbStream.set([12,34,56],60);
+ const rgbReport=parseDiagnostics(new DataView(rgbStream.buffer));
+ assert.deepEqual(rgbReport.ttRgb,[12,34,56]);
+ assert.equal(rgbReport.chatterEdges[0],0x1234);
+ assert.equal(rgbReport.rawButtons,7);
+ assert.equal(rgbReport.edgeSequence,5);
+ assert.equal(rgbReport.edgeEvents.length,18);
+ assert.equal(parseDiagnostics(new DataView(extendedDiagnostics.buffer)).ttRgb,undefined);
+ assert.equal(parseDiagnostics(new DataView(chatterDiagnostics.buffer)).ttRgb,undefined);
  const counterBytes=new Uint8Array(28);
  const counterView=new DataView(counterBytes.buffer);
  counterView.setUint16(0,1234,true);counterView.setUint16(14,12,true);

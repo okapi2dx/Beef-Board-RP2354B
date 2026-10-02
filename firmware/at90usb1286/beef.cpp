@@ -26,6 +26,15 @@ volatile diagnostics_report diagnostics{};
 volatile chatter_counts_report chatter_counts{};
 static beef_button_chatter_t button_chatter;
 
+static void snapshot_turntable_rgb() {
+  // Snapshot only for an already scheduled diagnostic packet. Updating these
+  // bytes every LED frame would make LUFA's changed-report detection send more.
+  const bool visible = !current_config.disable_leds && tt_leds && RgbHelper::num_tt_leds;
+  diagnostics.tt_rgb[0] = visible ? tt_leds[0].r : 0;
+  diagnostics.tt_rgb[1] = visible ? tt_leds[0].g : 0;
+  diagnostics.tt_rgb[2] = visible ? tt_leds[0].b : 0;
+}
+
 // bit-field storing button state. bits 0-10 map to buttons 1-11
 // bits 11 and 12 map to digital tt -/+
 uint16_t button_state;
@@ -303,6 +312,7 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
           return true;
         }
         *ReportID = HID_REPORTID_DiagnosticsStream;
+        if (send_diag_after_counts) snapshot_turntable_rgb();
         ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
           memcpy(ReportData, (const void*)&diagnostics, sizeof(diagnostics));
         }
@@ -334,8 +344,9 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
           return false;
         }
         case HID_REPORTID_Diagnostics:
-          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { memcpy(ReportData, (const void*)&diagnostics, sizeof(diagnostics)); }
-          *ReportSize = sizeof(diagnostics);
+          // Preserve the legacy feature-report layout; RGB is stream-only.
+          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { memcpy(ReportData, (const void*)&diagnostics, DIAGNOSTICS_LEGACY_SIZE); }
+          *ReportSize = DIAGNOSTICS_LEGACY_SIZE;
           return false;
         default:
           // We're handling a feature report, should only be coming from HID_Device_ProcessControlRequest()

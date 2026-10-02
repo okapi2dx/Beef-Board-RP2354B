@@ -47,6 +47,7 @@ export type Diagnostics = {
   transitions: number;
   intervalMs: number;
   ledLevels: number[];
+  ttRgb?: number[];
   chatterEdges: number[];
   rawButtons: number;
   edgeSequence: number;
@@ -67,7 +68,7 @@ export function parseChatterCounts(data: DataView): ChatterCounts {
 }
 
 export function parseDiagnostics(data: DataView): Diagnostics {
-  const extended = data.byteLength === 60;
+  const extended = data.byteLength === 60 || data.byteLength === 63;
   return {
     buttons: data.getUint16(0, true), sensorAB: data.getUint8(2), raw: data.getUint8(3),
     filtered: data.getUint8(4), output: data.getUint8(5), direction: data.getInt8(6),
@@ -75,6 +76,7 @@ export function parseDiagnostics(data: DataView): Diagnostics {
     // v30+ appends the 11 PWM output levels. Keep older diagnostics packets
     // readable so the monitor can still connect before a firmware update.
     ledLevels: data.byteLength >= 24 ? Array.from({ length: 11 }, (_, i) => data.getUint8(13 + i)) : [],
+    ttRgb: data.byteLength === 63 ? Array.from({ length: 3 }, (_, i) => data.getUint8(60 + i)) : undefined,
     chatterEdges: extended ? Array.from({ length: 7 }, (_, i) => data.getUint16(24 + i * 2, true))
       : data.byteLength >= 46 ? Array.from({ length: 11 }, (_, i) => data.getUint16(24 + i * 2, true)) : [],
     rawButtons: extended ? data.getUint16(38, true) : data.byteLength >= 48 ? data.getUint16(46, true) : data.getUint16(0, true),

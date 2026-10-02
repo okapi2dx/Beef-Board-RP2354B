@@ -11,8 +11,10 @@ struct diagnostics_report {
   uint16_t raw_buttons;
   uint16_t edge_sequence;
   uint8_t edge_events[18];
+  uint8_t tt_rgb[3]; // First physical ring pixel; exact for uniform effects.
 } __attribute__((packed));
-static_assert(sizeof(diagnostics_report) == 60, "diagnostics report must fit the HID endpoint");
+constexpr uint8_t DIAGNOSTICS_LEGACY_SIZE = 60;
+static_assert(sizeof(diagnostics_report) + 1 == 64, "diagnostics plus report ID must fit one HID packet");
 extern volatile diagnostics_report diagnostics;
 
 struct chatter_counts_report {

@@ -50,3 +50,4 @@ with tempfile.TemporaryDirectory(prefix="beef-tests-") as directory:
         subprocess.run([str(executable)], check=True)
 
 subprocess.run([sys.executable, str(tests / "at90_lighting_test.py")], check=True)
+subprocess.run([sys.executable, str(tests / "at90_rgb_diagnostics_test.py")], check=True)
