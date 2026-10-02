@@ -70,16 +70,30 @@ function extractFirmwareInfo(text) {
   return { commitHash: null, version: null };
 }
 
-function runProcess(spawnProcess, executable, args, options, onLog) {
+const DEFAULT_PROCESS_TIMEOUT_MS = 60000;
+
+function runProcess(spawnProcess, executable, args, options, onLog, timeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawnProcess(executable, args, options);
     for (const stream of [child.stdout, child.stderr]) stream?.on('data', chunk => onLog(chunk.toString()));
-    child.once('error', reject);
-    child.once('close', code => resolve(code));
+    let settled = false;
+    const finish = (handler, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      handler(value);
+    };
+    const timer = setTimeout(() => {
+      if (settled) return;
+      try { child.kill(); } catch { /* Process may already be gone. */ }
+      finish(reject, new Error(`avrdude timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+    child.once('error', error => finish(reject, error));
+    child.once('close', code => finish(resolve, code));
   });
 }
 
-function createFlasher(toolDir, spawnProcess = spawn) {
+function createFlasher(toolDir, spawnProcess = spawn, processTimeoutMs = DEFAULT_PROCESS_TIMEOUT_MS) {
   let selected, busy = false;
   return {
     get busy() { return busy; },
@@ -101,7 +115,7 @@ function createFlasher(toolDir, spawnProcess = spawn) {
         const executable = path.join(toolDir, 'avrdude.exe');
         const options = { windowsHide: true, shell: false };
         const restartArgs = ['-C', path.join(toolDir, 'avrdude.conf'), '-c', 'flip1', '-p', 'usb1286', '-F', '-x', 'start_app'];
-        const exitCode = await runProcess(spawnProcess, executable, restartArgs, options, onLog);
+        const exitCode = await runProcess(spawnProcess, executable, restartArgs, options, onLog, processTimeoutMs);
         return { success: exitCode === 0, exitCode };
       } finally {
         busy = false;
@@ -118,12 +132,12 @@ function createFlasher(toolDir, spawnProcess = spawn) {
         const executable = path.join(toolDir, 'avrdude.exe');
         const options = { cwd: temporary, windowsHide: true, shell: false };
         const writeArgs = ['-C', path.join(toolDir, 'avrdude.conf'), '-c', 'flip1', '-p', 'usb1286', '-U', 'flash:w:firmware.hex:i'];
-        const exitCode = await runProcess(spawnProcess, executable, writeArgs, options, onLog);
+        const exitCode = await runProcess(spawnProcess, executable, writeArgs, options, onLog, processTimeoutMs);
         if (exitCode !== 0) return { success: false, exitCode, restartSuccess: false, restartExitCode: null };
 
         onLog('\n[INFO] Starting normal application...\n');
         const restartArgs = ['-C', path.join(toolDir, 'avrdude.conf'), '-c', 'flip1', '-p', 'usb1286', '-F', '-x', 'start_app'];
-        const restartExitCode = await runProcess(spawnProcess, executable, restartArgs, options, onLog);
+        const restartExitCode = await runProcess(spawnProcess, executable, restartArgs, options, onLog, processTimeoutMs);
         return {
           success: true,
           exitCode,

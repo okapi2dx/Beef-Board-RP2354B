@@ -1,4 +1,30 @@
+static void mapping_tests(void) {
+ usb_ready=true;cfg[85]=0;pending_tt_buttons=0;turntable.output.direction=0;
+ for(unsigned physical=0;physical<11;physical++) {
+  stable_buttons=1u<<physical;
+  cfg[35+physical]=4+physical;
+  for(unsigned destination=0;destination<12;destination++) {
+   cfg[127+physical]=destination;cfg[32]=0;
+   logical_buttons=controller_buttons();
+   assert(send_controller_report());
+   uint16_t actual=(uint16_t)report[2]|((uint16_t)report[3]<<8);
+   unsigned bit=destination==11?7:destination<7?destination:destination+1;
+   assert(actual==(1u<<bit));
+   cfg[32]=1;logical_buttons=controller_buttons();
+   assert(send_controller_report());
+   assert(report_instance==BEEF_HID_INSTANCE_KEYBOARD && report[0]==4+physical && report[1]==0);
+  }
+ }
+ cfg[32]=0;cfg[127]=11;cfg[128]=11;stable_buttons=3;
+ logical_buttons=controller_buttons();assert(send_controller_report());
+ assert(report[2]==128 && report[3]==0);
+ stable_buttons=0;logical_buttons=controller_buttons();assert(send_controller_report());
+ assert(report[2]==0 && report[3]==0);
+ memset(cfg,0,sizeof(cfg));previous_input_mode=0xff;report_count=0;reported_buttons=0;
+ puts("PASS mappings: all 11 physical inputs x 12 destinations, physical keyboard bindings, duplicate B8 and release");
+}
 int main(void){
+ mapping_tests();
  cfg[30]=10;cfg[78]=60;cfg[79]=3;cfg[80]=24;cfg[138]=16;cfg[7]=255;cfg[8]=255;
  for(unsigned i=0;i<11;i++)cfg[127+i]=i;
  cfg[32]=1;cfg[85]=1;cfg[47]=0x52;pending_tt_buttons=1u<<12;

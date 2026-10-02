@@ -102,3 +102,18 @@ test('native writer never runs start_app after a failed flash', async () => {
     await fs.rmdir(folder).catch(() => {});
   }
 });
+
+test('native process timeout terminates avrdude and clears busy state', async () => {
+  let killed = 0;
+  const flasher = createFlasher('C:/tools', () => {
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.kill = () => { killed++; return true; };
+    return child;
+  }, 10);
+
+  await assert.rejects(flasher.restartDfu(() => {}), /avrdude timed out after 10ms/);
+  assert.equal(killed, 1);
+  assert.equal(flasher.busy, false);
+});

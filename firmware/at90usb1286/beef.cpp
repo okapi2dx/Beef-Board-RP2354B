@@ -471,7 +471,12 @@ uint16_t remap_buttons(const uint16_t buttons, const uint8_t* mapping) {
   uint16_t remapped = buttons & ~physical_mask;
   for (uint8_t physical = 0; physical < BUTTONS; ++physical) {
     if (buttons & (uint16_t(1) << physical)) {
-      remapped |= uint16_t(1) << mapping[physical];
+      const uint8_t logical = mapping[physical];
+      if (logical < BUTTONS) {
+        remapped |= uint16_t(1) << logical;
+      } else if (logical == B8_REMAP_VALUE) {
+        remapped |= B8_LOGICAL_MASK;
+      }
     }
   }
   return remapped;

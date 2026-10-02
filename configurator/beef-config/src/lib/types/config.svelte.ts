@@ -81,6 +81,8 @@ export class SDVXKeyMapping {
 }
 
 export class Config {
+  readonly supports_b8_remapping: boolean;
+  readonly supports_bar_led_count: boolean;
   version = $state(0);
   reverse_tt = $state(false);
   tt_effect = $state(TurntableMode.Static);
@@ -125,7 +127,13 @@ export class Config {
   button_mapping = $state<number[]>(Array.from({ length: 11 }, (_, i) => i));
 
   constructor(configData: DataView) {
+    // RP2354B exposes a 139-byte config report. AT90USB1286 firmware v42+
+    // adds B8 remapping without changing its legacy 138-byte report layout.
+    // This capability check also survives the shared IIDX Entry/Premium
+    // VID/PID where Windows can reject the separate BoardInfo report.
+    this.supports_b8_remapping = configData.byteLength === 139 || configData.getUint8(0) >= 42;
     this.version = configData.getUint8(0);
+    this.supports_bar_led_count = this.version >= 32 && configData.byteLength >= 139;
     this.reverse_tt = configData.getUint8(1) as unknown as boolean;
     this.tt_effect = numberToTurntableMode[configData.getUint8(2)];
     this.tt_deadzone = configData.getUint8(3);
@@ -469,9 +477,11 @@ export async function updateConfig(config: Config): Promise<void> {
       if (config.button_mapping.length !== 11 ||
           config.button_mapping.some((v) => !Number.isInteger(v) || v < 0 || v > 11))
         throw new Error('Button mapping entries must be valid button indices');
+      if (!config.supports_b8_remapping && config.button_mapping.includes(11))
+        throw new Error('B8 remapping requires RP2354B or AT90USB1286 firmware v42+');
       for (const value of config.button_mapping) configView.setUint8(offset++, value);
     }
-    if (config.version >= 32) {
+    if (config.supports_bar_led_count) {
       if (!Number.isInteger(config.bar_leds) || config.bar_leds < 1 || config.bar_leds > 255)
         throw new Error('Center bar LED count must be 1–255');
       configView.setUint8(offset++, config.bar_leds);

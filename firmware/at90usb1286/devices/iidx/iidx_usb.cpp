@@ -66,11 +66,13 @@ namespace IIDX {
         const auto report_buttons = remap_buttons(button_state, current_config.button_mapping);
         // Infinitas only reads buttons 1-7, 9-12,
         // so shift bits 8 and up once
-        const uint8_t upper = report_buttons >> 7;
+        const uint16_t gamepad_buttons = report_buttons & ~B8_LOGICAL_MASK;
+        const uint8_t upper = gamepad_buttons >> 7;
         const uint8_t lower = report_buttons & 0x7F;
         joystick_report->X = current_config.digital_tt ? 127 : delayed_position;
         joystick_report->Y = 127;
         joystick_report->Button = (upper << 8) | lower;
+        if (report_buttons & B8_LOGICAL_MASK) joystick_report->Button |= uint16_t(1) << 7;
 
         return true;
       }
@@ -81,7 +83,7 @@ namespace IIDX {
         process_keyboard(keyboard_report,
                          current_config.iidx_keys.key_codes,
                          sizeof(current_config.iidx_keys.key_codes),
-                         remap_buttons(button_state, current_config.button_mapping));
+                         button_state);
 
         return false;
       }

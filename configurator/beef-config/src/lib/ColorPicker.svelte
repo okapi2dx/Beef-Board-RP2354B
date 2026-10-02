@@ -1,16 +1,20 @@
 <script lang="ts">
 	import ColorPicker from 'svelte-awesome-color-picker';
+	import { onDestroy } from 'svelte';
 	import { mode } from 'mode-watcher';
 
 	import { Hsv } from '$lib/types/types.svelte';
+	import { tr } from '$lib/types/locale.svelte';
+	import SliderInput from '$lib/SliderInput.svelte';
 
 	interface Props {
 		hsv: Hsv;
+		components?: 'h' | 'hs' | 'sv' | 'hsv';
 	}
 
-	let { hsv = $bindable() }: Props = $props();
+	let { hsv = $bindable(), components = 'hsv' }: Props = $props();
 
-	let colourPickerElement: HTMLDivElement | undefined = $state();
+	const pickerId = $props.id();
 	let hsva = $state({
 		h: hsv.h,
 		s: hsv.s,
@@ -18,29 +22,45 @@
 		a: 1
 	});
 
-	// Limit updates so that we don't immediately wear out EEPROM if the user spasms out on the colour picker
-	function handleHsvStart(event: PointerEvent): void {
-		colourPickerElement?.setPointerCapture(event.pointerId);
-	}
-
-	function handleHsvEnd(event: PointerEvent): void {
-		colourPickerElement?.releasePointerCapture(event.pointerId);
+	let saveTimer: ReturnType<typeof setTimeout> | undefined;
+	function commitColor(): void {
+		if (saveTimer === undefined) return;
+		clearTimeout(saveTimer);
+		saveTimer = undefined;
 		hsv.h = hsva.h;
 		hsv.s = hsva.s;
 		hsv.v = hsva.v;
 	}
+	// Mouse, touch, keyboard and text edits all produce this event.
+	// Coalesce continuous edits before writing the board's EEPROM.
+	function colorChanged(): void {
+		clearTimeout(saveTimer);
+		saveTimer = setTimeout(commitColor, 150);
+	}
+	onDestroy(commitColor);
 </script>
 
+{#if components !== 'hsv'}
+	<div class="mb-4">
+		{#if components.includes('h')}
+			<label>{tr('色相', 'Hue')}<SliderInput bind:value={hsv.h} min={0} max={360} id={`${pickerId}-h`} /></label>
+		{/if}
+		{#if components.includes('s')}
+			<label>{tr('彩度', 'Saturation')}<SliderInput bind:value={hsv.s} min={0} max={100} id={`${pickerId}-s`} /></label>
+		{/if}
+		{#if components.includes('v')}
+			<label>{tr('明るさ', 'Brightness')}<SliderInput bind:value={hsv.v} min={0} max={100} id={`${pickerId}-v`} /></label>
+		{/if}
+	</div>
+{:else}
 <div
 	class="mb-4"
 	class:cp-dark={mode.current === 'dark'}
-	bind:this={colourPickerElement}
 	role="none"
-	onpointerdown={handleHsvStart}
-	onpointerup={handleHsvEnd}
 >
-	<ColorPicker position="responsive" isAlpha={false} bind:hsv={hsva} />
+	<ColorPicker position="responsive" isAlpha={false} bind:hsv={hsva} onInput={colorChanged} />
 </div>
+{/if}
 
 <style>
 	.cp-dark {

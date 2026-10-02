@@ -304,19 +304,19 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 						{#if config.tt_effect === TurntableMode.Static}
 							<ColorPicker bind:hsv={config.tt_static_hsv} />
 						{:else if config.tt_effect === TurntableMode.Spin}
-							<ColorPicker bind:hsv={config.tt_spin_hsv} />
+							<ColorPicker bind:hsv={config.tt_spin_hsv} components="h" />
 						{:else if config.tt_effect === TurntableMode.Shift}
-							<ColorPicker bind:hsv={config.tt_shift_hsv} />
+							<ColorPicker bind:hsv={config.tt_shift_hsv} components="sv" />
 						{:else if config.tt_effect === TurntableMode.RainbowStatic}
-							<ColorPicker bind:hsv={config.tt_rainbow_static_hsv} />
+							<ColorPicker bind:hsv={config.tt_rainbow_static_hsv} components="sv" />
 						{:else if config.tt_effect === TurntableMode.RainbowReactive}
-							<ColorPicker bind:hsv={config.tt_rainbow_react_hsv} />
+							<ColorPicker bind:hsv={config.tt_rainbow_react_hsv} components="sv" />
 						{:else if config.tt_effect === TurntableMode.RainbowSpin}
-							<ColorPicker bind:hsv={config.tt_rainbow_spin_hsv} />
+							<ColorPicker bind:hsv={config.tt_rainbow_spin_hsv} components="sv" />
 						{:else if config.tt_effect === TurntableMode.Reactive}
-							<ColorPicker bind:hsv={config.tt_react_hsv} />
+							<ColorPicker bind:hsv={config.tt_react_hsv} components="hs" />
 						{:else if config.tt_effect === TurntableMode.Breathing}
-							<ColorPicker bind:hsv={config.tt_breathing_hsv} />
+							<ColorPicker bind:hsv={config.tt_breathing_hsv} components="hs" />
 						{/if}
 					</div>
 
@@ -383,7 +383,7 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 						/>
 					</div>
 
-					{#if config.version >= 32}
+					{#if config.supports_bar_led_count}
 						<div class="mb-4 flex items-center justify-between gap-4">
 							<ToolTipLabel forId="bar-leds" label={tr('センターバーLED数', 'Center Bar LEDs')}>
 								<p>{tr('センターバーのRGB LED数を設定します。', 'Sets the number of RGB LEDs on the center bar.')}</p>
@@ -400,7 +400,7 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 							/>
 						</div>
 					{:else}
-						<p class="mb-4 text-sm">{tr('センターバーLED数の変更には、対応ファームウェアへ更新してください。', 'Update to compatible firmware to change the center bar LED count.')}</p>
+						<p class="mb-4 text-sm">{tr('この基板・ファームウェアではセンターバーLED数は固定です。', 'The center bar LED count is fixed on this board and firmware.')}</p>
 					{/if}
 				{/if}
 			{/if}

@@ -28,10 +28,10 @@
 		tt_cw: 'TT+'
 	};
 	// Physical inputs keep their board labels. Remap destinations use B9-B12
-	// for the four function inputs. B8 uses the spare HID Button 8 position while
-	// keeping existing stored values for B9-B12 unchanged.
+	// for the four function inputs. B8 uses the dedicated remap value 11 on
+	// RP2354B and AT90USB1286 firmware v42+.
 	const PHYSICAL_BUTTON_LABELS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'E1', 'E2', 'E3', 'E4'];
-	const BUTTON_DESTINATIONS = [
+	const BASE_BUTTON_DESTINATIONS = [
 		{ label: 'B1', value: 0 },
 		{ label: 'B2', value: 1 },
 		{ label: 'B3', value: 2 },
@@ -39,12 +39,17 @@
 		{ label: 'B5', value: 4 },
 		{ label: 'B6', value: 5 },
 		{ label: 'B7', value: 6 },
-		{ label: 'B8', value: 11 },
 		{ label: 'B9', value: 7 },
 		{ label: 'B10', value: 8 },
 		{ label: 'B11', value: 9 },
 		{ label: 'B12', value: 10 }
 	];
+	const B8_DESTINATION = { label: 'B8', value: 11 };
+	let buttonDestinations = $derived(
+		config.supports_b8_remapping
+			? [...BASE_BUTTON_DESTINATIONS.slice(0, 7), B8_DESTINATION, ...BASE_BUTTON_DESTINATIONS.slice(7)]
+			: BASE_BUTTON_DESTINATIONS
+	);
 
 	function startKeyCapture(button: number) {
 		selectedButton = button;
@@ -92,7 +97,7 @@
 	function changeButtonMapping(physical: number, value: string | null | undefined) {
 		if (value == null) return;
 		const logical = Number(value);
-		if (!Number.isInteger(logical) || !BUTTON_DESTINATIONS.some((destination) => destination.value === logical)) return;
+		if (!Number.isInteger(logical) || !buttonDestinations.some((destination) => destination.value === logical)) return;
 		if (config.button_mapping[physical] === logical) return;
 
 		// Multiple physical buttons may intentionally produce the same logical
@@ -176,11 +181,11 @@
 									onValueChange={(value) => changeButtonMapping(i, value)}
 								>
 									<Select.Trigger class="remap-select">
-										{BUTTON_DESTINATIONS.find((destination) => destination.value === config.button_mapping[i])?.label}
+										{buttonDestinations.find((destination) => destination.value === config.button_mapping[i])?.label}
 									</Select.Trigger>
 									<Select.Content>
 										<Select.Group>
-											{#each BUTTON_DESTINATIONS as destination}
+											{#each buttonDestinations as destination}
 												<Select.Item value={String(destination.value)}>{destination.label}</Select.Item>
 											{/each}
 										</Select.Group>

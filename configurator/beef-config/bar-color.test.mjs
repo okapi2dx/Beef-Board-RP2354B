@@ -143,6 +143,8 @@ try {
   };
   globalThis.__barTestState.device = device;
   const config = await readConfig();
+  assert.equal(config.supports_b8_remapping, true, '139-byte RP2354B config report must enable B8 remapping');
+  assert.equal(config.supports_bar_led_count, true, '139-byte RP2354B config report must expose center bar LED count');
   config.tt_delay_ms = 10;
   const firstWrite = updateConfig(config);
   await new Promise(resolve => setTimeout(resolve, 0));
@@ -170,7 +172,40 @@ try {
   await assert.rejects(() => updateConfig(config));
   await updateConfig(config);
   assert.equal(replacementWrites, 2, 'Failed writes must be retryable on another device');
+  let mappingWrites = 0;
+  globalThis.__barTestState.device = {
+    sendFeatureReport: async () => { mappingWrites++; }
+  };
+  config.button_mapping = [0, 1, 2, 3, 4, 5, 6, 11, 8, 9, 10];
+  globalThis.__barTestState.boardInfo = { boardType: 'AT90USB1286' };
+  await updateConfig(config);
+  assert.equal(mappingWrites, 1, 'RP2354B config packet must accept B8 even when boardInfo fell back to AT90');
+
+  const at90Packet = new Uint8Array(138);
+  at90Packet[0] = 42;
+  at90Packet[80] = 24;
+  const at90Config = new Config(new DataView(at90Packet.buffer));
+  assert.equal(at90Config.supports_b8_remapping, true, 'AT90USB1286 v42+ must enable B8 remapping');
+  assert.equal(at90Config.supports_bar_led_count, false, '138-byte AT90USB1286 config report must not expose center bar LED count');
+  at90Config.button_mapping = [0, 1, 2, 3, 4, 5, 6, 11, 8, 9, 10];
+  let at90WriteLength = 0;
+  globalThis.__barTestState.device = {
+    sendFeatureReport: async (_id, bytes) => { mappingWrites++; at90WriteLength = bytes.length; }
+  };
+  await updateConfig(at90Config);
+  assert.equal(mappingWrites, 2, 'AT90USB1286 v42+ must save B8 remapping');
+  assert.equal(at90WriteLength, 138, 'AT90USB1286 writes must preserve the 138-byte HID config report');
+
+  const oldAt90Packet = new Uint8Array(138);
+  oldAt90Packet[0] = 41;
+  oldAt90Packet[80] = 24;
+  const oldAt90Config = new Config(new DataView(oldAt90Packet.buffer));
+  assert.equal(oldAt90Config.supports_b8_remapping, false, 'AT90USB1286 v41 must keep B8 remapping disabled');
+  oldAt90Config.button_mapping = [0, 1, 2, 3, 4, 5, 6, 11, 8, 9, 10];
+  await assert.rejects(() => updateConfig(oldAt90Config), /AT90USB1286 firmware v42\+/);
+  assert.equal(mappingWrites, 2, 'AT90USB1286 v41 must reject B8 before sending a config report');
   console.log('PASS: queued save/revert, exact RP2354B packet size, LED count validation, device-scoped cache and failed-write retry');
+  console.log('PASS: B8 remapping supports RP2354B and AT90USB1286 v42+ while rejecting older AT90 firmware');
   console.log('PASS: static mode, independent color round-trip, and legacy version compatibility');
 } finally {
   delete globalThis.__barTestState;

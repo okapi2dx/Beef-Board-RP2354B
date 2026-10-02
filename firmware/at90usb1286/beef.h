@@ -49,3 +49,10 @@ enum {
   BUTTON_10 = 1 << 9,
   BUTTON_11 = 1 << 10
 };
+
+// button_mapping stores 0..10 for the legacy B1-B7/B9-B12 destinations.
+// Value 11 is reserved for B8, which occupies the otherwise skipped HID bit.
+enum {
+  B8_REMAP_VALUE = BUTTONS,
+  B8_LOGICAL_MASK = 1 << 13
+};

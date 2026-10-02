@@ -12,8 +12,11 @@
 #define CONFIG_TT_SHIFT_SAT_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_shift_hsv.s))
 #define CONFIG_TT_SHIFT_VAL_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_shift_hsv.v))
 #define CONFIG_TT_RAINBOW_STATIC_SAT_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_rainbow_static_hsv.s))
+#define CONFIG_TT_RAINBOW_STATIC_VAL_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_rainbow_static_hsv.v))
 #define CONFIG_TT_RAINBOW_REACT_SAT_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_rainbow_react_hsv.s))
+#define CONFIG_TT_RAINBOW_REACT_VAL_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_rainbow_react_hsv.v))
 #define CONFIG_TT_RAINBOW_SPIN_SAT_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_rainbow_spin_hsv.s))
+#define CONFIG_TT_RAINBOW_SPIN_VAL_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_rainbow_spin_hsv.v))
 #define CONFIG_TT_REACT_HUE_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_react_hsv.h))
 #define CONFIG_TT_REACT_SAT_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_react_hsv.s))
 #define CONFIG_TT_BREATHING_HUE_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_breathing_hsv.h))
@@ -34,6 +37,7 @@
 
 enum {
   MAGIC = 0xBEEF,
+  CURRENT_CONFIG_VERSION = 42,
 
   DEADZONE_MAX = 255,
   DEADZONE_MIN = 0,
@@ -78,6 +82,7 @@ const SDVXKeyMapping DEFAULT_SDVX_KEYS = {
 };
 
 bool validate_config(const config &self) {
+  if (self.version != CURRENT_CONFIG_VERSION) return false;
   if (self.button_led_fade_ms_extended > 1000) return false;
   if (self.button_led_brightness > 100 || self.button_led_invert > 1) return false;
   if (self.button_led_individual > 1 || self.tt_curve > TurntableCurve::Dynamic) return false;
@@ -89,13 +94,8 @@ bool validate_config(const config &self) {
   if (self.version >= 36)
     for (uint8_t i = 0; i < 7; ++i)
       if (self.sdvx_keys.button_release_debounce[i] > (self.version >= 37 ? 160 : 50)) return false;
-  uint16_t mapped_buttons = 0;
-  for (uint8_t i = 0; i < BUTTONS; ++i) {
-    if (self.button_mapping[i] >= BUTTONS) return false;
-    const uint16_t bit = uint16_t(1) << self.button_mapping[i];
-    if (mapped_buttons & bit) return false;
-    mapped_buttons |= bit;
-  }
+  for (uint8_t i = 0; i < BUTTONS; ++i)
+    if (self.button_mapping[i] > B8_REMAP_VALUE) return false;
   if (self.tt_effect >= TurntableMode::Count) {
     return false;
   }
@@ -136,16 +136,28 @@ bool validate_config(const config &self) {
   return true;
 }
 
+void reset_config(config* self) {
+  *self = {};
+  config_update(self);
+}
+
 void config_init(config* self) {
   const auto magic = eeprom_read_word(nullptr);
   if (magic != MAGIC) {
     eeprom_write_word(nullptr, MAGIC);
-    self->version = 0;
-  } else {
-    eeprom_read_block(self, CONFIG_BASE_ADDR, sizeof(*self));
+    reset_config(self);
+    return;
+  }
+
+  eeprom_read_block(self, CONFIG_BASE_ADDR, sizeof(*self));
+  if (self->version > CURRENT_CONFIG_VERSION ||
+      (self->version == CURRENT_CONFIG_VERSION && !validate_config(*self))) {
+    reset_config(self);
+    return;
   }
 
   config_update(self);
+  if (!validate_config(*self)) reset_config(self);
 }
 
 void config_update(config* self) {
@@ -318,6 +330,9 @@ void config_update(config* self) {
     case 40:
       // Count only opposite bounce edges and apply immediate release guards.
       self->version++;
+    case 41:
+      // Allow the remap table to use value 11 as the logical B8 destination.
+      self->version++;
     default: break;
   }
   eeprom_update_block(self, CONFIG_BASE_ADDR, sizeof(config));
@@ -351,6 +366,7 @@ void config_save(const config &new_config) {
   if (normalized.version == 38) normalized.version = 39;
   if (normalized.version == 39) normalized.version = 40;
   if (normalized.version == 40) normalized.version = 41;
+  if (normalized.version == 41) normalized.version = 42;
   if (!validate_config(normalized)) {
     return;
   }
@@ -498,15 +514,15 @@ callback tt_hsv_set_val(config* self) {
       v = &self->tt_shift_hsv;
       break;
     case TurntableMode::RainbowStatic:
-      addr = CONFIG_TT_RAINBOW_STATIC_SAT_ADDR;
+      addr = CONFIG_TT_RAINBOW_STATIC_VAL_ADDR;
       v = &self->tt_rainbow_static_hsv;
       break;
     case TurntableMode::RainbowReact:
-      addr = CONFIG_TT_RAINBOW_REACT_SAT_ADDR;
+      addr = CONFIG_TT_RAINBOW_REACT_VAL_ADDR;
       v = &self->tt_rainbow_react_hsv;
       break;
     case TurntableMode::RainbowSpin:
-      addr = CONFIG_TT_RAINBOW_SPIN_SAT_ADDR;
+      addr = CONFIG_TT_RAINBOW_SPIN_VAL_ADDR;
       v = &self->tt_rainbow_spin_hsv;
       break;
     default:
