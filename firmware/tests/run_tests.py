@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import re
 import subprocess
+import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
@@ -47,3 +48,5 @@ with tempfile.TemporaryDirectory(prefix="beef-tests-") as directory:
         subprocess.run([compiler, "-std=c11", "-Wall", "-Wextra", "-Werror", "-I" + str(src),
                         "-I" + str(tests / "stubs"), "-I" + str(temp), *map(str, sources), "-lm", "-o", str(executable)], check=True)
         subprocess.run([str(executable)], check=True)
+
+subprocess.run([sys.executable, str(tests / "at90_lighting_test.py")], check=True)

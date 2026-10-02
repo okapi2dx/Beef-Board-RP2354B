@@ -22,7 +22,7 @@ public:
   SpinPattern();
   SpinPattern(uint8_t spin_duration,
               uint8_t fast_spin_duration,
-              uint8_t limit = 0);
+              uint8_t limit = 0); // 0 means the full 256-value hue cycle.
 
   void init(uint8_t spin_duration,
             uint8_t fast_spin_duration,
@@ -31,10 +31,10 @@ public:
   uint8_t get() const;
 
 private:
-  uint8_t spin_duration;
-  uint8_t fast_spin_duration;
+  uint8_t spin_duration = 1;
+  uint8_t fast_spin_duration = 1;
   int8_t last_tt_report = 0;
   uint8_t spin_counter = 0;
-  uint8_t limit;
+  uint8_t limit = 0;
   Ticker ticker{};
 };

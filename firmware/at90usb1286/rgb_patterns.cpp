@@ -61,12 +61,10 @@ bool SpinPattern::update(const int8_t tt_report) {
   }
 
   const auto ticks = ticker.get_ticks();
-  if (tt_report == -1) {
-    spin_counter += limit - ticks;
-  } else {
-    spin_counter += ticks;
-  }
-  spin_counter %= limit;
+  const uint16_t cycle = limit ? limit : 256u;
+  const uint16_t step = ticks % cycle;
+  // Reduce before storing in the byte counter, including reverse motion.
+  spin_counter = (spin_counter + cycle + (tt_report == -1 ? -int16_t(step) : int16_t(step))) % cycle;
 
   return ticks > 0;
 }

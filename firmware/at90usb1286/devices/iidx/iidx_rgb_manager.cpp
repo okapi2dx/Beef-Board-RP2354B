@@ -58,24 +58,18 @@ namespace IIDX {
       }
 
       bool render_rainbow(const HSV &hsv, const uint8_t pos) {
-        static uint8_t prev_pos;
         bool update = false;
-        if (force_update || prev_pos != pos) {
-          fill_rainbow_circular(tt_leds,
-                                RgbHelper::num_tt_leds,
-                                -pos);
-          update = true;
-        }
-        prev_pos = pos;
-
-        // Emulate HSV adjustments
+        const uint16_t hue_change = 65535u / RgbHelper::num_tt_leds;
+        uint16_t hue_offset = 0;
+        // Start from the unscaled palette each frame. Scaling the previous
+        // output compounds brightness and saturation when the phase is static.
         for (uint8_t i = 0; i < RgbHelper::num_tt_leds; i++) {
-          auto &led = tt_leds[i];
-          const auto prev_led = tt_leds[i];
-          tt_leds[i] += (CRGB::White - tt_leds[i]).
-            scale8(255 - hsv.s);
-          led.nscale8(hsv.v);
-          update |= prev_led != led;
+          CRGB rgb = CHSV(static_cast<uint8_t>(-pos + (hue_offset >> 8)), 240, 255);
+          rgb += (CRGB::White - rgb).scale8(255 - hsv.s);
+          rgb.nscale8(hsv.v);
+          update |= tt_leds[i] != rgb;
+          tt_leds[i] = rgb;
+          hue_offset += hue_change;
         }
 
         return update;
@@ -357,9 +351,13 @@ namespace IIDX {
     }
 
     void init(const config &cfg) {
-      Turntable::spin_pattern.init(SPIN_TIMER * RgbHelper::tt_anim_normalise,
-                                   FAST_SPIN_TIMER * RgbHelper::tt_anim_normalise,
-                                   RgbHelper::num_tt_leds / 2);
+      (void)cfg;
+      const uint16_t count = RgbHelper::num_tt_leds;
+      const uint16_t slow = SPIN_TIMER * 24u / count;
+      const uint16_t fast = FAST_SPIN_TIMER * 24u / count;
+      Turntable::spin_pattern.init(slow > 255 ? 255 : slow ? slow : 1,
+                                   fast > 255 ? 255 : fast ? fast : 1,
+                                   (count + 1u) / 2u);
     }
 
     void update(const int8_t tt_report,
