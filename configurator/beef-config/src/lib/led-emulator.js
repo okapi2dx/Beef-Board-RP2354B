@@ -29,7 +29,7 @@ function color(c, h = c.h, v = c.v) {
 export function createLedEmulator() {
   let time = 0, spin = 0, rainbow = 0, react = 0, hue = 0;
   let spinRemainder = 0, rainbowRemainder = 0, lastDirection = 0;
-  let lastButtons = 0, level = 0, guard = -100, decay = 0;
+  let lastButtons = 0, level = 0, guard = -Infinity, decay = 0;
   let lastMotion = -Infinity, targetVelocity = 0, velocity = 0;
   /** @type {import('$lib/types/hid').Diagnostics | null} */
   let previousInput = null;
@@ -99,6 +99,7 @@ export function createLedEmulator() {
     react = wrap(react + dt / 3 * velocity * speed, 256);
     if (direction) { guard = time; hue = direction === 1 ? 0 : 180; }
     const buttons = displayButtons ?? input?.buttons ?? 0;
+    const physicalButtons = input?.buttons ?? 0;
     if (buttons !== lastButtons) { level = Math.min(16, level + 1); decay = time; }
     else if (time - decay >= 30) { level = Math.max(0, level - Math.floor((time-decay)/30)); decay = time; }
     lastButtons = buttons;
@@ -159,7 +160,7 @@ export function createLedEmulator() {
       if (useLedTelemetry && input?.ledLevels?.length === 11) return input.ledLevels[i];
       // LEDs correspond to physical output pins; input diagnostics are physical.
       const inverted = Boolean(cfg.button_led_invert) !== Boolean(cfg.button_led_individual && cfg.button_led_inverted?.[i]);
-      const on = Boolean(buttons & (1<<i)) !== inverted;
+      const on = Boolean(physicalButtons & (1<<i)) !== inverted;
       if (wasOn[i] && !on) released[i]=time;
       wasOn[i]=on;
       const fade=(cfg.button_led_individual ? cfg.button_led_fade?.[i] : cfg.button_led_fade_ms) || 0;

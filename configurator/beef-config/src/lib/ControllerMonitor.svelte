@@ -89,6 +89,9 @@
 	}
 	$effect(() => {
 		const device = appState.device;
+		data = null;
+		stale = true;
+		frame = { ring: Array(24).fill('#000000'), bar: Array(16).fill('#000000'), buttonLevels: Array(11).fill(0) };
 		if (!device) return;
 
 		// v30+ receives diagnostics through the config interface's interrupt IN
@@ -97,20 +100,29 @@
 		// registered while this component exists; rendering still pauses when
 		// the Monitor tab is inactive.
 		if (config.version >= 30) {
-			data = null;
-			stale = true;
+			let timeout: ReturnType<typeof setTimeout> | undefined;
+			const invalidate = () => {
+				clearTimeout(timeout);
+				data = null;
+				stale = true;
+			};
 			const onInput = (event: HIDInputReportEvent) => {
 				if (event.reportId !== ReportId.DiagnosticsStream) return;
 				try {
 					const next = parseDiagnostics(event.data);
 					data = next;
 					stale = false;
+					clearTimeout(timeout);
+					timeout = setTimeout(invalidate, 500);
 				} catch {
-					stale = true;
+					invalidate();
 				}
 			};
 			device.addEventListener('inputreport', onInput);
-			return () => device.removeEventListener('inputreport', onInput);
+			return () => {
+				clearTimeout(timeout);
+				device.removeEventListener('inputreport', onInput);
+			};
 		}
 
 		if (!active || config.version < 24) return;
@@ -156,7 +168,9 @@
 			handle: number;
 		function draw(now: number) {
 			const next = emulate(config, data, now - last, isRp2354bBoard(appState.boardInfo), displayedButtons);
-			if (active) frame = next;
+			if (active) frame = data ? next : {
+				ring: Array(24).fill('#000000'), bar: Array(16).fill('#000000'), buttonLevels: Array(11).fill(0)
+			};
 			last = now;
 			handle = requestAnimationFrame(draw);
 		}

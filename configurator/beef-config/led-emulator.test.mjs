@@ -77,7 +77,7 @@ let startEffect, draw, emulatorCount=0;
 const elapsed=[];
 const context=vm.createContext({
   $effect:callback=>{startEffect=callback;}, appState:{device:{},boardInfo:{}},
-  config:cfg,data:null,displayedButtons:0,active:true,frame:null,
+  config:cfg,data:{buttons:0},displayedButtons:0,active:true,frame:null,
   performance:{now:()=>0}, isRp2354bBoard:()=>true,
   createLedEmulator:()=>{emulatorCount++;return (config,data,dt)=>{elapsed.push(dt);return {time:dt};};},
   requestAnimationFrame:callback=>{draw=callback;return 1;}, cancelAnimationFrame:()=>{}
@@ -92,7 +92,61 @@ assert.deepEqual(elapsed,[16,1000,1000],'Clock must advance off-tab without a 50
 assert.equal(emulatorCount,1,'Changing tabs must retain the animation phase');
 dispose();startEffect();
 assert.equal(emulatorCount,2,'Reconnection must start a new local phase');
+context.data=null;draw(32);
+assert(context.frame.ring.every(c=>c==='#000000'));
+assert(context.frame.bar.every(c=>c==='#000000'));
+assert(context.frame.buttonLevels.every(level=>level===0),'Missing diagnostics must clear the visible LEDs');
 console.log('PASS: monitor tab switching, throttled display catch-up and connection reset');
+
+// Logical destinations must not move the LEDs attached to physical buttons.
+for(let physical=0;physical<11;physical++) {
+  for(let destination=0;destination<12;destination++) {
+    const displayed=1<<(destination===11?13:destination);
+    const remapped=createLedEmulator()(cfg,{buttons:1<<physical},16,false,displayed);
+    assert.deepEqual(remapped.buttonLevels,Array.from({length:11},(_,i)=>i===physical?100:0));
+  }
+}
+const reactive=createLedEmulator();
+const reactiveCfg={...cfg,tt_effect:'Reactive',reverse_tt:true};
+const idle=reactive(reactiveCfg,{direction:0},16,true).ring;
+assert(idle.every(color=>color==='hsl(180 100% 12.5%)'),'RP reactive mode must start at idle brightness');
+assert.notDeepEqual(reactive(reactiveCfg,{direction:1},16,true).ring,idle);
+assert.notDeepEqual(reactive(reactiveCfg,{direction:0},499,true).ring,idle);
+assert.deepEqual(reactive(reactiveCfg,{direction:0},1,true).ring,idle,'Reaction expires at 500ms');
+console.log('PASS: all physical inputs/logical destinations and RP reactive idle/500ms timeout');
+
+// Run the actual stream listener with a clock that delivers timeout callbacks.
+const firstEffect=source.indexOf('\t$effect(() => {');
+const nextEffect=source.indexOf('\t$effect(() => {',firstEffect+1);
+let listen,setupStream,clockNow=0,timerId=0;
+const timers=new Map();
+const testDevice={addEventListener:(_,callback)=>{listen=callback;},removeEventListener:()=>{listen=null;}};
+const streamContext=vm.createContext({
+  $effect:callback=>{setupStream=callback;},appState:{device:testDevice},config:{version:42},
+  data:null,stale:true,frame:null,ReportId:{DiagnosticsStream:5},
+  parseDiagnostics:value=>{if(value==='invalid')throw Error('Malformed packet');return value;},
+  setTimeout:(callback,delay)=>{timers.set(++timerId,{callback,due:clockNow+delay});return timerId;},
+  clearTimeout:id=>timers.delete(id)
+});
+const advance=milliseconds=>{
+  clockNow+=milliseconds;
+  for(const [id,timer] of [...timers]) if(timer.due<=clockNow){timers.delete(id);timer.callback();}
+};
+vm.runInContext(ts.transpileModule(source.slice(firstEffect,nextEffect),{compilerOptions:{target:ts.ScriptTarget.ESNext}}).outputText,streamContext);
+let stopStream=setupStream();
+const input={buttons:1,ttRgb:[255,0,0]};
+listen({reportId:5,data:input});advance(499);
+assert.equal(streamContext.data,input);assert.equal(streamContext.stale,false);
+listen({reportId:7,data:input});advance(1);
+assert.equal(streamContext.data,null);assert.equal(streamContext.stale,true,'Other reports must not refresh diagnostic freshness');
+listen({reportId:5,data:input});advance(400);listen({reportId:5,data:input});advance(100);
+assert.equal(streamContext.stale,false,'New valid packets must reset the timeout');
+listen({reportId:5,data:'invalid'});
+assert.equal(streamContext.data,null);assert.equal(streamContext.stale,true);assert.equal(timers.size,0);
+listen({reportId:5,data:input});stopStream();assert.equal(timers.size,0);assert.equal(listen,null);
+streamContext.appState.device=null;setupStream();
+assert.equal(streamContext.data,null);assert(streamContext.frame.ring.every(c=>c==='#000000'));
+console.log('PASS: diagnostic loss at 500ms, resumption, invalid packets, unrelated reports and listener cleanup');
 
 for(const mode of ['Shift','HID','Static','Reactive','Breathing']) {
   const live=createLedEmulator();
