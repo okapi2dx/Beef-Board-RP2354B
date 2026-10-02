@@ -4,17 +4,13 @@
 	import { mode } from 'mode-watcher';
 
 	import { Hsv } from '$lib/types/types.svelte';
-	import { tr } from '$lib/types/locale.svelte';
-	import SliderInput from '$lib/SliderInput.svelte';
 
 	interface Props {
 		hsv: Hsv;
-		components?: 'h' | 'hs' | 'sv' | 'hsv';
 	}
 
-	let { hsv = $bindable(), components = 'hsv' }: Props = $props();
+	let { hsv = $bindable() }: Props = $props();
 
-	const pickerId = $props.id();
 	let hsva = $state({
 		h: hsv.h,
 		s: hsv.s,
@@ -40,19 +36,6 @@
 	onDestroy(commitColor);
 </script>
 
-{#if components !== 'hsv'}
-	<div class="mb-4">
-		{#if components.includes('h')}
-			<label>{tr('色相', 'Hue')}<SliderInput bind:value={hsv.h} min={0} max={360} id={`${pickerId}-h`} /></label>
-		{/if}
-		{#if components.includes('s')}
-			<label>{tr('彩度', 'Saturation')}<SliderInput bind:value={hsv.s} min={0} max={100} id={`${pickerId}-s`} /></label>
-		{/if}
-		{#if components.includes('v')}
-			<label>{tr('明るさ', 'Brightness')}<SliderInput bind:value={hsv.v} min={0} max={100} id={`${pickerId}-v`} /></label>
-		{/if}
-	</div>
-{:else}
 <div
 	class="mb-4"
 	class:cp-dark={mode.current === 'dark'}
@@ -60,7 +43,6 @@
 >
 	<ColorPicker position="responsive" isAlpha={false} bind:hsv={hsva} onInput={colorChanged} />
 </div>
-{/if}
 
 <style>
 	.cp-dark {

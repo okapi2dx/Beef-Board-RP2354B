@@ -304,19 +304,19 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 						{#if config.tt_effect === TurntableMode.Static}
 							<ColorPicker bind:hsv={config.tt_static_hsv} />
 						{:else if config.tt_effect === TurntableMode.Spin}
-							<ColorPicker bind:hsv={config.tt_spin_hsv} components="h" />
+							<ColorPicker bind:hsv={config.tt_spin_hsv} />
 						{:else if config.tt_effect === TurntableMode.Shift}
-							<ColorPicker bind:hsv={config.tt_shift_hsv} components="sv" />
+							<ColorPicker bind:hsv={config.tt_shift_hsv} />
 						{:else if config.tt_effect === TurntableMode.RainbowStatic}
-							<ColorPicker bind:hsv={config.tt_rainbow_static_hsv} components="sv" />
+							<ColorPicker bind:hsv={config.tt_rainbow_static_hsv} />
 						{:else if config.tt_effect === TurntableMode.RainbowReactive}
-							<ColorPicker bind:hsv={config.tt_rainbow_react_hsv} components="sv" />
+							<ColorPicker bind:hsv={config.tt_rainbow_react_hsv} />
 						{:else if config.tt_effect === TurntableMode.RainbowSpin}
-							<ColorPicker bind:hsv={config.tt_rainbow_spin_hsv} components="sv" />
+							<ColorPicker bind:hsv={config.tt_rainbow_spin_hsv} />
 						{:else if config.tt_effect === TurntableMode.Reactive}
-							<ColorPicker bind:hsv={config.tt_react_hsv} components="hs" />
+							<ColorPicker bind:hsv={config.tt_react_hsv} />
 						{:else if config.tt_effect === TurntableMode.Breathing}
-							<ColorPicker bind:hsv={config.tt_breathing_hsv} components="hs" />
+							<ColorPicker bind:hsv={config.tt_breathing_hsv} />
 						{/if}
 					</div>
 
