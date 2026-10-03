@@ -264,11 +264,12 @@ static void controller_hardware_init(void) {
   dma_tt=ws2812_dma_init(rgb_sm_tt);
   dma_bar=ws2812_dma_init(rgb_sm_bar);
   uart_init(uart0, 115200);
-  gpio_set_function(18, GPIO_FUNC_UART);
-  gpio_set_function(19, GPIO_FUNC_UART);
+  // These RP2350 pin pairs expose TX/RX through F11; F2 is CTS/RTS.
+  gpio_set_function(18, GPIO_FUNC_UART_AUX);
+  gpio_set_function(19, GPIO_FUNC_UART_AUX);
   uart_init(uart1, 115200);
-  gpio_set_function(22, GPIO_FUNC_UART);
-  gpio_set_function(23, GPIO_FUNC_UART);
+  gpio_set_function(22, GPIO_FUNC_UART_AUX);
+  gpio_set_function(23, GPIO_FUNC_UART_AUX);
   phoenixwan_uart_init();
   encoder_prev = (gpio_get(21) ? 1u : 0u) | (gpio_get(20) ? 2u : 0u);
   gpio_set_irq_enabled_with_callback(21, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, input_gpio_irq);
