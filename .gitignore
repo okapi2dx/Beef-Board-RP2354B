@@ -8,6 +8,10 @@
 firmware/build/
 firmware/build-codex/
 firmware/build-output/
+# Distribute firmware images through GitHub Releases, not the source directory
+firmware/*.uf2
+firmware/*.hex
+firmware/*.elf
 **/node_modules/
 configurator/beef-config/.svelte-kit/
 configurator/beef-config/build/

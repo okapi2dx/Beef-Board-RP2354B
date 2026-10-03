@@ -2,12 +2,22 @@
 
 This is native RP2354B firmware built with the Pico SDK. It preserves the Beef Board HID configuration and controller behavior. The GPIO mapping was checked against the RP2354B PCB and matching schematic on 2026-09-25. The later routing cleanup keeps all footprints and vias in place.
 
-## Included
+## Download / ダウンロード
 
-- `Beef-Board-RP2354B.uf2`: RP2350 Arm image for BOOTSEL drag-and-drop flashing.
-- `Beef-Board-RP2354B.elf`: matching debug image.
-- `src/` and `CMakeLists.txt`: complete build sources. Pico SDK and its TinyUSB submodule are external dependencies.
-- `../configurator/`: complete Configurator source with RP2354B detection, settings access, desktop USB permission, BOOTSEL instructions and the bundled UF2.
+配布用ファームウェアはこのフォルダーに直接置かず、[V1.00リリースページ](https://github.com/okapi2dx/Beef-Board-RP2354B/releases/tag/V1.00)に掲載しています。使っている基板に合ったファイルを選んでください。
+
+| 基板 | 配布ファイル | 書き込み方法 |
+|---|---|---|
+| RP2354B | [`Beef-Board-RP2354B.uf2`](https://github.com/okapi2dx/Beef-Board-RP2354B/releases/download/V1.00/Beef-Board-RP2354B.uf2) | BOOTSELモードのUSBドライブへコピー |
+| AT90USB1286 | [`Beef-Board-AT90USB1286.hex`](https://github.com/okapi2dx/Beef-Board-RP2354B/releases/download/V1.00/Beef-Board-AT90USB1286.hex) | Windows ConfiguratorでDFU書き込み |
+
+Release firmware downloads are hosted on GitHub Releases. This directory contains source code, build instructions and tests; generated UF2, HEX and ELF files are not tracked here. For a debug ELF, build the firmware locally.
+
+## Source contents
+
+- `src/` and `CMakeLists.txt`: complete RP2354B build sources. Pico SDK and its TinyUSB submodule are external dependencies.
+- `at90usb1286/`: AT90USB1286 firmware sources and build instructions.
+- `../configurator/`: complete Configurator source with RP2354B detection, settings access, desktop USB permission, BOOTSEL instructions and the app's bundled UF2.
 
 ## Implemented
 
@@ -44,7 +54,7 @@ cmake --build build --target beef_board_rp2354b
 
 The CMake configuration targets the RP2350B pinout, Arm core and 2 MB flash size. The output UF2 is `build/beef_board_rp2354b.uf2`.
 
-The checked-in UF2 and ELF include the GPIO interrupt and debounce changes. Measuring physical input latency still requires a board and host.
+The V1.00 release UF2 includes the GPIO interrupt and debounce changes. Measuring physical input latency still requires a board and host.
 
 ## Flashing and current limits
 
