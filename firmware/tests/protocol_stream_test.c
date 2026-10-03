@@ -32,6 +32,19 @@ bool beef_config_store_reset(void) { return true; }
 bool beef_config_store_stage(const uint8_t data[BEEF_CONFIG_SIZE]) { (void)data; return true; }
 const uint8_t *beef_config_store_data(void) { return config_bytes; }
 
+static bool legacy_enabled = true;
+static unsigned tt_adjustments, bar_adjustments;
+static uint8_t last_channel;
+static bool last_increase;
+bool beef_config_store_legacy_phoenixwan_enabled(void) { return legacy_enabled; }
+bool beef_config_store_set_legacy_phoenixwan_enabled(bool enabled) { legacy_enabled = enabled; return true; }
+void phoenixwan_uart_adjust_turntable_color(uint8_t channel, bool increase) {
+  ++tt_adjustments; last_channel=channel; last_increase=increase;
+}
+void phoenixwan_uart_adjust_centerbar_color(uint8_t channel, bool increase) {
+  ++bar_adjustments; last_channel=channel; last_increase=increase;
+}
+
 // The runner supplies production source, removing only hardware includes.
 #include "protocol_under_test.c"
 
@@ -50,5 +63,17 @@ int main(void) {
   clock_ms = 20; beef_protocol_task(); assert(sends == 4 && last_id == BEEF_REPORT_DIAGNOSTICS_STREAM);
   clock_ms = 21; beef_protocol_task(); assert(sends == 5 && last_id == BEEF_REPORT_CHATTER_COUNTS);
   clock_ms = 22; beef_protocol_task(); assert(sends == 5);
+  for (uint8_t command=6; command<=17; ++command) {
+    beef_protocol_set_report(BEEF_REPORT_COMMAND, &command, 1);
+    assert(last_channel == (uint8_t)((command - (command < 12 ? 6 : 12))/2));
+    assert(last_increase == ((command & 1u) != 0));
+  }
+  assert(tt_adjustments==6 && bar_adjustments==6);
+  uint8_t command=5;beef_protocol_set_report(BEEF_REPORT_COMMAND,&command,1);
+  command=7;beef_protocol_set_report(BEEF_REPORT_COMMAND,&command,1);
+  command=13;beef_protocol_set_report(BEEF_REPORT_COMMAND,&command,1);
+  assert(tt_adjustments==6 && bar_adjustments==6);
+  command=4;beef_protocol_set_report(BEEF_REPORT_COMMAND,&command,1);
+  assert(legacy_enabled);
   puts("PASS protocol stream: short output pulses, USB backpressure, failed-send retry and periodic counts");
 }

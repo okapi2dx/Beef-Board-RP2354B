@@ -24,21 +24,21 @@ int main(void){
  for(unsigned i=0;i<100;i++){c[6]=i;assert(beef_config_store_write(c));beef_config_store_init();assert(beef_config_store_data()[6]==i);}
  c[80]=0;assert(!beef_config_store_stage(c));assert(beef_config_store_data()[80]==24);
  assert(beef_config_store_reset());beef_config_store_init();assert(beef_config_store_data()[6]==0);
- // v36 millisecond settings migrate to v41 tenths without changing duration.
+ // v36 millisecond settings migrate to v42 tenths without changing duration.
  memcpy(c,beef_config_store_data(),sizeof(c));c[0]=36;c[48]=3;c[64]=7;
  assert(beef_config_store_write(c));beef_config_store_init();
- assert(beef_config_store_data()[0]==41 && beef_config_store_data()[48]==30 && beef_config_store_data()[64]==70);
+ assert(beef_config_store_data()[0]==42 && beef_config_store_data()[48]==30 && beef_config_store_data()[64]==70);
  memcpy(c,beef_config_store_data(),sizeof(c));c[0]=37;c[48]=17;c[64]=1;
  assert(beef_config_store_write(c));beef_config_store_init();
- assert(beef_config_store_data()[0]==41 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
+ assert(beef_config_store_data()[0]==42 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
  memcpy(c,beef_config_store_data(),sizeof(c));c[0]=38;
  assert(beef_config_store_write(c));beef_config_store_init();
- assert(beef_config_store_data()[0]==41 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
+ assert(beef_config_store_data()[0]==42 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
  memcpy(c,beef_config_store_data(),sizeof(c));c[0]=39;
  assert(beef_config_store_write(c));beef_config_store_init();
- assert(beef_config_store_data()[0]==41 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
+ assert(beef_config_store_data()[0]==42 && beef_config_store_data()[48]==17 && beef_config_store_data()[64]==1);
  memcpy(c,beef_config_store_data(),sizeof(c));c[0]=40;
- assert(beef_config_store_write(c));beef_config_store_init();assert(beef_config_store_data()[0]==41);
+ assert(beef_config_store_write(c));beef_config_store_init();assert(beef_config_store_data()[0]==42);
  memcpy(c,beef_config_store_data(),sizeof(c));c[48]=1;c[64]=159;
  assert(beef_config_store_write(c));beef_config_store_init();
  assert(beef_config_store_data()[48]==1 && beef_config_store_data()[64]==159);
@@ -46,11 +46,30 @@ int main(void){
  // Existing releases used the last sector only. Import that format in place.
  memset(fake_flash,255,sizeof(fake_flash));config_record_t rec;
  memset(&rec,255,sizeof(rec));rec.magic=CONFIG_FLASH_MAGIC;rec.format=CONFIG_FLASH_FORMAT;
- rec.sequence=42;set_defaults(rec.data);rec.data[6]=77;rec.checksum=checksum_config(rec.sequence,rec.data);
+ rec.sequence=42;set_defaults(rec.data);rec.data[6]=77;rec.checksum=checksum_record(&rec);
  memcpy(fake_flash+12288,&rec,sizeof(rec));beef_config_store_init();assert(beef_config_store_data()[6]==77);
- memset(fake_flash,255,sizeof(fake_flash));rec.sequence=0xfffffffeu;rec.checksum=checksum_config(rec.sequence,rec.data);
+ memset(fake_flash,255,sizeof(fake_flash));rec.sequence=0xfffffffeu;rec.checksum=checksum_record(&rec);
  memcpy(fake_flash+12288,&rec,sizeof(rec));beef_config_store_init();memcpy(c,rec.data,sizeof(c));c[6]=78;assert(beef_config_store_write(c));
  c[6]=79;assert(beef_config_store_write(c));beef_config_store_init();assert(beef_config_store_data()[6]==79);
+ // UART flag and center-bar count survive reboot; odd counts are rejected.
+ memcpy(c,beef_config_store_data(),sizeof(c));c[61]=6;
+ assert(beef_config_store_set_legacy_phoenixwan_enabled(false));
+ assert(beef_config_store_write(c));beef_config_store_init();
+ assert(!beef_config_store_legacy_phoenixwan_enabled() && beef_config_store_data()[61]==6);
+ c[61]=3;assert(!beef_config_store_write(c));
+ // A corrupted enable flag must fail checksum validation.
+ config_record_t corrupt=*slot_ptr(newest_slot);
+ corrupt.legacy_phoenixwan_enabled ^= 1u;
+ assert(!record_valid(&corrupt));
+ // Original format 2 records remain readable and migrate to protected format 3.
+ memset(fake_flash,255,sizeof(fake_flash));memset(&rec,255,sizeof(rec));
+ rec.magic=CONFIG_FLASH_MAGIC;rec.format=2;rec.sequence=9;set_defaults(rec.data);
+ rec.data[0]=41;rec.data[61]=0;rec.data[6]=88;
+ rec.checksum=checksum_config(rec.sequence,rec.data);
+ memcpy(fake_flash+12288,&rec,sizeof(rec));beef_config_store_init();
+ assert(beef_config_store_data()[0]==42 && beef_config_store_data()[61]==16);
+ assert(beef_config_store_data()[6]==88 && beef_config_store_legacy_phoenixwan_enabled());
+ assert(slot_ptr(newest_slot)->format==3);
  puts("PASS storage: interrupted rollover preserves prior settings, retries, rotation, invalid config, reset, legacy import and sequence wrap");
  return 0;
 }

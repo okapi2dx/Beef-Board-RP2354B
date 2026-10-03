@@ -24,7 +24,9 @@ export enum BoardCapability {
   Ws2812 = 1 << 2,
   CenterBar = 1 << 3,
   Uart = 1 << 4,
-  BootloaderCommand = 1 << 5
+  BootloaderCommand = 1 << 5,
+  LegacyPhoenixwan = 1 << 6,
+  LegacyPhoenixwanEnabled = 1 << 7
 }
 
 export type BoardInfo = {

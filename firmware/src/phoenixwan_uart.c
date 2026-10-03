@@ -11,9 +11,12 @@ static uint8_t tt_state, tt_challenge, tt_mode, tt_motion;
 static uint8_t bar_state, bar_count;
 static uint32_t tt_progress_ms, bar_progress_ms;
 static uint32_t last_trigger_ms;
-static uint8_t tt_color[3], bar_color[3], tt_color_cursor, bar_color_cursor;
-static int16_t tt_color_pending[3], bar_color_pending[3];
-static bool tt_color_seen, bar_color_seen;
+static uint8_t tt_color[3], tt_color_cursor;
+static int16_t tt_color_pending[3];
+static bool tt_color_seen;
+static bool previous_enabled;
+static uint8_t tt_adjust_queue[8], tt_adjust_head, tt_adjust_count;
+static uint8_t bar_adjust_queue[8], bar_adjust_head, bar_adjust_count;
 
 enum { COLOR_CONFIG_STEP = 16 };
 
@@ -37,7 +40,23 @@ void phoenixwan_uart_init(void) {
   uart_set_hw_flow(uart1, false, false);
   tt_state = bar_state = WAIT_START;
   tt_mode = tt_motion = bar_count = 0xff;
-  tt_color_seen = bar_color_seen = false;
+  tt_color_seen = false;
+  tt_adjust_head = tt_adjust_count = 0;
+  bar_adjust_head = bar_adjust_count = 0;
+}
+
+void phoenixwan_uart_adjust_turntable_color(uint8_t channel, bool increase) {
+  if (channel >= 3u || tt_adjust_count >= sizeof(tt_adjust_queue)) return;
+  uint8_t tail = (uint8_t)((tt_adjust_head + tt_adjust_count) % sizeof(tt_adjust_queue));
+  tt_adjust_queue[tail] = (uint8_t)((increase ? 0x81u : 0x91u) + channel);
+  ++tt_adjust_count;
+}
+
+void phoenixwan_uart_adjust_centerbar_color(uint8_t channel, bool increase) {
+  if (channel >= 3u || bar_adjust_count >= sizeof(bar_adjust_queue)) return;
+  uint8_t tail = (uint8_t)((bar_adjust_head + bar_adjust_count) % sizeof(bar_adjust_queue));
+  bar_adjust_queue[tail] = (uint8_t)((increase ? 0x81u : 0x91u) + channel);
+  ++bar_adjust_count;
 }
 
 static void receive_turntable(uint32_t now) {
@@ -92,7 +111,6 @@ static void receive_bar(uint32_t now) {
     } else if (bar_state == WAIT_MARKER && byte == 0x5a) {
       bar_state = READY;
       bar_count = 0xff;
-      bar_color_seen = false;
     }
   }
 }
@@ -148,13 +166,25 @@ static void send_color_step(uart_inst_t *port, int16_t pending[3],
 
 void phoenixwan_uart_task(uint32_t now, const uint8_t *cfg,
                           int8_t direction, uint32_t motion_age_ms,
-                          uint16_t motion_interval_ms,
-                          uint8_t bar_pairs) {
+  uint16_t motion_interval_ms,
+                          bool enabled) {
   receive_turntable(now);
   receive_bar(now);
 
+  if (enabled != previous_enabled) {
+    tt_mode = tt_motion = bar_count = 0xff;
+    tt_color_seen = false;
+    tt_adjust_head = tt_adjust_count = 0;
+    bar_adjust_head = bar_adjust_count = 0;
+    previous_enabled = enabled;
+  }
+  if (!enabled) return;
+
   if (tt_state == READY) {
     uint8_t mode = desired_tt_mode(cfg);
+    // Colors belong to separate modes. Switching modes must establish a new
+    // baseline instead of applying the difference between unrelated colors.
+    if (mode != tt_mode) tt_color_seen = false;
     if (mode) {
       const uint8_t *color = &cfg[6u + 3u * cfg[2]];
       update_color_target(color, tt_color, tt_color_pending, &tt_color_seen);
@@ -188,17 +218,26 @@ void phoenixwan_uart_task(uint32_t now, const uint8_t *cfg,
           mode == 0x32 ? 0x01u :
           mode >= 0x33 && mode <= 0x35 ? 0x06u : 0x03u;
       send_color_step(uart0, tt_color_pending, color_mask, &tt_color_cursor);
+      if (tt_adjust_count) {
+        uint8_t command = tt_adjust_queue[tt_adjust_head];
+        uint8_t channel = (uint8_t)((command & 0x0fu) - 1u);
+        if (!(color_mask & (1u << channel)) || send_byte(uart0, command)) {
+          tt_adjust_head = (uint8_t)((tt_adjust_head + 1u) % sizeof(tt_adjust_queue));
+          --tt_adjust_count;
+        }
+      }
     }
   }
 
   if (bar_state == READY) {
-    const uint8_t *color = NULL;
-    if (cfg[84] && cfg[2] <= 7u) color = &cfg[6u + 3u * cfg[2]];
-    else if (cfg[4] == 8u) color = &cfg[81];
-    if (color) update_color_target(color, bar_color, bar_color_pending, &bar_color_seen);
-    uint8_t count = bar_pairs ? (uint8_t)(0x67u + bar_pairs) : 0x4c;
+    uint8_t count = cfg[5] || !cfg[61] ? 0x4cu : (uint8_t)(0x67u + cfg[61] / 2u);
     if (count != bar_count && send_byte(uart1, count)) bar_count = count;
-    if (color) send_color_step(uart1, bar_color_pending, 0x07u,
-                               &bar_color_cursor);
+    if (bar_adjust_count) {
+      uint8_t const command = bar_adjust_queue[bar_adjust_head];
+      if (send_byte(uart1, command)) {
+        bar_adjust_head = (uint8_t)((bar_adjust_head + 1u) % sizeof(bar_adjust_queue));
+        --bar_adjust_count;
+      }
+    }
   }
 }

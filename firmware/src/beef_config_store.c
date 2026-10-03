@@ -10,14 +10,14 @@
 #define CONFIG_FLASH_ADDRESS (XIP_BASE + CONFIG_FLASH_OFFSET)
 #define CONFIG_FLASH_PAGE_SIZE (2u * FLASH_SECTOR_SIZE)
 #define CONFIG_FLASH_MAGIC     0x32464642u
-#define CONFIG_FLASH_FORMAT    2u
+#define CONFIG_FLASH_FORMAT    3u
 
 typedef struct __attribute__((packed, aligned(4))) {
   uint32_t magic;
   uint32_t format;
   uint32_t sequence;
   uint8_t data[BEEF_CONFIG_SIZE];
-  uint8_t padding;
+  uint8_t legacy_phoenixwan_enabled;
   uint32_t checksum;
 } config_record_t;
 
@@ -29,6 +29,7 @@ _Static_assert(sizeof(config_record_t) <= FLASH_PAGE_SIZE, "config must fit one 
 static uint8_t current_config[BEEF_CONFIG_SIZE];
 static uint32_t next_sequence = 1u;
 static bool config_dirty;
+static bool legacy_phoenixwan_enabled = true;
 static uint32_t newest_slot;
 
 static uint32_t checksum_config(uint32_t sequence, uint8_t const *data) {
@@ -47,10 +48,21 @@ static uint32_t checksum_config(uint32_t sequence, uint8_t const *data) {
   return hash;
 }
 
+// Format 2 did not protect the former padding byte. Keep it readable, but
+// include the legacy UART enable flag in all newly written records.
+static uint32_t checksum_record(config_record_t const *rec) {
+  uint32_t hash = checksum_config(rec->sequence, rec->data);
+  if (rec->format >= 3u) {
+    hash ^= rec->legacy_phoenixwan_enabled;
+    hash *= 16777619u;
+  }
+  return hash;
+}
+
 static void set_defaults(uint8_t *c) {
   memset(c, 0, BEEF_CONFIG_SIZE);
 
-  c[0] = 41;
+  c[0] = 42;
   c[1] = 0;
   c[2] = 0;
   c[3] = 0;
@@ -90,6 +102,7 @@ static void set_defaults(uint8_t *c) {
 
   c[81] = 0; c[82] = 255; c[83] = 255;
   c[84] = 0;
+  c[61] = 16;
   c[85] = 0;
   c[86] = 0;
 
@@ -120,9 +133,10 @@ static bool slot_is_erased(uint32_t slot) {
 }
 
 static bool record_valid(config_record_t const *rec) {
-  if (rec->magic != CONFIG_FLASH_MAGIC || rec->format != CONFIG_FLASH_FORMAT) return false;
+  if (rec->magic != CONFIG_FLASH_MAGIC || (rec->format != 2u && rec->format != CONFIG_FLASH_FORMAT)) return false;
+  if (rec->legacy_phoenixwan_enabled != 0xffu && rec->legacy_phoenixwan_enabled > 1u) return false;
   if (!beef_config_valid(rec->data)) return false;
-  return rec->checksum == checksum_config(rec->sequence, rec->data);
+  return rec->checksum == checksum_record(rec);
 }
 
 static uint8_t flash_page[FLASH_PAGE_SIZE];
@@ -147,6 +161,7 @@ void beef_config_store_init(void) {
   bool migrate = false;
   uint32_t best_sequence = 0;
   newest_slot = 0;
+  legacy_phoenixwan_enabled = true;
 
   for (uint32_t slot = 0; slot < CONFIG_SLOT_COUNT; ++slot) {
     config_record_t const *rec = slot_ptr(slot);
@@ -154,8 +169,11 @@ void beef_config_store_init(void) {
 
     if (!found || (int32_t)(rec->sequence - best_sequence) > 0) {
       memcpy(current_config, rec->data, BEEF_CONFIG_SIZE);
+      legacy_phoenixwan_enabled = rec->legacy_phoenixwan_enabled == 0xffu ||
+                                  rec->legacy_phoenixwan_enabled != 0u;
       best_sequence = rec->sequence;
       newest_slot = slot;
+      migrate = rec->format != CONFIG_FLASH_FORMAT;
       found = true;
     }
   }
@@ -201,6 +219,11 @@ void beef_config_store_init(void) {
       current_config[0] = 41;
       migrate = true;
     }
+    if (current_config[0] == 41) {
+      current_config[61] = 16;
+      current_config[0] = 42;
+      migrate = true;
+    }
   } else {
     set_defaults(current_config);
     next_sequence = 1u;
@@ -215,6 +238,17 @@ void beef_config_store_init(void) {
 
 uint8_t const *beef_config_store_data(void) {
   return current_config;
+}
+
+bool beef_config_store_legacy_phoenixwan_enabled(void) {
+  return legacy_phoenixwan_enabled;
+}
+
+bool beef_config_store_set_legacy_phoenixwan_enabled(bool enabled) {
+  if (legacy_phoenixwan_enabled == enabled) return false;
+  legacy_phoenixwan_enabled = enabled;
+  config_dirty = true;
+  return true;
 }
 
 bool beef_config_store_stage(uint8_t const data[BEEF_CONFIG_SIZE]) {
@@ -266,7 +300,13 @@ bool beef_config_store_stage(uint8_t const data[BEEF_CONFIG_SIZE]) {
     migrated[0] = 41;
     data = migrated;
   }
-  if (data[0] != 41 || !beef_config_valid(data)) return false;
+  if (data[0] == 41) {
+    if (data != migrated) memcpy(migrated, data, sizeof(migrated));
+    migrated[61] = 16;
+    migrated[0] = 42;
+    data = migrated;
+  }
+  if (data[0] != 42 || !beef_config_valid(data)) return false;
   if (memcmp(current_config, data, BEEF_CONFIG_SIZE) == 0) return false;
 
   memcpy(current_config, data, BEEF_CONFIG_SIZE);
@@ -287,8 +327,8 @@ bool beef_config_store_flush(void) {
   rec.format = CONFIG_FLASH_FORMAT;
   rec.sequence = next_sequence;
   memcpy(rec.data, current_config, BEEF_CONFIG_SIZE);
-  rec.padding = 0xff;
-  rec.checksum = checksum_config(rec.sequence, rec.data);
+  rec.legacy_phoenixwan_enabled = legacy_phoenixwan_enabled ? 1u : 0u;
+  rec.checksum = checksum_record(&rec);
 
   uint32_t target_slot = CONFIG_SLOT_COUNT;
   for (uint32_t slot = 0; slot < CONFIG_SLOT_COUNT; ++slot) {
@@ -325,5 +365,7 @@ bool beef_config_store_write(uint8_t const data[BEEF_CONFIG_SIZE]) {
 bool beef_config_store_reset(void) {
   uint8_t defaults[BEEF_CONFIG_SIZE];
   set_defaults(defaults);
+  legacy_phoenixwan_enabled = true;
+  config_dirty = true;
   return beef_config_store_write(defaults);
 }

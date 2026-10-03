@@ -13,3 +13,5 @@ bool beef_config_store_is_dirty(void);
 
 bool beef_config_store_write(uint8_t const data[BEEF_CONFIG_SIZE]);
 uint8_t const *beef_config_store_data(void);
+bool beef_config_store_legacy_phoenixwan_enabled(void);
+bool beef_config_store_set_legacy_phoenixwan_enabled(bool enabled);

@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include "beef_config_store.h"
+#include "phoenixwan_uart.h"
 #include "pico/stdlib.h"
 #include "pico/bootrom.h"
 #include "hardware/watchdog.h"
@@ -24,6 +25,8 @@
 #define BEEF_CAP_CENTER_BAR  (1u << 3)
 #define BEEF_CAP_UART        (1u << 4)
 #define BEEF_CAP_BOOTLOADER  (1u << 5)
+#define BEEF_CAP_LEGACY_PHOENIXWAN (1u << 6)
+#define BEEF_CAP_LEGACY_PHOENIXWAN_ENABLED (1u << 7)
 
 static volatile uint8_t pending_command = BEEF_COMMAND_NONE;
 static uint32_t command_received_ms;
@@ -96,12 +99,15 @@ uint16_t beef_protocol_get_report(uint8_t report_id, uint8_t *buffer, uint16_t r
       return copy_report(buffer, reqlen, diagnostics_data, sizeof(diagnostics_data));
 
     case BEEF_REPORT_BOARD_INFO: {
-      uint16_t const caps = BEEF_CAP_DIAGNOSTICS |
+      uint16_t caps = BEEF_CAP_DIAGNOSTICS |
                             BEEF_CAP_TURNTABLE |
                             BEEF_CAP_WS2812 |
                             BEEF_CAP_CENTER_BAR |
                             BEEF_CAP_UART |
-                            BEEF_CAP_BOOTLOADER;
+                            BEEF_CAP_BOOTLOADER |
+                            BEEF_CAP_LEGACY_PHOENIXWAN;
+      if (beef_config_store_legacy_phoenixwan_enabled())
+        caps |= BEEF_CAP_LEGACY_PHOENIXWAN_ENABLED;
       uint8_t const info[11] = {
         0x42, 0x45, 0x45, 0x46,
         1,
@@ -127,6 +133,31 @@ void beef_protocol_set_report(uint8_t report_id, uint8_t const *buffer, uint16_t
   }
 
   if (report_id == BEEF_REPORT_COMMAND && size == 1) {
+    if (buffer[0] == BEEF_COMMAND_ENABLE_LEGACY_PHOENIXWAN ||
+        buffer[0] == BEEF_COMMAND_DISABLE_LEGACY_PHOENIXWAN) {
+      (void)beef_config_store_set_legacy_phoenixwan_enabled(
+          buffer[0] == BEEF_COMMAND_ENABLE_LEGACY_PHOENIXWAN);
+      config_changed_ms = to_ms_since_boot(get_absolute_time());
+      return;
+    }
+    if (buffer[0] >= BEEF_COMMAND_LEGACY_PHOENIXWAN_HUE_DECREASE &&
+        buffer[0] <= BEEF_COMMAND_LEGACY_PHOENIXWAN_BRIGHTNESS_INCREASE) {
+      if (!beef_config_store_legacy_phoenixwan_enabled()) return;
+      uint8_t const adjustment = (uint8_t)(buffer[0] - BEEF_COMMAND_LEGACY_PHOENIXWAN_HUE_DECREASE);
+      uint8_t const channel = (uint8_t)(adjustment / 2u);
+      bool const increase = (adjustment & 1u) != 0u;
+      phoenixwan_uart_adjust_turntable_color(channel, increase);
+      return;
+    }
+    if (buffer[0] >= BEEF_COMMAND_LEGACY_PHOENIXWAN_BAR_HUE_DECREASE &&
+        buffer[0] <= BEEF_COMMAND_LEGACY_PHOENIXWAN_BAR_BRIGHTNESS_INCREASE) {
+      if (!beef_config_store_legacy_phoenixwan_enabled()) return;
+      uint8_t const adjustment = (uint8_t)(buffer[0] - BEEF_COMMAND_LEGACY_PHOENIXWAN_BAR_HUE_DECREASE);
+      uint8_t const channel = (uint8_t)(adjustment / 2u);
+      bool const increase = (adjustment & 1u) != 0u;
+      phoenixwan_uart_adjust_centerbar_color(channel, increase);
+      return;
+    }
     if (buffer[0] >= BEEF_COMMAND_BOOTLOADER && buffer[0] <= BEEF_COMMAND_RESTART) {
       pending_command = buffer[0];
       command_received_ms = to_ms_since_boot(get_absolute_time());

@@ -34,7 +34,21 @@ export enum ReportId {
 export enum Command {
   Bootloader = 1,
   ResetConfig = 2,
-  Restart = 3
+  Restart = 3,
+  EnableLegacyPhoenixwan = 4,
+  DisableLegacyPhoenixwan = 5,
+  LegacyPhoenixwanHueDecrease = 6,
+  LegacyPhoenixwanHueIncrease = 7,
+  LegacyPhoenixwanSaturationDecrease = 8,
+  LegacyPhoenixwanSaturationIncrease = 9,
+  LegacyPhoenixwanBrightnessDecrease = 10,
+  LegacyPhoenixwanBrightnessIncrease = 11,
+  LegacyPhoenixwanBarHueDecrease = 12,
+  LegacyPhoenixwanBarHueIncrease = 13,
+  LegacyPhoenixwanBarSaturationDecrease = 14,
+  LegacyPhoenixwanBarSaturationIncrease = 15,
+  LegacyPhoenixwanBarBrightnessDecrease = 16,
+  LegacyPhoenixwanBarBrightnessIncrease = 17
 }
 
 export type Diagnostics = {

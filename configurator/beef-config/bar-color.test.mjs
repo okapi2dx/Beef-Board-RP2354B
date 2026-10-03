@@ -15,12 +15,13 @@ async function moduleFile(name, source) {
 try {
   const types = await moduleFile('types', await readFile(new URL('./src/lib/types/types.svelte.ts', import.meta.url), 'utf8'));
   const codes = await moduleFile('codes', await readFile(new URL('./src/lib/types/hid-codes.ts', import.meta.url), 'utf8'));
+  const board = await moduleFile('board', await readFile(new URL('./src/lib/types/board.ts', import.meta.url), 'utf8'));
   const feature = await moduleFile('feature-report', await readFile(new URL('./src/lib/types/feature-report.ts', import.meta.url), 'utf8'));
   let source = await readFile(new URL('./src/lib/types/config.svelte.ts', import.meta.url), 'utf8');
   source = source.replace("import { ReportId } from '$lib/types/hid';", 'const ReportId = { Config: 1 };')
     .replace("import { appState } from '$lib/types/state.svelte';", 'const appState = globalThis.__barTestState;')
     .replace('$lib/types/types.svelte', types.href).replace('$lib/types/hid-codes', codes.href)
-    .replace('$lib/types/feature-report', feature.href);
+    .replace('$lib/types/feature-report', feature.href).replace('$lib/types/board', board.href);
   let sent;
   globalThis.__barTestState = { device: { sendFeatureReport: async (_id, data) => { sent = data; } } };
   const { Config, readConfig, updateConfig, flushPendingConfigWrites } = await import((await moduleFile('config', source)).href);
@@ -204,6 +205,28 @@ try {
   oldAt90Config.button_mapping = [0, 1, 2, 3, 4, 5, 6, 11, 8, 9, 10];
   await assert.rejects(() => updateConfig(oldAt90Config), /AT90USB1286 firmware v42\+/);
   assert.equal(mappingWrites, 2, 'AT90USB1286 v41 must reject B8 before sending a config report');
+  const legacyPacket = new Uint8Array(139);
+  legacyPacket[0] = 42; legacyPacket[61] = 16; legacyPacket[80] = 24; legacyPacket[138] = 16;
+  const legacyConfig = new Config(new DataView(legacyPacket.buffer));
+  assert.equal(legacyConfig.legacy_phoenixwan_bar_count, 16);
+  globalThis.__barTestState.device = { sendFeatureReport: async (_id, bytes) => { sent = bytes; } };
+  for (const count of [0,2,4,6,8,10,12,14,16]) {
+    legacyConfig.legacy_phoenixwan_bar_count = count;
+    await updateConfig(legacyConfig);
+    assert.equal(sent.length, 139);
+    assert.equal(sent[61], count);
+    assert.equal(sent[138], 16);
+    assert.equal(new Config(new DataView(sent.buffer)).legacy_phoenixwan_bar_count, count);
+  }
+  for (const count of [-1,1,3,17,18,2.5,NaN]) {
+    legacyConfig.legacy_phoenixwan_bar_count = count;
+    await assert.rejects(() => updateConfig(legacyConfig));
+  }
+  const at90LegacyPacket = new Uint8Array(138);
+  at90LegacyPacket[0] = 42; at90LegacyPacket[61] = 9; at90LegacyPacket[80] = 24;
+  assert.equal(new Config(new DataView(at90LegacyPacket.buffer)).legacy_phoenixwan_bar_count, 16,
+    'AT90 padding must not be interpreted as a legacy bar count');
+  console.log('PASS: legacy center-bar count round-trip, invalid values and AT90 padding isolation');
   console.log('PASS: queued save/revert, exact RP2354B packet size, LED count validation, device-scoped cache and failed-write retry');
   console.log('PASS: B8 remapping supports RP2354B and AT90USB1286 v42+ while rejecting older AT90 firmware');
   console.log('PASS: static mode, independent color round-trip, and legacy version compatibility');

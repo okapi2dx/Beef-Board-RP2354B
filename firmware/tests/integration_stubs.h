@@ -26,7 +26,6 @@ static uint8_t host_tt_rgb[3],host_center_rgb[3];
 static beef_rgb_t ring_pixels[255],bar_pixels[255];
 static uint32_t ring_words[255],bar_words[255];
 static uint8_t previous_tt_count,previous_bar_count;
-static uint8_t uart_bar_pairs;
 static uint32_t rgb_last_frame,rgb_dma_done_us,fake_us;
 static bool rgb_transmitting,rgb_latching,dma_busy,usb_ready;
 static int dma_tt=0,dma_bar=1;

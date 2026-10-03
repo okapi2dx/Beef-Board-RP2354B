@@ -1,6 +1,7 @@
 import { ReportId } from '$lib/types/hid';
 import { featureReportPayload } from '$lib/types/feature-report';
 import { appState } from '$lib/types/state.svelte';
+import { BoardCapability, BoardType } from '$lib/types/board';
 import { TurntableMode, BarMode, ControllerType, InputMode, TurntableCurve, Hsv, numberToTurntableMode, numberToBarMode, numberToControllerType, numberToInputMode, numberToTurntableCurve, turntableModeToNumber, barModeToNumber, controllerTypeToNumber, inputModeToNumber, turntableCurveToNumber } from '$lib/types/types.svelte';
 import * as HIDCodes from '$lib/types/hid-codes';
 
@@ -112,8 +113,10 @@ export class Config {
   rainbow_spin_speed = $state(1);
   tt_leds = $state(0);
   bar_leds = $state(16);
+  legacy_phoenixwan_bar_count = $state(16);
   bar_static_hsv = $state(new Hsv(0, 255, 255));
   link_bar_effect = $state(false);
+  legacy_phoenixwan_enabled = $state(false);
   digital_tt = $state(false);
   tt_delay_ms = $state(0);
   button_led_fade_ms = $state(0);
@@ -216,7 +219,9 @@ export class Config {
         this.sdvx_keys.fx_buttons[i] = configData.getUint8(offset++);
       }
 
-      offset += this.sdvx_keys.padding_1.length;
+      const hasLegacyPhoenixwanBarCount = this.version >= 42 && this.supports_bar_led_count;
+      if (hasLegacyPhoenixwanBarCount) this.legacy_phoenixwan_bar_count = configData.getUint8(offset++);
+      offset += this.sdvx_keys.padding_1.length - (hasLegacyPhoenixwanBarCount ? 1 : 0);
 
       this.sdvx_keys.start = configData.getUint8(offset++);
 
@@ -298,7 +303,13 @@ export async function readConfig(): Promise<Config> {
 
     lastConfigPacket = configBytes;
     lastConfigDevice = device;
-    return new Config(configData);
+    const config = new Config(configData);
+    if (appState.boardInfo?.boardType === BoardType.RP2354B &&
+        (appState.boardInfo.capabilities & BoardCapability.LegacyPhoenixwan)) {
+      config.legacy_phoenixwan_enabled =
+        (appState.boardInfo.capabilities & BoardCapability.LegacyPhoenixwanEnabled) !== 0;
+    }
+    return config;
   } catch (err) {
     throw new Error(`Failed to read config: ${err}`);
   }
@@ -403,7 +414,14 @@ export async function updateConfig(config: Config): Promise<void> {
       }
 
       // Skip padding
-      offset += config.sdvx_keys.padding_1.length;
+      const hasLegacyPhoenixwanBarCount = config.version >= 42 && config.supports_bar_led_count;
+      if (hasLegacyPhoenixwanBarCount) {
+        const allowedCounts = new Set([0, 2, 4, 6, 8, 10, 12, 14, 16]);
+        if (!allowedCounts.has(config.legacy_phoenixwan_bar_count))
+          throw new Error('Legacy Phoenixwan center bar count must be off or 2–16 even LEDs');
+        configView.setUint8(offset++, config.legacy_phoenixwan_bar_count);
+      }
+      offset += config.sdvx_keys.padding_1.length - (hasLegacyPhoenixwanBarCount ? 1 : 0);
 
       configView.setUint8(offset++, config.sdvx_keys.start);
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as Tooltip from '$lib/components/ui/tooltip';
   import { tr } from '$lib/types/locale.svelte';
-  let { children, label = '', side = 'top', sideOffset = 0 }: { children: import('svelte').Snippet; label?: string; side?: 'top' | 'right' | 'bottom' | 'left'; sideOffset?: number } = $props();
+  let { children, label = '', side = 'top', sideOffset = 0, wrap = false }: { children: import('svelte').Snippet; label?: string; side?: 'top' | 'right' | 'bottom' | 'left'; sideOffset?: number; wrap?: boolean } = $props();
 </script>
 <Tooltip.Provider delayDuration={150}>
   <Tooltip.Root>
@@ -10,7 +10,7 @@
       aria-label={tr(label + 'の説明', 'Help: ' + label)}
     >?</Tooltip.Trigger>
     <Tooltip.Content {side} {sideOffset} class="z-50 w-[min(28rem,calc(100vw-2rem))] max-w-none p-3 text-left text-sm leading-6">
-      <div class="help-text-body">
+      <div class="help-text-body" class:help-text-wrap={wrap}>
         {@render children()}
       </div>
     </Tooltip.Content>
@@ -30,5 +30,11 @@
   }
   :global(.help-text-body p + p) {
     margin-top: 0.5rem;
+  }
+  :global(.help-text-body.help-text-wrap),
+  :global(.help-text-body.help-text-wrap p) {
+    white-space: normal;
+    text-wrap: wrap;
+    overflow-wrap: anywhere;
   }
 </style>

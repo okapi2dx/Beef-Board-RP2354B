@@ -3,6 +3,7 @@
 	import * as Tabs from '$lib/components/ui/tabs';
 
 	import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import * as Select from '$lib/components/ui/select';
 	import { Separator } from '$lib/components/ui/separator/index.js';
@@ -18,21 +19,54 @@
 	import ChatterTest from '$lib/ChatterTest.svelte';
 
 import { readConfig, updateConfig, type Config } from '$lib/types/config.svelte';
-import { restartAndWaitForReconnection } from '$lib/types/hid';
-import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board';
+import { Command, restartAndWaitForReconnection, sendCommand } from '$lib/types/hid';
+import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board';
 	import { appState } from '$lib/types/state.svelte';
 	import { TurntableMode, BarMode, ControllerType, InputMode } from '$lib/types/types.svelte';
 	import WarningAlert from '$lib/WarningAlert.svelte';
 	import ColorPicker from '$lib/ColorPicker.svelte';
+	import PhoenixwanColorControls from '$lib/PhoenixwanColorControls.svelte';
 	import { tr } from '$lib/types/locale.svelte';
 
 	let config: Config | undefined = $state();
+	const legacyPhoenixwanTtModes = [
+		TurntableMode.Static,
+		TurntableMode.Spin,
+		TurntableMode.Shift,
+		TurntableMode.RainbowStatic,
+		TurntableMode.RainbowReactive,
+		TurntableMode.Reactive,
+		TurntableMode.Breathing
+	];
 	let {
 		active = true,
 		settingsTab = $bindable('input'),
 		showTabs = true
 	}: { active?: boolean; settingsTab?: string; showTabs?: boolean } = $props();
 	let controllerRestarting = $state(false);
+	let legacyPhoenixwanBusy = $state(false);
+	async function setLegacyPhoenixwan(enabled: boolean): Promise<void> {
+		if (legacyPhoenixwanBusy || !appState.boardInfo || !config) return;
+		legacyPhoenixwanBusy = true;
+		const device = appState.device;
+		const currentConfig = config;
+		try {
+			await sendCommand(enabled ? Command.EnableLegacyPhoenixwan : Command.DisableLegacyPhoenixwan);
+			if (device !== appState.device || !appState.boardInfo) return;
+			const stateBit = BoardCapability.LegacyPhoenixwanEnabled;
+			appState.boardInfo = {
+				...appState.boardInfo,
+				capabilities: enabled
+					? appState.boardInfo.capabilities | stateBit
+					: appState.boardInfo.capabilities & ~stateBit
+			};
+		} catch (error) {
+			if (device === appState.device && config === currentConfig) config.legacy_phoenixwan_enabled = !enabled;
+			appState.error = `${tr('旧Phoenixwanの設定を変更できませんでした', 'Could not change the legacy Phoenixwan setting')}: ${error}`;
+		} finally {
+			legacyPhoenixwanBusy = false;
+		}
+	}
 	function controllerModeLabel(mode: ControllerType): string {
 		if (mode === ControllerType.Default) return tr('デフォルト', 'Default');
 		if (mode === ControllerType.IIDXEntry) return 'IIDX Entry';
@@ -92,6 +126,10 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 
 	$effect(() => {
 		if (config && !controllerRestarting) {
+            if (config.legacy_phoenixwan_enabled && appState.boardInfo?.boardType === BoardType.RP2354B &&
+                !legacyPhoenixwanTtModes.includes(config.tt_effect)) {
+                config.tt_effect = TurntableMode.Static;
+            }
 			try {
 				void updateConfig(config).catch((err) => { appState.error = `${err}`; });
 			} catch (err) {
@@ -288,20 +326,48 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 					<p class="mb-4">{tr('ボタンLEDの調整にはファームウェアV1.00以降へ更新してください。', 'Update to firmware V1.00 or later to adjust button LEDs.')}</p>
 				{/if}
 				{#if config.version >= 19}
-					<Switch label={tr('ターンテーブルとセンターバーの発光効果を連動', 'Link Turntable and Light Bar Effects')} bind:checked={config.link_bar_effect} />
+					<Switch label={tr('ターンテーブルとセンターバーの発光効果を連動', 'Link Turntable and Light Bar Effects')} bind:checked={config.link_bar_effect} disabled={appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled} />
 				{/if}
-				{#if config.version >= 33 && appState.boardInfo?.boardType === BoardType.RP2354B}
-					<p class="mb-4 text-sm">{tr('PHOENIXWAN UART接続も同じ発光設定に追従します。色は相対調整のため電源投入時の完全一致はできず、センターバーの動きとターンテーブルの消灯もUARTの公開仕様では再現できません。', 'Phoenixwan UART follows these lighting settings too. Color adjustments are relative, so power-on colors may differ; the published UART protocol also cannot reproduce moving bar patterns or turntable off.')}</p>
+				{@const legacyPhoenixwanMode = appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled}
+				{#if appState.boardInfo?.boardType === BoardType.RP2354B && (appState.boardInfo.capabilities & BoardCapability.LegacyPhoenixwan) !== 0}
+					<Switch label={tr('旧Phoenixwanを使用', 'Use legacy Phoenixwan')} bind:checked={config.legacy_phoenixwan_enabled} onchange={setLegacyPhoenixwan} disabled={legacyPhoenixwanBusy} helpWrap>
+						<p>{tr('ONにすると、旧PhoenixwanのLEDをUART接続で制御します。', 'When ON, controls legacy Phoenixwan LEDs over UART.')}</p>
+						<p>{tr('OFFにしても、旧PhoenixwanのLEDは最後の点灯状態を保つ場合があります。', 'When OFF, legacy Phoenixwan LEDs may retain their last lighting state.')}</p>
+					</Switch>
+				{/if}
+				{#if config.version >= 42 && legacyPhoenixwanMode}
+					<p class="mb-4 text-sm">{tr('旧Phoenixwanのセンターバーは固定設定で色と点灯数を調整できます。色は相対調整で、絶対色の読み取りや本体のオーディオライトモード切替はUART仕様にありません。', 'The legacy Phoenixwan center bar is configured as a fixed light with adjustable color and LED count. Color changes are relative; the UART protocol does not expose absolute color readback or Audio Light mode selection.')}</p>
 				{/if}
 				{@const ttModeMapping = Object.values(TurntableMode)}
 				<div class="grid gap-x-6 gap-y-2 md:grid-cols-2">
 					<div class="min-w-0">
-						<LightEffectSelect
+		<LightEffectSelect
 							label={tr('ターンテーブルの発光効果', 'Turntable Effect')}
 							bind:effect={config.tt_effect}
-							modeMapping={ttModeMapping}
-						/>
-						{#if config.tt_effect === TurntableMode.Static}
+							modeMapping={legacyPhoenixwanMode ? legacyPhoenixwanTtModes : ttModeMapping}
+							legacyPhoenixwan={legacyPhoenixwanMode}
+		/>
+		{#if legacyPhoenixwanMode}
+			{#if config.version >= 42 && config.supports_bar_led_count}
+				{#if config.tt_effect === TurntableMode.Static}
+					<PhoenixwanColorControls mode={1} />
+				{:else if config.tt_effect === TurntableMode.Spin}
+					<PhoenixwanColorControls mode={2} />
+				{:else if config.tt_effect === TurntableMode.Shift}
+					<PhoenixwanColorControls mode={3} />
+				{:else if config.tt_effect === TurntableMode.RainbowStatic}
+					<PhoenixwanColorControls mode={4} />
+				{:else if config.tt_effect === TurntableMode.RainbowReactive}
+					<PhoenixwanColorControls mode={5} />
+				{:else if config.tt_effect === TurntableMode.Reactive}
+					<PhoenixwanColorControls mode={6} />
+				{:else if config.tt_effect === TurntableMode.Breathing}
+					<PhoenixwanColorControls mode={7} />
+				{/if}
+			{:else}
+				<p class="mb-4 text-sm">{tr('色調整には旧Phoenixwan対応ファームウェアV1.00以降へ更新してください。', 'Update to firmware V1.00 or later with legacy Phoenixwan color adjustment support.')}</p>
+			{/if}
+						{:else if config.tt_effect === TurntableMode.Static}
 							<ColorPicker bind:hsv={config.tt_static_hsv} />
 						{:else if config.tt_effect === TurntableMode.Spin}
 							<ColorPicker bind:hsv={config.tt_spin_hsv} />
@@ -321,7 +387,31 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 					</div>
 
 					<div class="min-w-0">
-						{#if config.version >= 19 && config.link_bar_effect}
+						{#if legacyPhoenixwanMode}
+							<LightEffectSelect
+								label={tr('センターバーの発光効果', 'Center Bar Effect')}
+								effect={BarMode.Static}
+								modeMapping={[BarMode.Static]}
+							/>
+							{#if config.version >= 42 && config.supports_bar_led_count}
+								<PhoenixwanColorControls centerBar />
+								<div class="mb-4 flex items-center justify-between gap-4">
+								<ToolTipLabel forId="legacy-phoenixwan-bar-count" wrap label={tr('センターバーの点灯数', 'Center Bar LED Count')}>
+									<p>{tr('「−／＋」で2灯ずつ変更します。', 'Use −/+ to change the count by 2 LEDs.')}</p>
+									<p>{tr('0灯で消灯し、2〜16灯を中央から左右対称に点灯します。', 'Set 0 to turn the light off, or 2–16 LEDs to light symmetrically from the center.')}</p>
+								</ToolTipLabel>
+									<div class="flex items-center gap-2">
+										<Button variant="outline" size="sm" aria-label={tr('点灯数を2灯減らす', 'Decrease by 2 LEDs')} disabled={config.legacy_phoenixwan_bar_count === 0} onclick={() => { if (config) config.legacy_phoenixwan_bar_count = Math.max(0, config.legacy_phoenixwan_bar_count - 2); }}>−</Button>
+										<span id="legacy-phoenixwan-bar-count" class="min-w-12 text-center text-sm tabular-nums" aria-live="polite">
+											{config.legacy_phoenixwan_bar_count === 0 ? tr('消灯', 'Off') : `${config.legacy_phoenixwan_bar_count}${tr('灯', ' LEDs')}`}
+										</span>
+										<Button variant="outline" size="sm" aria-label={tr('点灯数を2灯増やす', 'Increase by 2 LEDs')} disabled={config.legacy_phoenixwan_bar_count >= 16} onclick={() => { if (config) config.legacy_phoenixwan_bar_count = Math.min(16, config.legacy_phoenixwan_bar_count + 2); }}>＋</Button>
+									</div>
+								</div>
+							{:else}
+								<p class="mb-4 text-sm">{tr('センターバーの色と点灯数の調整には旧Phoenixwan対応ファームウェアV1.00以降へ更新してください。', 'Update to firmware V1.00 or later with legacy Phoenixwan center bar controls.')}</p>
+							{/if}
+						{:else if config.version >= 19 && config.link_bar_effect}
 							<p class="mb-4 text-sm">{tr('センターバーにターンテーブルと同じ発光効果と色を反映します。', 'The light bar follows the turntable effect and color.')}</p>
 						{:else}
 							{@const barModeMapping = config.version >= 17 ? Object.values(BarMode) : Object.values(BarMode).filter((mode) => mode !== BarMode.Static)}
@@ -339,7 +429,7 @@ import { BoardType, defaultUsbIdentity, isRp2354bBoard } from '$lib/types/board'
 					</div>
 				</div>
 
-				{#if config.version >= 16}
+				{#if !legacyPhoenixwanMode && config.version >= 16}
 					<Separator class="mb-4" />
 					<div class="mb-4">
 						<ToolTipLabel forId="led-refresh" label={tr('RGB LED更新頻度', 'RGB LED Refresh Rate')}>

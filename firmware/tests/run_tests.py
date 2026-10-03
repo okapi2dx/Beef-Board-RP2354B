@@ -40,6 +40,7 @@ with tempfile.TemporaryDirectory(prefix="beef-tests-") as directory:
         ("button_debounce", [tests / "button_debounce_test.c"]),
         ("button_chatter", [tests / "button_chatter_test.c"]),
         ("protocol_stream", [tests / "protocol_stream_test.c"]),
+        ("phoenixwan_uart", [tests / "phoenixwan_uart_test.c", src / "phoenixwan_uart.c"]),
         ("runtime", [tests / "runtime_test.c", src / "beef_runtime.c", src / "beef_lighting.c"]),
         ("storage", [tests / "storage_test.c", src / "beef_runtime.c"]),
         ("integration", [adapter, src / "beef_runtime.c", src / "beef_lighting.c"]),

@@ -114,7 +114,6 @@ static uint32_t rgb_last_frame, rgb_dma_done_us;
 static bool rgb_transmitting, rgb_latching;
 static uint32_t uart_tt_previous_raw_ms;
 static uint16_t uart_tt_interval_ms;
-static uint8_t uart_bar_pairs;
 
 static diagnostics_t diagnostics;
 static chatter_counts_t chatter_counts;
@@ -190,13 +189,6 @@ static void update_rgb_leds(uint32_t now) {
   rgb_last_frame = now;
   bool host_active = host_lighting_seen && (uint32_t)(now-host_lighting_ms)<1000;
   beef_lighting_render(&lighting,cfg,host_active,host_tt_rgb,host_center_rgb,ring_pixels,bar_pixels);
-  // The UART bar can only illuminate center pairs. Derive its lit count from
-  // the same frame used by the WS2812 output, including link/HID/off modes.
-  unsigned lit = 0;
-  for (unsigned i = 0; i < cfg[CFG_BAR_LEDS]; ++i)
-    if (bar_pixels[i].r || bar_pixels[i].g || bar_pixels[i].b) ++lit;
-  uart_bar_pairs = (uint8_t)((lit * 8u + cfg[CFG_BAR_LEDS] / 2u) / cfg[CFG_BAR_LEDS]);
-  if (lit && !uart_bar_pairs) uart_bar_pairs = 1;
   // Send black pixels to the old tail when counts shrink.
   uint n=cfg[CFG_TT_LEDS]>previous_tt_count?cfg[CFG_TT_LEDS]:previous_tt_count;
   uint m=cfg[CFG_BAR_LEDS]>previous_bar_count?cfg[CFG_BAR_LEDS]:previous_bar_count;
@@ -593,7 +585,7 @@ int main(void) {
         now - lighting.last_motion : UINT32_MAX;
     phoenixwan_uart_task(now, beef_config_store_data(), uart_direction,
                          uart_motion_age, uart_tt_interval_ms,
-                         uart_bar_pairs);
+                         beef_config_store_legacy_phoenixwan_enabled());
     if (now != last_scan_ms) {
       last_scan_ms = now;
 
