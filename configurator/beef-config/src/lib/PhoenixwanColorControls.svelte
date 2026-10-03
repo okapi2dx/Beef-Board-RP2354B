@@ -41,21 +41,20 @@
 
 <div class="mb-4 space-y-3 rounded-md border p-3">
 	<p class="text-sm text-muted-foreground">
-		{tr('選択中のモードで調整できる項目を表示します。「−／＋」で1段階ずつ相対調整します。', 'Controls available for the selected mode are shown. Use −/+ to make relative adjustments one step at a time.')}
+		{tr('調整できない項目はグレーアウトします。「−／＋」で1段階ずつ相対調整します。', 'Controls unavailable for the selected mode are grayed out. Use −/+ to make relative adjustments one step at a time.')}
 	</p>
 	{#each [
 		{ key: 'hue', label: tr('色相', 'Hue') },
 		{ key: 'saturation', label: tr('彩度', 'Saturation') },
 		{ key: 'brightness', label: tr('明るさ', 'Brightness') }
 	] as item}
-		{#if supported[item.key as keyof typeof supported]}
-			<div class="flex items-center justify-between gap-3">
+		{@const canAdjust = supported[item.key as keyof typeof supported]}
+			<div class="flex items-center justify-between gap-3" class:opacity-50={!canAdjust}>
 				<span class="text-sm font-medium">{item.label}</span>
 				<div class="flex gap-2">
-					<Button id={`legacy-phoenixwan-${centerBar ? 'bar' : 'turntable'}-${item.key}`} variant="outline" size="sm" disabled={sending || !appState.device} aria-label={`${item.label} ${tr('を下げる', 'decrease')}`} onclick={() => adjust(controls[centerBar ? 'centerBar' : 'turntable'][item.key as keyof typeof controls.turntable][0])}>−</Button>
-					<Button variant="outline" size="sm" disabled={sending || !appState.device} aria-label={`${item.label} ${tr('を上げる', 'increase')}`} onclick={() => adjust(controls[centerBar ? 'centerBar' : 'turntable'][item.key as keyof typeof controls.turntable][1])}>＋</Button>
+					<Button id={`legacy-phoenixwan-${centerBar ? 'bar' : 'turntable'}-${item.key}`} variant="outline" size="sm" disabled={!canAdjust || sending || !appState.device} aria-label={`${item.label} ${tr('を下げる', 'decrease')}`} onclick={() => adjust(controls[centerBar ? 'centerBar' : 'turntable'][item.key as keyof typeof controls.turntable][0])}>−</Button>
+					<Button variant="outline" size="sm" disabled={!canAdjust || sending || !appState.device} aria-label={`${item.label} ${tr('を上げる', 'increase')}`} onclick={() => adjust(controls[centerBar ? 'centerBar' : 'turntable'][item.key as keyof typeof controls.turntable][1])}>＋</Button>
 				</div>
 			</div>
-		{/if}
 	{/each}
 </div>
