@@ -405,6 +405,10 @@ static void update_button_leds(uint32_t now) {
 
 static void update_diagnostics(void) {
   diagnostics.buttons = stable_buttons; // Physical bits; Configurator applies mapping once.
+  if (beef_config_store_data()[CFG_DIGITAL_TT]) {
+    if (turntable.output.direction < 0) diagnostics.buttons |= 1u << 11;
+    if (turntable.output.direction > 0) diagnostics.buttons |= 1u << 12;
+  }
   diagnostics.raw_buttons = button_debouncer.raw;
   diagnostics.sensor_ab =
       (gpio_get(21) ? 1u : 0u) |

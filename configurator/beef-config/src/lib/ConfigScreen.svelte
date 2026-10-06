@@ -140,10 +140,10 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 </script>
 
 {#if config}
-	{#if config.version < 33 && isRp2354bBoard(appState.boardInfo)}
+	{#if !config.supports_encoder_deadzone}
 		<WarningAlert
 			title={tr('ファームウェアが古いです', 'Outdated Firmware')}
-			description={tr('角度式デッドゾーンを使うには、最新のファームウェアへ更新してください。', 'Update the firmware to use the angle-based deadzone.')}
+			description={tr('エンコーダーカウント式デッドゾーンを使うには、ファームウェアを更新してください。', 'Update the firmware to use the encoder-count deadzone.')}
 		/>
 	{/if}
 
@@ -158,7 +158,8 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
   </Tabs.List>
   {/if}
   <Tabs.Content value="input" class="settings-card">
-	<div class="mb-4">
+	<div class="settings-group mode-settings mb-4">
+		<div class="mode-field">
 		<Label for="controller-type">{tr('コントローラーモード', 'Controller Mode')}</Label>
 		<Select.Root
 			type="single"
@@ -166,7 +167,7 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 			disabled={controllerRestarting}
 			onValueChange={(value) => void changeControllerMode(value as ControllerType)}
 		>
-			<Select.Trigger class="w-[180px]">{controllerModeLabel(config.controller_type)}</Select.Trigger>
+			<Select.Trigger class="w-full">{controllerModeLabel(config.controller_type)}</Select.Trigger>
 			<Select.Content>
 				<Select.Group>
 					{#each Object.values(ControllerType) as value}
@@ -175,6 +176,12 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 				</Select.Group>
 			</Select.Content>
 		</Select.Root>
+		</div>
+		{#if Object.values(ControllerType).includes(config.controller_type)}
+			<div class="mode-field mode-input">
+				<InputModes bind:inputMode={config.iidx_input_mode} />
+			</div>
+		{/if}
 	</div>
 
 	{#if controllerRestarting}
@@ -184,13 +191,8 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 		/>
 	{/if}
 
-	<Separator class="mb-4" />
-
 	{#if Object.values(ControllerType).includes(config.controller_type)}
-		<div>
-			<h2 class="mb-2 text-xl font-bold">{tr('IIDX設定', 'IIDX Configuration')}</h2>
-			<InputModes bind:inputMode={config.iidx_input_mode} />
-
+		<div class="settings-group">
 			<h3 class="mb-2 text-xl font-bold">{tr('ターンテーブル', 'Turntable')}</h3>
 
 			<Switch label={tr('回転方向を反転', 'Reverse Turntable')} bind:checked={config.reverse_tt} />
@@ -206,15 +208,23 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 			<div class="mb-4">
 				<ToolTipLabel
 					forId="tt-deadzone"
-					label={config.version >= 33
+					wrap
+					label={config.supports_encoder_deadzone
+                        ? tr('ターンテーブル デッドゾーン（カウント）', 'Turntable Deadzone (counts)')
+                        : config.supports_angle_deadzone
 						? tr('ターンテーブル デッドゾーン（°）', 'Turntable Deadzone (°)')
 						: config.version >= 22
 							? tr('ターンテーブル デッドゾーン（ms）', 'Turntable Deadzone (ms)')
 							: tr('ターンテーブル デッドゾーン', 'Turntable Deadzone')}
 				>
-					{#if config.version >= 33}
+					{#if config.supports_encoder_deadzone}
+                        <p>{tr('A相・B相の有効な状態変化を1カウントとします。', 'Each valid quadrature transition counts as one encoder count.')}</p>
+                        <p>{tr('設定数を超えると回転に追従します。逆回転も同じです。', 'Ignores the configured number of counts, then follows rotation. Reversals use the same threshold.')}</p>
+                        <p>{tr('感度設定の影響は受けません。0で無効です。', 'Independent of sensitivity. Set 0 to disable.')}</p>
+                    {:else if config.supports_angle_deadzone}
 						<p>{tr('X軸の回転量を角度で判定します。', 'Uses the X-axis rotation angle for the deadzone.')}</p>
-						<p>{tr('設定角度に達するまで入力を無視します。', 'Input is ignored until the configured angle is reached.')}</p>
+						<p>{tr('設定角度を超えるまで入力せず、その後は回転に追従します。', 'Waits until the angle threshold is crossed, then follows rotation.')}</p>
+						<p>{tr('小さな逆振れは無視し、逆回転も設定角度で判定します。', 'Ignores small reverse jitter and applies the same angle threshold to reversals.')}</p>
 						<p>{tr('0°で無効になり、すぐに入力します。', 'Set 0° to disable it and accept input immediately.')}</p>
 					{:else}
 						<p>{tr('短い回転や誤入力を無視する時間です。', 'Ignores brief turntable movement and false input.')}</p>
@@ -224,7 +234,7 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 				<SliderInput
 					bind:value={config.tt_deadzone}
 					min={config.version >= 22 ? 0 : 1}
-					max={config.version >= 33 ? 30 : config.version >= 22 ? 255 : 6}
+					max={config.supports_encoder_deadzone ? 50 : config.supports_angle_deadzone ? 30 : config.version >= 22 ? 255 : 6}
 					id="tt-deadzone"
 				/>
 			</div>
@@ -252,12 +262,25 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 				</div>
 			{/if}
 			<div class="mb-4">
-				<ToolTipLabel forId="tt-ratio" label={tr('ターンテーブル感度', 'Turntable Sensitivity')}>
-					<p>{tr('ターンテーブルの回転に対する入力量を調整します。', 'Adjusts how much input is produced by turntable rotation.')}</p>
-					<p>{tr('感度10では1カウント、感度5では2カウントです。', 'Sensitivity 10 uses 1 count; sensitivity 5 uses 2 counts.')}</p>
-					<p>{tr('感度1では10カウントです。', 'Sensitivity 1 uses 10 counts.')}</p>
+				<ToolTipLabel forId="tt-ratio" wrap label={tr('ターンテーブル感度', 'Turntable Sensitivity')}>
+                    {#if config.supports_multiplier}
+                    <p>{tr('1.000が基準です。値が大きいほどX軸の入力が大きくなります。', '1.000 is the baseline; higher values produce more X-axis movement.')}</p>
+                    <p>{tr('0.500で半分、2.000で2倍の入力量になります。', '0.500 produces half the movement; 2.000 produces twice as much.')}</p>
+                    <p>{tr('0.000で回転入力を無効にします。', '0.000 disables turntable input.')}</p>
+                    {:else if config.supports_extended_sensitivity}
+                    <p>{tr('同じ回転量でも、感度が高いほどX軸の入力が大きくなります。', 'Higher sensitivity produces more X-axis movement for the same rotation.')}</p>
+                    <p>{tr('感度6が基準です。1〜5は基準の約17〜83%になります。', '6 is the baseline; 1–5 produce about 17–83% of it.')}</p>
+                    <p>{tr('感度7〜10は25%ずつ増え、10では基準の2倍になります。', '7–10 increase by 25% per step; 10 is twice the baseline.')}</p>
+                    {:else}
+                    <p>{tr('同じ回転量でも、感度が高いほどX軸の入力が大きくなります。', 'Higher sensitivity produces more X-axis movement for the same rotation.')}</p>
+                    <p>{tr('感度10が基準です。5では半分、1では10分の1になります。', '10 is the baseline; 5 is half and 1 is one tenth.')}</p>
+                    {/if}
 				</ToolTipLabel>
-				<SliderInput bind:value={config.tt_ratio} min={1} max={config.version >= 26 ? 10 : 6} id="tt-ratio" />
+				{#if config.supports_multiplier}
+                <SliderInput bind:value={config.tt_multiplier} min={0} max={2} step={0.001} id="tt-ratio" />
+                {:else}
+                <SliderInput bind:value={config.tt_ratio} min={1} max={config.version >= 26 ? 10 : 6} id="tt-ratio" />
+                {/if}
 			</div>
 			<TurntableTest
 				active={active && settingsTab === 'input'}
@@ -293,11 +316,14 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
   <Tabs.Content value="led" class="settings-card">
 	{#if Object.values(ControllerType).includes(config.controller_type)}
 		<div>
+			<div class="settings-group">
 			<h3 class="mb-2 text-xl font-bold">{tr('ライティング', 'Lights')}</h3>
 
 			<Switch label={tr('LEDを無効にする', 'Disable LEDs')} bind:checked={config.disable_leds} />
-
+			</div>
 			{#if !config.disable_leds}
+				{@const legacyPhoenixwanMode = appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled}
+				<div class="settings-group">
 				<h3 class="mb-2 text-xl font-bold">{tr('ボタンLED', 'Button LEDs')}</h3>
 				{#if config.version >= 23}
 					<div class="mb-4">
@@ -325,10 +351,11 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 				{:else}
 					<p class="mb-4">{tr('ボタンLEDの調整にはファームウェアV1.00以降へ更新してください。', 'Update to firmware V1.00 or later to adjust button LEDs.')}</p>
 				{/if}
+				</div>
+				<div class="settings-group">
 				{#if config.version >= 19}
 					<Switch label={tr('ターンテーブルとセンターバーの発光効果を連動', 'Link Turntable and Light Bar Effects')} bind:checked={config.link_bar_effect} disabled={appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled} />
 				{/if}
-				{@const legacyPhoenixwanMode = appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled}
 				{#if appState.boardInfo?.boardType === BoardType.RP2354B && (appState.boardInfo.capabilities & BoardCapability.LegacyPhoenixwan) !== 0}
 					<Switch label={tr('旧Phoenixwanを使用', 'Use legacy Phoenixwan')} bind:checked={config.legacy_phoenixwan_enabled} onchange={setLegacyPhoenixwan} disabled={legacyPhoenixwanBusy} helpWrap>
 						<p>{tr('ONにすると、旧PhoenixwanのLEDをUART接続で制御します。', 'When ON, controls legacy Phoenixwan LEDs over UART.')}</p>
@@ -338,9 +365,10 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 				{#if config.version >= 42 && legacyPhoenixwanMode}
 					<p class="mb-4 text-sm">{tr('旧Phoenixwanのセンターバーは固定設定で色と点灯数を調整できます。色は相対調整で、絶対色の読み取りや本体のオーディオライトモード切替はUART仕様にありません。', 'The legacy Phoenixwan center bar is configured as a fixed light with adjustable color and LED count. Color changes are relative; the UART protocol does not expose absolute color readback or Audio Light mode selection.')}</p>
 				{/if}
+				</div>
 				{@const ttModeMapping = Object.values(TurntableMode)}
 				<div class="grid gap-x-6 gap-y-2 md:grid-cols-2">
-					<div class="min-w-0">
+					<div class="min-w-0 settings-group">
 		<LightEffectSelect
 							label={tr('ターンテーブルの発光効果', 'Turntable Effect')}
 							bind:effect={config.tt_effect}
@@ -386,7 +414,7 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 						{/if}
 					</div>
 
-					<div class="min-w-0">
+					<div class="min-w-0 settings-group">
 						{#if legacyPhoenixwanMode}
 							<LightEffectSelect
 								label={tr('センターバーの発光効果', 'Center Bar Effect')}
@@ -430,7 +458,8 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 				</div>
 
 				{#if !legacyPhoenixwanMode && config.version >= 16}
-					<Separator class="mb-4" />
+					<div class="settings-group">
+					<h3>{tr('RGB LED設定', 'RGB LED Settings')}</h3>
 					<div class="mb-4">
 						<ToolTipLabel forId="led-refresh" label={tr('RGB LED更新頻度', 'RGB LED Refresh Rate')}>
 							<p>{tr('RGB LEDを更新する頻度です。', 'Sets the RGB LED refresh rate.')}</p>
@@ -457,41 +486,15 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 						/>
 					</div>
 
-					<div class="mb-4 flex items-center justify-between gap-4">
-						<ToolTipLabel forId="tt-leds" label={tr('ターンテーブルLED数', 'Turntable LEDs')}>
-							<p>{tr('ターンテーブルのRGB LED数を設定します。', 'Sets the number of RGB LEDs on the turntable.')}</p>
-							<p>{tr('実際に接続しているLED数に合わせてください。', 'Match this to the number of LEDs actually connected.')}</p>
-							<p>{tr('初期値は24。RP2354Bでは変更がすぐに反映されます。', 'The default is 24. Changes apply immediately on RP2354B.')}</p>
-						</ToolTipLabel>
-						<Input
-							class="w-24 shrink-0"
-							id="tt-leds"
-							min={1}
-							max={255}
-							type="number"
-							bind:value={config.tt_leds}
-						/>
+					<div class="mb-4">
+						<span>{tr('ターンテーブルLED数', 'Turntable LEDs')}</span>
+						<SliderInput bind:value={config.tt_leds} min={0} max={255} id="tt-leds" />
 					</div>
-
-					{#if config.supports_bar_led_count}
-						<div class="mb-4 flex items-center justify-between gap-4">
-							<ToolTipLabel forId="bar-leds" label={tr('センターバーLED数', 'Center Bar LEDs')}>
-								<p>{tr('センターバーのRGB LED数を設定します。', 'Sets the number of RGB LEDs on the center bar.')}</p>
-								<p>{tr('実際に接続しているLED数に合わせてください。', 'Match this to the number of LEDs actually connected.')}</p>
-								<p>{tr('初期値は16。RP2354Bでは変更がすぐに反映されます。', 'The default is 16. Changes apply immediately on RP2354B.')}</p>
-							</ToolTipLabel>
-							<Input
-								class="w-24 shrink-0"
-								id="bar-leds"
-								min={1}
-								max={255}
-								type="number"
-								bind:value={config.bar_leds}
-							/>
-						</div>
-					{:else}
-						<p class="mb-4 text-sm">{tr('この基板・ファームウェアではセンターバーLED数は固定です。', 'The center bar LED count is fixed on this board and firmware.')}</p>
-					{/if}
+					<div class="mb-4">
+						<span>{tr('センターバーLED数', 'Center Bar LEDs')}</span>
+						{#if config.supports_bar_led_count}<SliderInput bind:value={config.bar_leds} min={0} max={255} id="bar-leds" />{:else}<span>{tr('ファーム更新が必要です', 'Firmware update required')}</span>{/if}
+					</div>
+					</div>
 				{/if}
 			{/if}
 		</div>
@@ -509,15 +512,15 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 {/if}
 
 <style>
-  :global(.settings-card) { border: 1px solid var(--border); border-radius: 1rem; padding: 1.25rem; background: var(--card); }
+  .mode-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .mode-field { min-width: 0; }
+  .mode-input :global(.mb-4) { margin-bottom: 0; }
+  .mode-input :global([data-slot="select-trigger"]) { width: 100%; min-width: 0; }
+  :global(.settings-card) { border: 0; border-radius: 0; padding: 0; background: transparent; }
   :global(.settings-card .mb-4) { margin-bottom: 0.75rem; }
-  :global(.settings-card h2), :global(.settings-card h3) { font-size: 1.125rem; margin-top: 0.75rem; margin-bottom: 0.75rem; }
+  :global(.settings-card h2), :global(.settings-card h3) { font-size: 1rem; margin-top: 0; margin-bottom: 0.75rem; }
   :global(.settings-card label) { line-height: 1.5; }
-  :global(.keys-card) { padding-top: 0.75rem; padding-bottom: 0.9rem; }
-  :global(.chatter-card) { padding: 0.75rem; }
-  @media (max-height: 740px) { :global(.chatter-card) { padding: 0.4rem; } }
-  @media (max-height: 650px) { :global(.chatter-card) { padding: 0.1rem; } }
+  :global(.keys-card), :global(.chatter-card) { padding: 0; }
   :global(.app-content:has(.chatter-card[data-state="active"]) > .flex.flex-col.gap-2) { display: flex; flex-direction: column; min-height: 0; height: 100%; }
   :global(.chatter-card[data-state="active"]) { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
 </style>
-

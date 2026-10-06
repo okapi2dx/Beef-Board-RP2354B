@@ -119,10 +119,7 @@ void handle_command() {
       reboot_to_bootloader();
       break;
     case Command::ResetConfig:
-      current_config.version = 0;
-      config_update(&current_config);
-      current_config.tt_ratio = 10;
-      current_config.tt_sustain_ms = 0;
+      reset_config(&current_config);
       config_save(current_config);
       // TODO: find out why device re-enumeration doesn't work
       reboot();

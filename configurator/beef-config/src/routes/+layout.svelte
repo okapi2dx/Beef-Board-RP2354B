@@ -1,12 +1,25 @@
 <script lang="ts">
 	import '../app.css';
-	import { ModeWatcher } from 'mode-watcher';
+	import '../equipment-theme.css';
+	import '../simple-theme.css';
+	import { onMount } from 'svelte';
+	import { ModeWatcher, setMode } from 'mode-watcher';
 
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
 
 	let { children }: Props = $props();
+	const design = import.meta.env.VITE_BEEF_DESIGN === 'equipment' ? 'equipment' : 'simple';
+	onMount(() => {
+		document.documentElement.dataset.design = design;
+		const preferenceKey = `beef-${design}-design`;
+		if (!localStorage.getItem(preferenceKey) || localStorage.getItem('beef-active-design') !== design) {
+			setMode(design === 'simple' ? 'light' : 'dark');
+			localStorage.setItem(preferenceKey, '1');
+		}
+		localStorage.setItem('beef-active-design', design);
+	});
 </script>
 
 <ModeWatcher />

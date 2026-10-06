@@ -1,5 +1,6 @@
 #include "beef_config_store.h"
 #include "beef_runtime.h"
+#include "turntable_sensitivity.h"
 
 #include <string.h>
 #include "pico/stdlib.h"
@@ -62,7 +63,7 @@ static uint32_t checksum_record(config_record_t const *rec) {
 static void set_defaults(uint8_t *c) {
   memset(c, 0, BEEF_CONFIG_SIZE);
 
-  c[0] = 42;
+  c[0] = 45;
   c[1] = 0;
   c[2] = 0;
   c[3] = 0;
@@ -75,7 +76,8 @@ static void set_defaults(uint8_t *c) {
     c[off + 2] = 255;
   }
 
-  c[30] = 10;
+  c[30] = 6;
+  c[71] = 1000 & 255; c[72] = 1000 >> 8;
   c[31] = 0;
   c[32] = 0;
   c[33] = 0;
@@ -135,7 +137,11 @@ static bool slot_is_erased(uint32_t slot) {
 static bool record_valid(config_record_t const *rec) {
   if (rec->magic != CONFIG_FLASH_MAGIC || (rec->format != 2u && rec->format != CONFIG_FLASH_FORMAT)) return false;
   if (rec->legacy_phoenixwan_enabled != 0xffu && rec->legacy_phoenixwan_enabled > 1u) return false;
-  if (!beef_config_valid(rec->data)) return false;
+  uint8_t validated[BEEF_CONFIG_SIZE];
+  memcpy(validated, rec->data, sizeof(validated));
+  // Read previous count-range records without losing unrelated settings.
+  if (validated[0] >= 43 && validated[3] > 50) validated[3] = 50;
+  if (!beef_config_valid(validated)) return false;
   return rec->checksum == checksum_record(rec);
 }
 
@@ -224,6 +230,21 @@ void beef_config_store_init(void) {
       current_config[0] = 42;
       migrate = true;
     }
+    if (current_config[0] == 42) {
+      current_config[3] = 0;
+      current_config[0] = 43;
+      migrate = true;
+    }
+    if (current_config[0] >= 43 && current_config[3] > 50) {
+      current_config[3] = 50;
+      migrate = true;
+    }
+    if (current_config[0] == 43) {
+      current_config[30] = beef_migrate_sensitivity(current_config[30]);
+      current_config[0] = 44;
+      migrate = true;
+    }
+    if (current_config[0] == 44) { uint16_t milli = beef_sensitivity_milli(current_config[30]); current_config[71] = milli; current_config[72] = milli >> 8; current_config[0] = 45; migrate = true; }
   } else {
     set_defaults(current_config);
     next_sequence = 1u;
@@ -306,7 +327,17 @@ bool beef_config_store_stage(uint8_t const data[BEEF_CONFIG_SIZE]) {
     migrated[0] = 42;
     data = migrated;
   }
-  if (data[0] != 42 || !beef_config_valid(data)) return false;
+  if (data[0] == 42) {
+    if (data != migrated) memcpy(migrated, data, sizeof(migrated));
+    migrated[3] = 0;
+    migrated[0] = 43;
+    data = migrated;
+  }
+  if (data != migrated) memcpy(migrated, data, sizeof(migrated));
+  if (migrated[0] == 43) { migrated[30] = beef_migrate_sensitivity(migrated[30]); migrated[0] = 44; }
+  if (migrated[0] == 44) { uint16_t milli = beef_sensitivity_milli(migrated[30]); migrated[71] = milli; migrated[72] = milli >> 8; migrated[0] = 45; }
+  data = migrated;
+  if (data[0] != 45 || !beef_config_valid(data)) return false;
   if (memcmp(current_config, data, BEEF_CONFIG_SIZE) == 0) return false;
 
   memcpy(current_config, data, BEEF_CONFIG_SIZE);

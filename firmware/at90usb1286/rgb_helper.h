@@ -15,7 +15,7 @@
 
 constexpr auto DEFAULT_COLOUR = HSV{ 128, 255, 255 }; // Aqua
 extern CRGB* tt_leds;
-extern CRGB bar_leds[LIGHT_BAR_LEDS];
+extern CRGB bar_leds[255];
 
 struct rgb_light {
   uint8_t r, g, b;
@@ -26,6 +26,7 @@ namespace RgbHelper {
   extern uint32_t min_micros;
   extern uint8_t tt_anim_normalise;
   extern uint8_t num_tt_leds;
+  extern uint8_t num_bar_leds;
 
   void init(const config &cfg);
   void update(const config &new_cfg);

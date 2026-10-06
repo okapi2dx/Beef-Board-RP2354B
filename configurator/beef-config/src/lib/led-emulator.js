@@ -49,7 +49,7 @@ export function createLedEmulator() {
     dt = Math.max(0, dt);
     time += dt;
     const direction = (input?.direction ?? 0) * (cfg.reverse_tt ? 1 : -1);
-    const count = Math.max(1, Math.min(255, cfg.tt_leds || 24));
+    const count = Math.max(1, Math.min(255, cfg.tt_leds ?? 24));
     if (useLedTelemetry) {
       // RP2354B integrates continuous phase in beef_lighting_update.
       spin = wrap(spin + dt / (direction ? 25 : 50) * (direction === -1 ? -1 : 1), 12);
@@ -120,7 +120,7 @@ export function createLedEmulator() {
       'Rainbow Spin':cfg.tt_rainbow_spin_hsv,Reactive:cfg.tt_react_hsv,Breathing:cfg.tt_breathing_hsv});
     const c = modeColors[mode];
     const ring = Array.from({length:24}, (_,i) => {
-      if (cfg.disable_leds || mode === 'Off') return black;
+      if (cfg.disable_leds || cfg.tt_leds === 0 || mode === 'Off') return black;
       if (uniformRgb) return uniformRgb;
       if (mode === 'HID') return color({h:0,s:0,v:100},0,wave(2048));
       if (!c) return black;
@@ -147,7 +147,15 @@ export function createLedEmulator() {
     const reverseRingPreview = mode === 'Rainbow Spin' || mode === 'Rainbow Reactive';
     const ringPreview = reverseRingPreview ? [...ring].reverse() : ring;
     let bar = Array(16).fill(black);
-    if (cfg.link_bar_effect) bar = bar.map((_,i)=>ring[Math.floor(i*24/16)]);
+    if (cfg.link_bar_effect) {
+      // Sample rainbow hue at each bar pixel's exact position; rounding a
+      // 24-pixel ring to 16 pixels makes alternating large/small color steps.
+      if (mode.startsWith('Rainbow') && c && !cfg.disable_leds && cfg.tt_leds !== 0) {
+        const pos = mode === 'Rainbow Static' ? 0 : mode === 'Rainbow Reactive' ? react
+          : useLedTelemetry ? rainbow*speed : wrap(rainbow*speed,256);
+        bar = bar.map((_,i)=>color(c, i*360/16 - pos*360/256));
+      } else bar = bar.map((_,i)=>ring[Math.floor(i*24/16)]);
+    }
     else if (!cfg.disable_leds) {
       const mode = cfg.bar_effect;
       if (mode === 'Static') bar.fill(color(cfg.bar_static_hsv));
@@ -167,6 +175,7 @@ export function createLedEmulator() {
       const brightness=(cfg.button_led_individual ? cfg.button_led_level?.[i] : cfg.button_led_brightness) ?? 100;
       return cfg.disable_leds ? 0 : brightness * (on ? 1 : fade ? Math.max(0,1-(time-released[i])/fade) : 0);
     });
+    if (cfg.bar_leds === 0) bar.fill(black);
     return {ring:ringPreview,bar,buttonLevels};
   };
 }

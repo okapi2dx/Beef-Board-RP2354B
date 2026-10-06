@@ -21,10 +21,10 @@ Release firmware downloads are hosted on GitHub Releases. This directory contain
 
 ## Implemented
 
-- 11 button inputs with GPIO interrupt sampling and immediate press/release detection. B1–B7 have separate press and release debounce settings from 0.0 to 16.0 ms in 0.1 ms steps. The press window rejects brief OFF edges; the release window rejects brief ON edges, including ON pulses that end after the window expires. A short tap's OFF is applied when the press window expires if it remains OFF. Button mapping, keyboard/joystick HID reports and diagnostics remain supported.
+- 11 button inputs with immediate first press/release. B1–B7 have separate press and release guard settings from 0.0 to 16.0 ms in 0.1 ms steps. The accepted edge starts its corresponding guard window; reverse edges inside the window are suppressed. A reverse raw state that persists until expiry is adopted at expiry. Zero disables that guard. AT90 and RP use the same state machine. Button mapping, keyboard/joystick HID reports and diagnostics remain supported.
 - 11 button LED outputs with the original brightness, fade and host-lighting logic. Software PWM runs at 100 Hz.
 - Encoder 1 turntable handling on GP21/GP20. Encoder 2 pins GP3/GP2 are initialized but have no behavior in the original firmware either.
-- Two WS2812 outputs on GP1/GP0, using PIO and nonblocking DMA, with 1–255 LEDs on each output. J42 (UART A, GP18/GP19) drives a Phoenixwan turntable ring and J43 (UART B, GP22/GP23) drives a Phoenixwan center bar at 115200 baud.
+- Two WS2812 outputs on GP1/GP0, using PIO and nonblocking DMA, with independently adjustable 0–255 LEDs on each output (defaults: 24 turntable LEDs and 16 center-bar LEDs; 0 disables the output). J42 (UART A, GP18/GP19) drives a Phoenixwan turntable ring and J43 (UART B, GP22/GP23) drives a Phoenixwan center bar at 115200 baud.
 - HID configuration reports and settings journaled across the last two 4 KB sectors of the RP2354B's 2 MB flash. Both settings sectors are excluded from the linked program region. The prior single-sector format is imported in place.
 - HID bootloader command enters the RP2350 ROM BOOTSEL USB mode. The restart command uses the watchdog reset.
 
@@ -74,7 +74,7 @@ RP2354B's [48 GPIO and stacked 2 MB flash](https://www.raspberrypi.com/products/
 
 ## V1.00 fixes and validation
 
-- Turntable hold expires relative to the last real movement (100 axis counts/s while holding). Analog deadzone uses 0–30 degrees; digital TT follows raw direction without the analog gate. Delay buffers both movement and releases for 0–255 ms.
+- Turntable deadzone uses 0–50 raw encoder counts before sensitivity for both analog and digital input. Hold is bounded by the last accepted movement; reversal evaluation cancels old-direction analog hold. Delay buffers movement and releases for 0–255 ms and is reset consistently on both boards when settings change.
 - Keyboard reports include TT-/TT+ and deduplicate key codes. Pending digital TT presses survive a busy USB endpoint. Encoder edges are collected by GPIO interrupts instead of 1 ms polling.
 - Spin, Shift, rainbow, Reactive, Breathing, key spectrum, tape and linked bar effects are implemented. Configured refresh is 1–60 Hz. DMA keeps LED transmission from blocking input scanning. Shrinking LED counts clears the old tail.
 - Diagnostics expose physical buttons, separate raw/filtered/output axes, the encoder interval and actual PWM output levels. The Configurator maps buttons once and uses RP2354B PWM telemetry for button LEDs. RGB previews remain local simulations, not measured LED feedback.
@@ -92,3 +92,38 @@ It covers the production input/lighting/storage logic and extracted hardware-ada
 These checks do not replace physical-board validation of USB enumeration, GPIO/encoder signals, WS2812 timing and persistent settings after an actual power cycle. Update both the UF2 and Configurator to use this revision together.
 
 The V1.00 validation run also passed Svelte type checking, web/desktop builds, all app regression suites, 13 desktop unit tests, and headless UI checks for turntable feedback, button mapping, interrupt diagnostics and RP2354B settings/UF2/BOOTSEL. The packaged Electron app started successfully and served the exact matching UF2 through its local protocol. UI checks use mocked HID devices and do not flash hardware.
+
+
+## Encoder-count turntable deadzone (AT90 config v45 / RP config v43)
+
+Both boards count valid signed A/B quadrature transitions before sensitivity.
+One valid change is one count (four counts per full quadrature cycle); repeated
+states and invalid two-bit changes do not count. The setting range is 0–50.
+A setting of N suppresses the first N net counts and accepts count N+1. Zero
+passes input immediately. Sensitivity scales only accepted motion, so it cannot
+change the physical distance needed to qualify a gesture or reversal.
+
+After qualification, same-direction movement follows smoothly. Small reverse
+excursions are absorbed as net displacement. A deliberate reversal must exceed
+the same threshold. Suppressed distance is discarded rather than applied as a
+catch-up jump. A pause longer than one second starts a new gesture. Analog hold
+in the previous direction is cancelled while evaluating a reversal. Digital
+turntable direction uses accepted encoder events even at low X-axis sensitivity.
+
+Earlier AT90/RP settings used time or X-axis degrees. Those values cannot be
+converted universally to physical encoder counts. Upgrading resets only the
+turntable deadzone to 0, preserving other settings. Set the desired count after
+upgrading. The app retains the correct units and ranges for earlier firmware.
+
+Previously saved encoder thresholds above 50 are clamped to 50 on load; other settings are preserved.
+
+
+## Extended turntable sensitivity (AT90 config v46 / RP config v44)
+
+Sensitivity 6 is 1:1 encoder-to-X movement. Values 1–5 use value/6; 7–10 use 1 + (value-6)*0.25. Fractional motion is retained in twelfths, including negative direction. Both boards use the same scale before and after the encoder deadzone; deadzone qualification remains independent of sensitivity. Reset defaults to 6. Older sensitivity values migrate to the nearest supported value (old 10 becomes new 6), preserving other settings.
+
+
+## Current multiplier (AT90 v47 / RP v45)
+Config bytes 71–72 store the little-endian multiplier in thousandths (0..2000). Reset uses 1000. Old sensitivity migrates to its multiplier. Both boards accumulate fractional encoder movement in thousandths; zero disables turntable input. The app exposes 0.000–2.000 at 0.001 increments. AT90 hardware sensitivity shortcuts adjust by 0.100.
+
+Factory reset uses a 0 ms hold on both boards. Switching to digital mode preserves the configured deadzone and hold; it does not apply a separate preset. RP diagnostics include B13/B14 when digital turntable mode is enabled. The app also derives these buttons from accepted output direction for compatibility with older RP diagnostics. AT90 hardware color shortcuts use qualified encoder motion without extending color changes through the hold period.

@@ -39,6 +39,7 @@ void QeAxis::poll() {
   const uint8_t curr = (a << 1) | b;
 
   const auto direction = tt_transitions[prev][curr];
+  encoder_step = direction;
   if (direction) {
     uint32_t now;
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { now = milliseconds; }
@@ -47,7 +48,7 @@ void QeAxis::poll() {
     last_transition_time = now;
     transition_count++;
   }
-  position.update(direction, current_config.tt_ratio);
+  position.update_milli(direction, turntable_multiplier(current_config));
   prev = curr;
 }
 

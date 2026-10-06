@@ -107,16 +107,15 @@
 		config.button_mapping = next;
 	}
 
-	// Keep the remap layout aligned with ControllerMonitor exactly.
-	// B1/B3/B5/B7 are the lower row; B2/B4/B6 are the upper row.
+	// Stagger the seven tall keys with equal gaps and balanced side margins.
 	const IIDX_REMAP_POSITIONS = [
-		[45, 175],
-		[75, 105],
-		[105, 175],
-		[135, 105],
-		[165, 175],
-		[195, 105],
-		[225, 175],
+		[42, 178],
+		[72, 99],
+		[102, 178],
+		[132, 99],
+		[162, 178],
+		[192, 99],
+		[222, 178],
 		[45, 15],
 		[105, 15],
 		[165, 15],
@@ -153,7 +152,7 @@
 
 	{#if Object.values(ControllerType).includes(config.controller_type)}
 		{#if config.iidx_input_mode === InputMode.Joystick && config.version >= 28}
-			<div class="remap-section">
+			<div class="remap-section settings-group">
 				<div class="remap-heading">
 					<h3 class="text-xl font-bold">{tr('ボタン配置入れ替え', 'Button Layout Remapping')}</h3>
 					<HelpText label={tr('ボタン配置入れ替え', 'Button Layout Remapping')}>
@@ -199,7 +198,7 @@
 		{/if}
 
 		{#if config.iidx_input_mode === InputMode.Keyboard}
-			<Separator class="mb-4" />
+			<div class="settings-group">
 			<Label>{tr('メインボタン', 'Main Buttons')}</Label>
 		<div class="mb-2 flex flex-col">
 			<div class="grid grid-cols-4 gap-2">
@@ -244,6 +243,7 @@
 					{IIDX_BUTTON_LABELS.tt_cw}: {getKeyName(config.iidx_keys.tt_cw)}
 				</Button>
 			</div>
+		</div>
 		</div>
 		{/if}
 	{/if}
@@ -298,7 +298,8 @@
 	.remap-key {
 		position: absolute;
 		width: 15%;
-		height: 22%;
+		height: 28%;
+		box-sizing: border-box;
 		border: 2px solid #7b8797;
 		border-radius: 7px;
 		background: #edf1f6;
@@ -360,7 +361,8 @@
 	:global(.remap-select) {
 		height: 26px !important;
 		min-height: 26px !important;
-		width: 50px !important;
+		width: min(50px, 100%) !important;
+		min-width: 0 !important;
 		padding: 0 5px !important;
 		gap: 2px !important;
 		font-size: 12px !important;
@@ -390,6 +392,15 @@
 		}
 		.remap-key.function-key {
 			width: 14%;
+			padding: 1px;
+			gap: 0;
+		}
+		.remap-key.function-key strong { font-size: 11px; }
+		.remap-key.function-key .remap-arrow { font-size: 7px; }
+		:global(.remap-key.function-key .remap-select) {
+			height: 20px !important;
+			min-height: 20px !important;
+			font-size: 10px !important;
 		}
 	}
 </style>

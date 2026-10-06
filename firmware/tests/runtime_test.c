@@ -5,7 +5,7 @@
 #include "beef_lighting.h"
 static uint8_t c[139];
 static void defaults(void) {
- memset(c,0,sizeof(c)); c[0]=33;c[30]=10;c[78]=60;c[79]=3;c[80]=24;c[138]=16;c[88]=100;c[4]=8;
+ memset(c,0,sizeof(c)); c[0]=33;c[30]=6;c[78]=60;c[79]=3;c[80]=24;c[138]=16;c[88]=100;c[4]=8;
  for(unsigned i=0;i<11;i++){c[102+i]=100;c[127+i]=i;}
  for(unsigned i=6;i<=27;i+=3){c[i]=64;c[i+1]=255;c[i+2]=255;}
  c[81]=128;c[82]=255;c[83]=255;
@@ -16,8 +16,8 @@ static void input_tests(void) {
  for(unsigned t=102;t<=1101;t++)beef_turntable_update(&s,c,0,t);
  assert(s.output.direction==0 && s.output.position==133);
  uint8_t end=s.output.position;beef_turntable_update(&s,c,0,2101);assert(s.output.position==end);
- // Deadzone: 10 degrees rounds up to 8 axis counts; reversal gates again.
- memset(&s,0,sizeof(s));c[34]=0;c[3]=10;beef_turntable_update(&s,c,0,0);
+ // Deadzone: 7 encoder counts are ignored; the eighth passes; reversal gates again.
+ memset(&s,0,sizeof(s));c[34]=0;c[3]=7;beef_turntable_update(&s,c,0,0);
  for(unsigned t=1;t<8;t++){beef_turntable_update(&s,c,1,t);assert(s.output.position==127);}
  beef_turntable_update(&s,c,1,8);assert(s.output.position==128);
  beef_turntable_update(&s,c,1,9);assert(s.output.position==129);
@@ -35,13 +35,30 @@ static void input_tests(void) {
  }
  memset(&s,0,sizeof(s));defaults();c[3]=30;c[85]=1;
  beef_turntable_update(&s,c,0,0);beef_turntable_update(&s,c,1,1);
- assert(s.output.direction==1 && s.output.position==127);
+ assert(s.output.direction==0 && s.output.position==127);
+ // All encoder thresholds qualify at count+1, at slow and fast rates.
+ for(unsigned angle=0;angle<=255;angle++)for(unsigned gap=1;gap<=250;gap+=249)for(int sign=-1;sign<=1;sign+=2){
+  memset(&s,0,sizeof(s));defaults();c[3]=angle;c[85]=1;
+  beef_turntable_update(&s,c,0,0);
+  unsigned threshold=angle+1;
+  uint8_t position=127;
+  for(unsigned edge=1;edge<=257;edge++){
+   beef_turntable_update(&s,c,sign,edge*gap);
+   bool accepted=!threshold || edge>=threshold;
+   if(accepted)position=(uint8_t)(position+sign);
+   assert(s.output.position==position);
+   assert(s.output.direction==(accepted?sign:0));
+  }
+  beef_turntable_update(&s,c,0,257*gap+2000);assert(s.output.direction==0);
+  beef_turntable_update(&s,c,sign,257*gap+2001);
+  assert(s.output.direction==(threshold<=1?sign:0));
+ }
  // Clock wrap, reversal, sensitivity and a settings change while holding.
  memset(&s,0,sizeof(s));defaults();c[34]=50;
  beef_turntable_update(&s,c,0,0xfffffff0u);beef_turntable_update(&s,c,1,0xfffffff1u);
  for(unsigned t=0xfffffff2u;t!=60;t++)beef_turntable_update(&s,c,0,t);
  assert(s.output.direction==0 && s.output.position==133);
- memset(&s,0,sizeof(s));defaults();c[30]=5;c[1]=1;
+ memset(&s,0,sizeof(s));defaults();c[30]=3;c[1]=1;
  beef_turntable_update(&s,c,0,0);beef_turntable_update(&s,c,1,1);assert(s.raw==127);
  beef_turntable_update(&s,c,1,2);assert(s.raw==126);
  c[34]=100;beef_turntable_update(&s,c,1,3);c[85]=1;
@@ -85,4 +102,4 @@ static void lighting_tests(void) {
  beef_lighting_update(&s,c,1000,127,0,1);assert(s.level==0);
  puts("PASS lighting: moving effects, linked pixels, HID timeout, 255 pixels, tail clearing, disable, 1..60 Hz and key spectrum decay");
 }
-int main(void){input_tests();lighting_tests();defaults();assert(beef_config_valid(c));c[80]=0;assert(!beef_config_valid(c));return 0;}
+int main(void){input_tests();lighting_tests();defaults();assert(beef_config_valid(c));c[80]=0;c[138]=0;assert(beef_config_valid(c));return 0;}

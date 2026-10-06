@@ -19,7 +19,9 @@
 	const destinationLabels = [
 		...[0, 1, 2, 3, 4, 5, 6].map((bit) => ({ label: `B${bit + 1}`, bit })),
 		{ label: 'B8', bit: 13 },
-		...[7, 8, 9, 10].map((bit, index) => ({ label: `B${index + 9}`, bit }))
+		...[7, 8, 9, 10].map((bit, index) => ({ label: `B${index + 9}`, bit })),
+		{ label: 'B13', bit: 11 },
+		{ label: 'B14', bit: 12 }
 	];
 	const legacyMonitorPollMs = 75;
 	const positions = [
@@ -35,7 +37,14 @@
 		[165, 15],
 		[225, 15]
 	];
-	function logicalButtonState(buttons: number): number {
+	function logicalButtonState(buttons: number, direction: number): number {
+		// RP firmware can report only physical button bits. Both boards report
+		// the accepted, delayed turntable direction separately.
+		buttons &= ~((1 << 11) | (1 << 12));
+		if (config.digital_tt) {
+			if (direction < 0) buttons |= 1 << 11;
+			if (direction > 0) buttons |= 1 << 12;
+		}
 		if (config.version < 28 || config.iidx_input_mode !== 'Joystick') return buttons;
 		let mapped = buttons & ~0x7ff;
 		for (let physical = 0; physical < config.button_mapping.length; physical++) {
@@ -46,7 +55,9 @@
 		}
 		return mapped;
 	}
-	const displayedButtons = $derived(data ? logicalButtonState(data.buttons) : 0);
+	const displayedButtons = $derived(data ? logicalButtonState(data.buttons, data.direction) : 0);
+	const digitalB13Pressed = $derived(Boolean(displayedButtons & (1 << 11)));
+	const digitalB14Pressed = $derived(Boolean(displayedButtons & (1 << 12)));
 	const pressed = $derived(destinationLabels.filter(({ bit }) => displayedButtons & (1 << bit)).map(({ label }) => label));
 	const effectLabels: Record<string, string> = {
 		Static: '固定',
@@ -75,14 +86,14 @@
 	}
 	function barGradient() {
 		return (
-			'linear-gradient(to bottom,' +
+			'linear-gradient(to bottom in oklab,' +
 			Array.from({ length: 16 }, (_, i) => barRgbAt(i) + ' ' + (i / 15) * 100 + '%').join(',') +
 			')'
 		);
 	}
 	function ringBackground() {
 		return (
-			'conic-gradient(' +
+			'conic-gradient(in oklab,' +
 			[...frame.ring, frame.ring[0]].map((c, i) => c + ' ' + (i / 24) * 100 + '%').join(',') +
 			')'
 		);
@@ -168,9 +179,7 @@
 			handle: number;
 		function draw(now: number) {
 			const next = emulate(config, data, now - last, isRp2354bBoard(appState.boardInfo), displayedButtons);
-			if (active) frame = data ? next : {
-				ring: Array(24).fill('#000000'), bar: Array(16).fill('#000000'), buttonLevels: Array(11).fill(0)
-			};
+			if (active) frame = next;
 			last = now;
 			handle = requestAnimationFrame(draw);
 		}
@@ -187,7 +196,7 @@
 				? tr('対応ファームウェアへ更新してください', 'Update firmware to enable monitoring')
 				: stale
 					? tr('入力待機中', 'Waiting for input')
-					: tr('入力取得中', 'Monitoring inputs')}</span
+				: tr('入力取得中', 'Monitoring inputs')}</span
 		>
 	</div>
 	<div class="monitor-layout">
@@ -245,16 +254,39 @@
 		</div>
 		<div class="stage">
 			<div class="stage-title" data-testid="monitor-side">{side}</div>
-			<div class="device" class:second={side === '2P'}>
+			<div class="device" class:second={side === '2P'} class:digital={config.digital_tt}>
 				<div class="disc-area">
+					{#if config.digital_tt}
+						<span class="digital-mode-label">{tr('デジタル', 'Digital')}</span>
+					{/if}
 					<div
 						class="ring"
 						data-testid="monitor-ring"
 						data-led-source="simulation"
 						style:background={ringBackground()}
 					>
-						<div class="disc">
-							<span style:transform={`rotate(${((data?.output ?? 0) * 360) / 256}deg)`}>●</span>
+						<div class="disc" class:digital-disc={config.digital_tt}>
+							{#if config.digital_tt}
+								<div
+									class="digital-segment left"
+									class:active={digitalB13Pressed}
+									data-testid="monitor-digital-b13"
+									data-pressed={digitalB13Pressed}
+									role="img"
+									aria-label={`B13: ${digitalB13Pressed ? tr('入力中', 'Pressed') : tr('未入力', 'Released')}`}
+								><span>B13</span></div>
+								<div
+									class="digital-segment right"
+									class:active={digitalB14Pressed}
+									data-testid="monitor-digital-b14"
+									data-pressed={digitalB14Pressed}
+									role="img"
+									aria-label={`B14: ${digitalB14Pressed ? tr('入力中', 'Pressed') : tr('未入力', 'Released')}`}
+								><span>B14</span></div>
+								<div class="digital-divider" aria-hidden="true"></div>
+							{:else}
+								<span style:transform={`rotate(${((data?.output ?? 0) * 360) / 256}deg)`}>●</span>
+							{/if}
 						</div>
 					</div>
 				</div>
@@ -266,7 +298,7 @@
 					)}
 					data-top-rgb={barRgbAt(0)}
 					data-bottom-rgb={barRgbAt(15)}
-					style:background={barGradient()}
+					style:--led-background={barGradient()}
 				></div>
 				<div class="keyboard">
 					{#each labels as label, i}<div
@@ -291,15 +323,6 @@
 </section>
 
 <style>
-	.bar {
-		background: #263244;
-		outline: 2px solid #000;
-		border-radius: 6px !important;
-		width: 3% !important;
-		align-self: stretch;
-		min-height: 0 !important;
-		box-shadow: 0 0 8px color-mix(in srgb, currentColor 20%, transparent);
-	}
 	.monitor-heading {
 		display: flex;
 		justify-content: space-between;
@@ -329,7 +352,8 @@
 		margin-bottom: 6px;
 	}
 	.device {
-		display: flex;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 4.2% minmax(0, 1fr);
 		align-items: stretch;
 		gap: 1.35%;
 		padding: 1.35%;
@@ -341,10 +365,12 @@
 		border: 3px double #718094;
 		box-shadow: inset 0 0 0 1px #f8fafc;
 	}
-	.device.second {
-		flex-direction: row-reverse;
-	}
+	.device.second .disc-area { grid-column: 3; }
+	.device.second .keyboard { grid-column: 1; }
 	.disc-area {
+		position: relative;
+		grid-column: 1;
+		grid-row: 1;
 		flex: 1 1 0;
 		min-width: 0;
 		display: grid;
@@ -355,22 +381,90 @@
 		border-radius: 13px;
 		overflow: hidden;
 	}
+	.digital-mode-label {
+		position: absolute;
+		z-index: 2;
+		top: 7%;
+		left: 7%;
+		padding: 3px 9px;
+		border: 1px solid rgb(100 116 139 / 25%);
+		border-radius: 999px;
+		background: rgb(226 232 240 / 82%);
+		color: #334155;
+		font-size: clamp(9px, 1.1vw, 12px);
+		font-weight: 700;
+		line-height: 1.4;
+		pointer-events: none;
+	}
 	.ring {
+		position: relative;
 		width: min(100%, 500px);
 		max-height: 100%;
-		padding: 7px;
+		padding: 12px;
 		border-radius: 50%;
 		aspect-ratio: 1;
 		box-shadow: 0 0 0 2px #101827, 0 0 0 5px #7b8797;
+		filter: brightness(1.15) saturate(1.04);
+	}
+	.ring::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: inherit;
+		filter: blur(5px);
+		opacity: 0.22;
+		pointer-events: none;
 	}
 	.disc {
+		position: relative;
 		height: 100%;
 		border-radius: 50%;
 		background: radial-gradient(circle, #101827 35%, #2b3544 36%, #2b3544 52%, #0c1320 53%);
 		display: grid;
 		place-items: center;
 	}
-	.disc span {
+	.digital-disc {
+		overflow: hidden;
+		isolation: isolate;
+		background: #111827;
+	}
+	.digital-segment {
+		position: absolute;
+		inset: 0 50% 0 0;
+		display: grid;
+		place-items: center;
+		background: #202b3b;
+		color: #aab6c5;
+		transition: background-color 90ms ease, color 90ms ease, filter 90ms ease;
+	}
+	.digital-segment.right {
+		inset: 0 0 0 50%;
+	}
+	.digital-segment.active {
+		background: #0f9f9a;
+		color: #f0fdfa;
+		filter: brightness(1.2);
+		text-shadow: 0 0 8px rgb(153 246 228 / 70%);
+	}
+	.digital-segment span {
+		position: relative;
+		z-index: 1;
+		font-size: clamp(10px, 1.5vw, 15px);
+		font-weight: 700;
+	}
+	.digital-divider {
+		position: absolute;
+		z-index: 2;
+		top: 0;
+		bottom: 0;
+		left: calc(50% - 1px);
+		width: 2px;
+		background: #718096;
+		box-shadow: 0 0 4px rgb(15 23 42 / 70%);
+		pointer-events: none;
+	}
+	.disc > span {
 		display: block;
 		width: 100%;
 		height: 100%;
@@ -380,16 +474,38 @@
 		font-size: 14px;
 	}
 	.bar {
-		flex: 0 0 3.2%;
-		width: auto !important;
+		grid-column: 2;
+		grid-row: 1;
+		position: relative;
 		box-sizing: border-box;
-		height: 100%;
-		min-height: 180px;
-		border: 1px solid #718094;
-		border-radius: 10px !important;
-		box-shadow: inset 0 0 0 3px #d7dee6, 0 0 4px rgba(15, 23, 42, 0.3);
+		min-height: 0;
+		border: 2px solid #000;
+		border-radius: 999px;
+		isolation: isolate;
+		filter: brightness(1.15) saturate(1.04);
+	}
+	.bar::before {
+		content: "";
+		position: absolute;
+		z-index: -1;
+		inset: 0;
+		background: var(--led-background);
+		border-radius: inherit;
+		filter: blur(5px);
+		opacity: 0.18;
+		pointer-events: none;
+	}
+	.bar::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: var(--led-background);
+		border-radius: inherit;
+		pointer-events: none;
 	}
 	.keyboard {
+		grid-column: 3;
+		grid-row: 1;
 		position: relative;
 		flex: 1 1 0;
 		min-width: 0;
@@ -521,9 +637,6 @@
 		}
 		.stage {
 			padding: 12px;
-		}
-		.bar {
-			min-height: 150px;
 		}
 	}
 	@media (max-width: 560px) {

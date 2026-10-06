@@ -24,6 +24,10 @@
 }
 
 :root {
+  --tooltip-background: #edf2f8;
+  --tooltip-foreground: #223047;
+  --tooltip-border: #bbc9da;
+  --tooltip-shadow: 0 4px 12px rgb(26 46 78 / .12);
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);
@@ -54,6 +58,10 @@
 }
 
 .dark {
+  --tooltip-background: #35465c;
+  --tooltip-foreground: #f1f5f9;
+  --tooltip-border: #62758f;
+  --tooltip-shadow: 0 4px 12px rgb(0 0 0 / .25);
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(0.208 0.042 265.755);

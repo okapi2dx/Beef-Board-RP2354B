@@ -161,7 +161,7 @@ try {
   assert.equal(flushed, true);
   assert.deepEqual(edits.map(bytes => bytes[86]), [10, 0]);
   assert(edits.every(bytes => bytes.length === 139));
-  for (const count of [0, -1, 256, 1.5, NaN]) {
+  for (const count of [-1, 256, 1.5, NaN]) {
     config.tt_leds = count;
     await assert.rejects(() => updateConfig(config));
   }
@@ -226,6 +226,53 @@ try {
   at90LegacyPacket[0] = 42; at90LegacyPacket[61] = 9; at90LegacyPacket[80] = 24;
   assert.equal(new Config(new DataView(at90LegacyPacket.buffer)).legacy_phoenixwan_bar_count, 16,
     'AT90 padding must not be interpreted as a legacy bar count');
+  const newPacket = new Uint8Array(138); newPacket[0]=43;newPacket[61]=16;newPacket[80]=24;
+  const newAt90 = new Config(new DataView(newPacket.buffer));
+  assert.equal(newAt90.supports_bar_led_count,true); assert.equal(newAt90.bar_leds,16);
+  globalThis.__barTestState.device = { sendFeatureReport: async (_id, bytes) => { sent=bytes; } };
+  for (const target of [newAt90,legacyConfig]) {
+    target.legacy_phoenixwan_bar_count=16;
+    for (const count of [0,1,24,255]) {
+      target.tt_leds=count;target.bar_leds=count;await updateConfig(target);
+      assert.equal(sent.length,target.bar_led_count_at_tail?139:138);
+      const restored=new Config(new DataView(sent.buffer, sent.byteOffset, sent.byteLength));
+      assert.equal(restored.tt_leds,count);assert.equal(restored.bar_leds,count);
+    }
+  }
+  for (const [version, length, angleBased] of [[43,138,false],[44,138,true],[45,138,false],[33,139,true],[42,139,true],[43,139,false]]) {
+    const bytes=new Uint8Array(length);bytes[0]=version;bytes[80]=24;bytes[61]=16;
+    globalThis.__barTestState.boardInfo=undefined;
+    const target=new Config(new DataView(bytes.buffer));
+    assert.equal(target.supports_angle_deadzone,angleBased);
+    const countBased=(length===139 && version>=43)||(length===138 && version>=45);
+    assert.equal(target.supports_encoder_deadzone,countBased);
+    for(const value of angleBased?[0,1,10,30]:countBased?[0,1,5,50]:[0,1,5,50,255]){
+      target.tt_deadzone=value;await updateConfig(target);assert.equal(sent[3],value);
+    }
+    target.tt_deadzone=angleBased?31:countBased?51:256;await assert.rejects(()=>updateConfig(target));
+  }
+  for(const [version,length] of [[45,138],[43,139]]) {
+    const bytes=new Uint8Array(length);bytes[0]=version;bytes[3]=200;bytes[30]=5;bytes[80]=24;bytes[61]=16;
+    const loaded=new Config(new DataView(bytes.buffer));
+    assert.equal(loaded.tt_deadzone,50,'Older count settings are normalized on read');
+    assert.equal(loaded.tt_ratio,5,'Other settings stay intact');
+    await updateConfig(loaded);assert.equal(sent[3],50);assert.equal(sent[30],5);
+  }
+  for(const [version,length] of [[47,138],[45,139]]) {
+    const bytes=new Uint8Array(length);bytes[0]=version;bytes[30]=6;bytes[80]=24;bytes[61]=16;
+    const target=new Config(new DataView(bytes.buffer));
+    assert(target.supports_multiplier);
+    for(const gain of [0,.001,.333,1,1.999,2]) {
+      target.tt_multiplier=gain;await updateConfig(target);
+      assert.equal(new DataView(sent.buffer,sent.byteOffset,sent.byteLength).getUint16(71,true),Math.round(gain*1000));
+      assert.equal(new Config(new DataView(sent.buffer,sent.byteOffset,sent.byteLength)).tt_multiplier,gain);
+      assert.equal(sent.length,length);
+    }
+    for(const gain of [-.001,2.001,NaN]) {target.tt_multiplier=gain;await assert.rejects(()=>updateConfig(target));}
+  }
+  console.log('PASS: fractional multiplier exact packet round-trip for AT90/RP, zero and invalid bounds');
+  console.log('PASS: old count settings above 50 can be loaded and auto-saved without losing other settings');
+  console.log('PASS: AT90 v43 time / v44 angle / v45 encoder and RP v43 encoder validation, including missing BoardInfo');
   console.log('PASS: legacy center-bar count round-trip, invalid values and AT90 padding isolation');
   console.log('PASS: queued save/revert, exact RP2354B packet size, LED count validation, device-scoped cache and failed-write retry');
   console.log('PASS: B8 remapping supports RP2354B and AT90USB1286 v42+ while rejecting older AT90 firmware');

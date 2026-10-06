@@ -1,11 +1,13 @@
 #include "beef_runtime.h"
 #include <string.h>
+#include "turntable_sensitivity.h"
 
 bool beef_config_valid(const uint8_t *c) {
-  if ((c[0] != 33 && c[0] != 34 && c[0] != 35 && c[0] != 36 && c[0] != 37 && c[0] != 38 && c[0] != 39 && c[0] != 40 && c[0] != 41 && c[0] != 42) || c[2] > 9 || c[3] > 30 || c[4] > 8 ||
+  if ((c[0] != 33 && c[0] != 34 && c[0] != 35 && c[0] != 36 && c[0] != 37 && c[0] != 38 && c[0] != 39 && c[0] != 40 && c[0] != 41 && c[0] != 42 && c[0] != 43 && c[0] != 44 && c[0] != 45) || c[2] > 9 || (c[3] > (c[0] >= 43 ? 50 : 30)) || c[4] > 8 ||
       c[30] < 1 || c[30] > 10 || c[31] > 2 || c[32] > 1 || c[33] > 1 ||
-      c[78] < 1 || c[78] > 60 || c[79] < 1 || c[80] < 1 || c[138] < 1 ||
+      c[78] < 1 || c[78] > 60 || c[79] < 1 ||
       c[88] > 100 || c[124] > 2 || ((uint16_t)c[125] + 256u*c[126]) > 1000) return false;
+  if (c[0] >= 45 && ((uint16_t)c[71] | ((uint16_t)c[72] << 8)) > 2000) return false;
   if (c[0] >= 42 && c[61] != 0 && (c[61] < 2 || c[61] > 16 || (c[61] & 1u))) return false;
   if (c[0] >= 34)
     for (unsigned i = 0; i < 7; ++i) if (c[48+i] > (c[0] >= 37 ? 160 : 50)) return false;
@@ -28,11 +30,11 @@ void beef_keyboard_report(const uint8_t *cfg, uint16_t buttons, uint8_t keys[13]
   }
 }
 
-// The 8-bit axis describes 360 degrees. Gate each new gesture and reversal;
-// movement before the threshold is discarded, as in the original controller.
+// Gate new gestures and deliberate reversals; ignore small jitter without
+// repeatedly stopping accepted same-direction motion.
 void beef_turntable_update(beef_turntable_t *s, const uint8_t *c,
                            int32_t transitions, uint32_t now) {
-  uint8_t settings[6] = {c[1], c[3], c[30], c[34], c[85], c[86]};
+  uint8_t settings[8] = {c[1], c[3], c[30], c[34], c[85], c[86], c[71], c[72]};
   if (!s->initialized || memcmp(settings, s->settings, sizeof(settings))) {
     uint8_t position = s->initialized ? s->output.position : 127;
     memset(s, 0, sizeof(*s));
@@ -40,45 +42,38 @@ void beef_turntable_update(beef_turntable_t *s, const uint8_t *c,
     s->previous.position = s->output.position = position;
     for (unsigned i=0; i<256; ++i) s->history[i] = s->previous;
     memcpy(s->settings, settings, sizeof(settings));
-    s->last_ms = s->gate_ms = s->motion_ms = now;
+    s->last_ms = s->gate.last_motion = s->motion_ms = now;
     s->initialized = true;
   }
   uint32_t elapsed = now - s->last_ms;
   int32_t signed_steps = c[1] ? -transitions : transitions;
-  unsigned sensitivity = c[30] < 1 ? 1 : c[30] > 10 ? 10 : c[30];
+  int32_t denominator = c[0] >= 45 ? 1000u : 12u;
+  unsigned sensitivity = c[0] >= 45 ? (uint16_t)c[71] | ((uint16_t)c[72] << 8) : beef_sensitivity_units(c[30]);
   s->fraction += signed_steps * (int32_t)sensitivity;
-  int32_t delta = s->fraction / 10;
-  s->fraction %= 10;
+  int32_t delta = s->fraction / denominator;
+  s->fraction %= denominator;
   s->raw = (uint8_t)(s->raw + delta);
-  // The angle gate is for the analog axis. Digital TT follows raw movement,
-  // including gestures smaller than the analog deadzone.
-  if (delta) {
-    s->digital_direction = delta > 0 ? 1 : -1;
+  const int32_t qualified = beef_encoder_gate_update(&s->gate, signed_steps, now, c[3]);
+  const int32_t accepted_steps = sensitivity ? qualified : 0;
+  s->accepted_fraction += accepted_steps * (int32_t)sensitivity;
+  const int32_t accepted_delta = s->accepted_fraction / denominator;
+  s->accepted_fraction %= denominator;
+  const bool accepted = accepted_delta != 0;
+  if (accepted) {
+    s->filtered = (uint8_t)(s->filtered + accepted_delta);
+    s->position = (uint8_t)(s->position + accepted_delta);
+    s->direction = accepted_delta > 0 ? 1 : -1; s->moving = true;
+    s->motion_ms = now; s->hold_remainder = 0;
+  } else if (beef_encoder_gate_reversing(&s->gate)) {
+    // Do not synthesize old-direction X motion while evaluating a reversal.
+    s->direction = 0; s->moving = false; s->hold_remainder = 0;
+  }
+  // Both report modes use only encoder-qualified motion; rejected movement
+  // must not start or extend a digital turntable press.
+  if (accepted_steps) {
+    s->digital_direction = accepted_steps > 0 ? 1 : -1;
     s->digital_motion_ms = now;
   } else if ((uint32_t)(now-s->digital_motion_ms) >= c[34]) s->digital_direction = 0;
-  bool accepted = false;
-  if (delta) {
-    int8_t direction = delta > 0 ? 1 : -1;
-    uint32_t gap = now - s->gate_ms;
-    uint32_t continuity = s->gate_interval ? s->gate_interval * 3 : 250;
-    if (continuity < 30) continuity = 30;
-    if (continuity > 1000) continuity = 1000;
-    if (direction != s->gate_direction || gap > continuity) {
-      s->accumulated = 0; s->qualified = false; s->gate_interval = 0;
-    } else if (gap) s->gate_interval = gap;
-    s->gate_direction = direction; s->gate_ms = now;
-    unsigned magnitude = delta < 0 ? -delta : delta;
-    unsigned accumulated = s->accumulated + magnitude;
-    s->accumulated = accumulated > 65535 ? 65535 : accumulated;
-    unsigned threshold = ((unsigned)c[3] * 256 + 359) / 360;
-    if (!threshold || s->qualified || s->accumulated >= threshold) {
-      s->qualified = true; accepted = true;
-      s->filtered = (uint8_t)(s->filtered + delta);
-      s->position = (uint8_t)(s->position + delta);
-      s->direction = direction; s->moving = true;
-      s->motion_ms = now; s->hold_remainder = 0;
-    }
-  }
   if (!accepted && s->moving) {
     uint32_t age = now - s->motion_ms;
     uint32_t previous_age = s->last_ms - s->motion_ms;

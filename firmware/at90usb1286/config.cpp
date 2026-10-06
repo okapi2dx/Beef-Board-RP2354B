@@ -1,4 +1,5 @@
 #define CONFIG_BASE_ADDR (uint8_t*)2
+#include "../src/turntable_sensitivity.h"
 #define CONFIG_VERSION_ADDR (CONFIG_BASE_ADDR + offsetof(config, version))
 #define CONFIG_REVERSE_TT_ADDR (CONFIG_BASE_ADDR + offsetof(config, reverse_tt))
 #define CONFIG_TT_EFFECT_ADDR (CONFIG_BASE_ADDR + offsetof(config, tt_effect))
@@ -37,9 +38,9 @@
 
 enum {
   MAGIC = 0xBEEF,
-  CURRENT_CONFIG_VERSION = 42,
+  CURRENT_CONFIG_VERSION = 47,
 
-  DEADZONE_MAX = 255,
+  DEADZONE_MAX = 50,
   DEADZONE_MIN = 0,
 
   RATIO_MAX = 10,
@@ -105,6 +106,7 @@ bool validate_config(const config &self) {
   if (self.tt_deadzone < DEADZONE_MIN || self.tt_deadzone > DEADZONE_MAX) {
     return false;
   }
+  if (turntable_multiplier(self) > 2000) return false;
   if (self.tt_ratio < RATIO_MIN || self.tt_ratio > RATIO_MAX) {
     return false;
   }
@@ -123,9 +125,6 @@ bool validate_config(const config &self) {
   if (self.rainbow_spin_speed == 0) {
     return false;
   }
-  if (self.tt_leds == 0) {
-    return false;
-  }
   if (self.link_bar_effect > 1) {
     return false;
   }
@@ -139,6 +138,10 @@ bool validate_config(const config &self) {
 void reset_config(config* self) {
   *self = {};
   config_update(self);
+  self->tt_ratio = 6;
+  self->tt_sustain_ms = 0;
+  self->sdvx_keys.padding[0] = 1000 & 255; self->sdvx_keys.padding[1] = 1000 >> 8;
+  eeprom_update_block(self, CONFIG_BASE_ADDR, sizeof(config));
 }
 
 void config_init(config* self) {
@@ -150,6 +153,9 @@ void config_init(config* self) {
   }
 
   eeprom_read_block(self, CONFIG_BASE_ADDR, sizeof(*self));
+  // Preserve other settings from the former 0..255 count range.
+  if (self->version >= 45 && self->tt_deadzone > DEADZONE_MAX)
+    self->tt_deadzone = DEADZONE_MAX;
   if (self->version > CURRENT_CONFIG_VERSION ||
       (self->version == CURRENT_CONFIG_VERSION && !validate_config(*self))) {
     reset_config(self);
@@ -333,6 +339,26 @@ void config_update(config* self) {
     case 41:
       // Allow the remap table to use value 11 as the logical B8 destination.
       self->version++;
+    case 42:
+      self->sdvx_keys.key_codes[6] = 16;
+      self->version++;
+    case 43:
+      // Duration settings cannot be converted to degrees. Disable until reset
+      // by the user, preserving all other settings.
+      self->tt_deadzone = 0;
+      self->version++;
+    case 44:
+      // X-axis degrees cannot be converted to raw encoder counts universally.
+      self->tt_deadzone = 0;
+      self->version++;
+    case 45:
+      self->tt_ratio = beef_migrate_sensitivity(self->tt_ratio);
+      self->version++;
+    case 46: {
+      uint16_t milli = beef_sensitivity_milli(self->tt_ratio);
+      self->sdvx_keys.padding[0] = milli; self->sdvx_keys.padding[1] = milli >> 8;
+      self->version++;
+    }
     default: break;
   }
   eeprom_update_block(self, CONFIG_BASE_ADDR, sizeof(config));
@@ -367,6 +393,11 @@ void config_save(const config &new_config) {
   if (normalized.version == 39) normalized.version = 40;
   if (normalized.version == 40) normalized.version = 41;
   if (normalized.version == 41) normalized.version = 42;
+  if (normalized.version == 42) { normalized.sdvx_keys.key_codes[6] = 16; normalized.version = 43; }
+  if (normalized.version == 43) { normalized.tt_deadzone = 0; normalized.version = 44; }
+  if (normalized.version == 44) { normalized.tt_deadzone = 0; normalized.version = 45; }
+  if (normalized.version == 45) { normalized.tt_ratio = beef_migrate_sensitivity(normalized.tt_ratio); normalized.version = 46; }
+  if (normalized.version == 46) { uint16_t milli = beef_sensitivity_milli(normalized.tt_ratio); normalized.sdvx_keys.padding[0] = milli; normalized.sdvx_keys.padding[1] = milli >> 8; normalized.version = 47; }
   if (!validate_config(normalized)) {
     return;
   }
@@ -572,15 +603,21 @@ void update_ratio(const uint8_t ratio) {
 }
 
 callback increase_ratio(config* self) {
-  self->tt_ratio = MIN(self->tt_ratio + 1, static_cast<uint8_t>(RATIO_MAX));
-  update_ratio(self->tt_ratio);
+  uint16_t milli = turntable_multiplier(*self);
+  milli = milli > 1900 ? 2000 : milli + 100;
+  self->sdvx_keys.padding[0] = milli; self->sdvx_keys.padding[1] = milli >> 8;
+  eeprom_update_block(self->sdvx_keys.padding, CONFIG_BASE_ADDR + offsetof(config, sdvx_keys) + offsetof(SDVXKeyMapping, padding), 2);
+  IIDX::RgbManager::Turntable::display_tt_change(CRGB::Red, milli / 100, 20);
 
   return callback{};
 }
 
 callback decrease_ratio(config* self) {
-  self->tt_ratio = MAX(self->tt_ratio - 1, static_cast<uint8_t>(RATIO_MIN));
-  update_ratio(self->tt_ratio);
+  uint16_t milli = turntable_multiplier(*self);
+  milli = milli < 100 ? 0 : milli - 100;
+  self->sdvx_keys.padding[0] = milli; self->sdvx_keys.padding[1] = milli >> 8;
+  eeprom_update_block(self->sdvx_keys.padding, CONFIG_BASE_ADDR + offsetof(config, sdvx_keys) + offsetof(SDVXKeyMapping, padding), 2);
+  IIDX::RgbManager::Turntable::display_tt_change(CRGB::Red, milli / 100, 20);
 
   return callback{};
 }

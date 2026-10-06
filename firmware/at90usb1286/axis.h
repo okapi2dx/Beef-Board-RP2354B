@@ -25,6 +25,7 @@ public:
 
   void poll() override;
   uint8_t get() const override;
+  int8_t last_step() const { return encoder_step; }
   uint32_t transitions() const { return transition_count; }
   uint16_t last_interval() const { return transition_interval; }
 
@@ -34,6 +35,7 @@ private:
   uint8_t b_pin;
   uint8_t prev{};
   EncoderPosition position;
+  int8_t encoder_step = 0;
   uint32_t transition_count{};
   uint16_t transition_interval{};
   uint32_t last_transition_time{};

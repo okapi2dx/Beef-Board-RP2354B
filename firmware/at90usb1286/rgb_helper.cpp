@@ -1,9 +1,11 @@
 #include "config.h"
 #include "hid.h"
 #include "rgb_helper.h"
+#include "devices/iidx/iidx_rgb_manager.h"
 
-CRGB* tt_leds;
-CRGB bar_leds[LIGHT_BAR_LEDS];
+static CRGB turntable_pixels[255];
+CRGB* tt_leds = turntable_pixels;
+CRGB bar_leds[255];
 
 namespace RgbHelper {
   // Pin mapping can be found in FastLED/src/platforms/avr/fastpin_avr.h
@@ -16,6 +18,7 @@ namespace RgbHelper {
   uint32_t min_micros = 0;
   uint8_t tt_anim_normalise = 0;
   uint8_t num_tt_leds = 0;
+  uint8_t num_bar_leds = 0;
 
   CLEDController* tt_controller;
   CLEDController* bar_controller;
@@ -26,20 +29,31 @@ namespace RgbHelper {
 
   void init(const config &cfg) {
     timer_init(&combo_timer);
-    tt_anim_normalise = 24 / cfg.tt_leds;
-    num_tt_leds = cfg.tt_leds;
-    tt_leds = static_cast<CRGB*>(calloc(num_tt_leds, sizeof(CRGB)));
-    update(cfg);
 
     tt_controller = &FastLED.addLeds<NEOPIXEL, TT_DATA_PIN>(tt_leds, num_tt_leds)
       .setDither(DISABLE_DITHER);
-    bar_controller = &FastLED.addLeds<NEOPIXEL, BAR_DATA_PIN>(bar_leds, LIGHT_BAR_LEDS)
+    bar_controller = &FastLED.addLeds<NEOPIXEL, BAR_DATA_PIN>(bar_leds, 0)
       .setDither(DISABLE_DITHER);
+    update(cfg);
     FastLED.setMaxRefreshRate(0); // We have our own frame rate limiter
   }
 
   void update(const config &new_cfg) {
     set_refresh_rate(new_cfg.led_refresh);
+    const uint8_t bar_count = new_cfg.sdvx_keys.key_codes[6];
+    if (num_tt_leds != new_cfg.tt_leds || num_bar_leds != bar_count) {
+      // Clear the previous length before shrinking or disabling either output.
+      if (num_tt_leds) { set_rgb(tt_leds, num_tt_leds, CRGB::Black); show_tt(); }
+      if (num_bar_leds) { set_rgb(bar_leds, num_bar_leds, CRGB::Black); show_bar(); }
+      num_tt_leds = new_cfg.tt_leds;
+      num_bar_leds = bar_count;
+      tt_anim_normalise = num_tt_leds ? (24u / num_tt_leds ? 24u / num_tt_leds : 1u) : 1u;
+      tt_controller->setLeds(tt_leds, num_tt_leds);
+      bar_controller->setLeds(bar_leds, num_bar_leds);
+      IIDX::RgbManager::init(new_cfg);
+      IIDX::RgbManager::Turntable::force_update = true;
+      IIDX::RgbManager::Bar::force_update = true;
+    }
   }
 
   bool set_rgb(CRGB* leds, const uint8_t n, const rgb_light &lights) {
@@ -93,6 +107,6 @@ namespace RgbHelper {
     return true;
   }
 
-  void show_tt() { tt_controller->showLeds(); }
-  void show_bar() { bar_controller->showLeds(); }
+  void show_tt() { if (num_tt_leds) tt_controller->showLeds(); }
+  void show_bar() { if (num_bar_leds) bar_controller->showLeds(); }
 }

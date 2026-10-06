@@ -16,7 +16,7 @@ public:
   }
 
   uint8_t update(uint8_t raw, uint32_t now, uint8_t deadzone, uint8_t sustain,
-                 uint32_t encoder_activity) {
+                 uint32_t encoder_activity, bool allow_sustain = true) {
     (void)encoder_activity;
 
     int16_t delta = static_cast<int16_t>(raw) - anchor;
@@ -33,6 +33,7 @@ public:
       return static_cast<uint8_t>(output);
     }
 
+    if (!allow_sustain) direction = 0;
     if (sustain == 0 || direction == 0) {
       last_update_time = now;
       hold_remainder = 0;

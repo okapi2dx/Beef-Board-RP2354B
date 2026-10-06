@@ -59,7 +59,7 @@ namespace IIDX {
 
       bool render_rainbow(const HSV &hsv, const uint8_t pos) {
         bool update = false;
-        const uint16_t hue_change = 65535u / RgbHelper::num_tt_leds;
+        const uint16_t hue_change = RgbHelper::num_tt_leds ? 65535u / RgbHelper::num_tt_leds : 0;
         uint16_t hue_offset = 0;
         // Start from the unscaled palette each frame. Scaling the previous
         // output compounds brightness and saturation when the phase is static.
@@ -174,6 +174,7 @@ namespace IIDX {
 
       bool update(int8_t tt_report,
                   const rgb_light &lights) {
+        if (!RgbHelper::num_tt_leds) return false;
         auto update = force_update;
 
         // Ignore turntable effect if notifying a setting change
@@ -241,16 +242,16 @@ namespace IIDX {
       };
 
       bool set_leds_off() {
-        return RgbHelper::set_rgb(bar_leds, LIGHT_BAR_LEDS, CRGB::Black);
+        return RgbHelper::set_rgb(bar_leds, RgbHelper::num_bar_leds, CRGB::Black);
       }
 
       void flip_leds(const PlayerSide side) {
         if (side == PlayerSide::P1) {
           // Flip for P1
-          for (uint8_t i = 0; i < LIGHT_BAR_LEDS / 2; i++) {
+          for (uint8_t i = 0; i < RgbHelper::num_bar_leds / 2; i++) {
             const auto tmp = bar_leds[i];
-            bar_leds[i] = bar_leds[LIGHT_BAR_LEDS-1-i];
-            bar_leds[LIGHT_BAR_LEDS-1-i] = tmp;
+            bar_leds[i] = bar_leds[RgbHelper::num_bar_leds-1-i];
+            bar_leds[RgbHelper::num_bar_leds-1-i] = tmp;
           }
         }
       }
@@ -259,6 +260,7 @@ namespace IIDX {
       bool spectrum(const PlayerSide side) {
         static uint8_t last_level;
 
+        bpm.set_max_level(RgbHelper::num_bar_leds);
         const auto level = bpm.update(button_state);
 
         bool update = false;
@@ -285,14 +287,14 @@ namespace IIDX {
           update = ticks > 0;
           if (update) {
             set_leds_off();
-            i = (i + ticks) % LIGHT_BAR_LEDS;
-            bar_leds[LIGHT_BAR_LEDS - 1 - i] = CRGB::White;
+            i = (i + ticks) % RgbHelper::num_bar_leds;
+            bar_leds[RgbHelper::num_bar_leds - 1 - i] = CRGB::White;
           }
         } else {
-          for (uint8_t i = 0; i < LIGHT_BAR_LEDS; ++i) {
-            const auto rgb = CRGB(tape_leds[i].r, tape_leds[i].g, tape_leds[i].b);
-            update |= bar_leds[LIGHT_BAR_LEDS - 1 - i] != rgb;
-            bar_leds[LIGHT_BAR_LEDS - 1 - i] = rgb;
+          for (uint8_t i = 0; i < RgbHelper::num_bar_leds; ++i) {
+            const auto rgb = CRGB(tape_leds[uint16_t(i) * LIGHT_BAR_LEDS / RgbHelper::num_bar_leds].r, tape_leds[uint16_t(i) * LIGHT_BAR_LEDS / RgbHelper::num_bar_leds].g, tape_leds[uint16_t(i) * LIGHT_BAR_LEDS / RgbHelper::num_bar_leds].b);
+            update |= bar_leds[RgbHelper::num_bar_leds - 1 - i] != rgb;
+            bar_leds[RgbHelper::num_bar_leds - 1 - i] = rgb;
           }
         }
 
@@ -301,9 +303,10 @@ namespace IIDX {
       }
 
       bool sync_turntable() {
+        if (!RgbHelper::num_tt_leds) return set_leds_off();
         bool update = false;
-        for (uint8_t i = 0; i < LIGHT_BAR_LEDS; i++) {
-          const uint8_t tt_index = (static_cast<uint16_t>(i) * RgbHelper::num_tt_leds) / LIGHT_BAR_LEDS;
+        for (uint8_t i = 0; i < RgbHelper::num_bar_leds; i++) {
+          const uint8_t tt_index = (static_cast<uint16_t>(i) * RgbHelper::num_tt_leds) / RgbHelper::num_bar_leds;
           update |= bar_leds[i] != tt_leds[tt_index];
           bar_leds[i] = tt_leds[tt_index];
         }
@@ -311,6 +314,7 @@ namespace IIDX {
       }
 
       bool update(const rgb_light &lights) {
+        if (!RgbHelper::num_bar_leds) return false;
         auto update = force_update;
 
         if (current_config.link_bar_effect) {
@@ -321,7 +325,7 @@ namespace IIDX {
 
         switch(current_config.bar_effect) {
           case BarMode::Static:
-            update |= RgbHelper::set_hsv(bar_leds, LIGHT_BAR_LEDS, current_config.bar_static_hsv);
+            update |= RgbHelper::set_hsv(bar_leds, RgbHelper::num_bar_leds, current_config.bar_static_hsv);
             break;
           case BarMode::KeySpectrumP1:
             update |= spectrum(PlayerSide::P1);
@@ -330,7 +334,7 @@ namespace IIDX {
             update |= spectrum(PlayerSide::P2);
             break;
           case BarMode::HID:
-            update |= RgbHelper::hid(bar_leds, LIGHT_BAR_LEDS, lights);
+            update |= RgbHelper::hid(bar_leds, RgbHelper::num_bar_leds, lights);
             break;
           case BarMode::TapeLedP1:
             update |= tape_led(PlayerSide::P1);
@@ -352,7 +356,7 @@ namespace IIDX {
 
     void init(const config &cfg) {
       (void)cfg;
-      const uint16_t count = RgbHelper::num_tt_leds;
+      const uint16_t count = RgbHelper::num_tt_leds ? RgbHelper::num_tt_leds : 1;
       const uint16_t slow = SPIN_TIMER * 24u / count;
       const uint16_t fast = FAST_SPIN_TIMER * 24u / count;
       Turntable::spin_pattern.init(slow > 255 ? 255 : slow ? slow : 1,

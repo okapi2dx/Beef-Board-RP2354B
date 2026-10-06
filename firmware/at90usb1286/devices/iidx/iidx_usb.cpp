@@ -8,6 +8,7 @@
 #include "../../turntable_delay.h"
 #include "../../analog_turntable.h"
 #include "../../turntable_gate.h"
+#include "../../turntable_direction.h"
 #include "../../diagnostics.h"
 #include "../../button_led_pwm.h"
 #include <util/atomic.h>
@@ -27,6 +28,7 @@ namespace IIDX {
   TurntableDelay turntable_delay;
   AnalogTurntable analog_turntable;
   TurntableGate turntable_gate;
+  TurntableDirection turntable_direction;
   uint8_t delayed_position = 0;
   int8_t latest_tt_report = 0;
 
@@ -112,15 +114,14 @@ namespace IIDX {
 
     tt_x.poll();
     const auto now = current_milliseconds();
-    const auto filtered = turntable_gate.update(tt_x.get(), now, config.tt_deadzone);
-    // Digital TT direction must follow the encoder movement directly.
-    // The filtered position is intended for the analog X-axis gate and can
-    // suppress short movements before a digital button is generated.
-    const auto tt1_report = button_x.poll(1,
-                                          config.tt_sustain_ms,
-                                          tt_x.get());
+    const auto filtered = turntable_gate.update_milli(tt_x.last_step(), now, config.tt_deadzone, turntable_multiplier(config));
+    const auto accepted_steps = turntable_gate.accepted_steps();
+    // Hardware color shortcuts follow actual motion, without extending it through the hold period.
+    button_x.direction = accepted_steps > 0 ? 1 : accepted_steps < 0 ? -1 : 0;
+    // Digital and analog reports share the same encoder-qualified movement.
+    const auto tt1_report = turntable_direction.update_steps(accepted_steps, now, config.tt_sustain_ms);
     const auto analog_position = analog_turntable.update(filtered, now,
-      1, config.tt_sustain_ms, tt_x.transitions());
+      1, config.tt_sustain_ms, tt_x.transitions(), !turntable_gate.reversing());
     const auto delayed = turntable_delay.update(now,
       {analog_position, tt1_report}, config.tt_delay_ms);
     delayed_position = delayed.position;
@@ -142,13 +143,17 @@ namespace IIDX {
   }
 
   void UsbHandler::config_update(const config &new_config) {
-    if (new_config.tt_deadzone != current_config.tt_deadzone ||
+    if (turntable_multiplier(new_config) != turntable_multiplier(current_config) ||
+        new_config.reverse_tt != current_config.reverse_tt ||
+        new_config.tt_ratio != current_config.tt_ratio ||
+        new_config.tt_deadzone != current_config.tt_deadzone ||
         new_config.tt_sustain_ms != current_config.tt_sustain_ms ||
+        new_config.tt_delay_ms != current_config.tt_delay_ms ||
         new_config.digital_tt != current_config.digital_tt) {
       const auto now = current_milliseconds();
       turntable_gate.reset(tt_x.get(), delayed_position, now);
       analog_turntable.reset(delayed_position, now);
-      button_x.init(1, true, tt_x.get());
+      turntable_direction.reset(delayed_position, now);
       turntable_delay.reset(now, {delayed_position, 0}, new_config.tt_delay_ms);
     }
     if (new_config.tt_effect != current_config.tt_effect) {
@@ -160,9 +165,9 @@ namespace IIDX {
       RgbManager::Bar::force_update = true;
     }
     update_tt_transitions(new_config.reverse_tt);
-    buttons_debounce.init(new_config.iidx_keys.button_debounce,
+    buttons_debounce.configure(new_config.iidx_keys.button_debounce,
                           new_config.sdvx_keys.button_release_debounce, 7);
-    effectors_debounce.init(new_config.iidx_effectors_debounce);
+    effectors_debounce.configure(new_config.iidx_effectors_debounce);
   }
 
   void usb_init(const config &config) {
@@ -171,7 +176,7 @@ namespace IIDX {
     ::usb_handler = &usb_handler;
     get_button_combo_callback = get_button_combo;
 
-    button_x.init(1, true, tt_x.get());
+    button_x.init(1, true, delayed_position);
     delayed_position = tt_x.get();
     turntable_gate.reset(tt_x.get(), delayed_position, current_milliseconds());
     analog_turntable.reset(delayed_position, current_milliseconds());
@@ -185,6 +190,5 @@ namespace IIDX {
     RgbManager::init(config);
   }
 }
-
 
 

@@ -1,7 +1,7 @@
 import { ReportId } from '$lib/types/hid';
 import { featureReportPayload } from '$lib/types/feature-report';
 import { appState } from '$lib/types/state.svelte';
-import { BoardCapability, BoardType } from '$lib/types/board';
+import { BoardCapability, BoardType, isRp2354bBoard } from '$lib/types/board';
 import { TurntableMode, BarMode, ControllerType, InputMode, TurntableCurve, Hsv, numberToTurntableMode, numberToBarMode, numberToControllerType, numberToInputMode, numberToTurntableCurve, turntableModeToNumber, barModeToNumber, controllerTypeToNumber, inputModeToNumber, turntableCurveToNumber } from '$lib/types/types.svelte';
 import * as HIDCodes from '$lib/types/hid-codes';
 
@@ -84,10 +84,20 @@ export class SDVXKeyMapping {
 export class Config {
   readonly supports_b8_remapping: boolean;
   readonly supports_bar_led_count: boolean;
+  readonly bar_led_count_at_tail: boolean;
   version = $state(0);
   reverse_tt = $state(false);
   tt_effect = $state(TurntableMode.Static);
   tt_deadzone = $state(0);
+  get supports_encoder_deadzone(): boolean {
+    return this.bar_led_count_at_tail ? this.version >= 43 : this.version >= 45;
+  }
+  get supports_extended_sensitivity(): boolean {
+    return this.bar_led_count_at_tail ? this.version >= 44 : this.version >= 46;
+  }
+  get supports_angle_deadzone(): boolean {
+    return !this.supports_encoder_deadzone && (this.version >= 44 || (this.version >= 33 && (this.bar_led_count_at_tail || isRp2354bBoard(appState.boardInfo))));
+  }
   bar_effect = $state(BarMode.KeySpectrumP1);
   disable_leds = $state(false);
   tt_static_hsv = $state(new Hsv(0, 0, 0));
@@ -98,7 +108,9 @@ export class Config {
   tt_rainbow_spin_hsv = $state(new Hsv(0, 0, 0));
   tt_react_hsv = $state(new Hsv(0, 0, 0));
   tt_breathing_hsv = $state(new Hsv(0, 0, 0));
-  tt_ratio = $state(10);
+  tt_ratio = $state(6);
+  tt_multiplier = $state(1);
+  get supports_multiplier(): boolean { return this.bar_led_count_at_tail ? this.version >= 45 : this.version >= 47; }
   controller_type = $state(ControllerType.Default);
   iidx_input_mode = $state(InputMode.Joystick);
   sdvx_input_mode = $state(InputMode.Joystick);
@@ -111,7 +123,7 @@ export class Config {
   sdvx_buttons_debounce = $state(0);
   led_refresh = $state(0);
   rainbow_spin_speed = $state(1);
-  tt_leds = $state(0);
+  tt_leds = $state(24);
   bar_leds = $state(16);
   legacy_phoenixwan_bar_count = $state(16);
   bar_static_hsv = $state(new Hsv(0, 255, 255));
@@ -136,10 +148,12 @@ export class Config {
     // VID/PID where Windows can reject the separate BoardInfo report.
     this.supports_b8_remapping = configData.byteLength === 139 || configData.getUint8(0) >= 42;
     this.version = configData.getUint8(0);
-    this.supports_bar_led_count = this.version >= 32 && configData.byteLength >= 139;
+    this.bar_led_count_at_tail = this.version >= 32 && configData.byteLength >= 139;
+    this.supports_bar_led_count = this.bar_led_count_at_tail || this.version >= 43;
+    if (!this.bar_led_count_at_tail && this.version >= 43) this.bar_leds = configData.getUint8(61);
     this.reverse_tt = configData.getUint8(1) as unknown as boolean;
     this.tt_effect = numberToTurntableMode[configData.getUint8(2)];
-    this.tt_deadzone = configData.getUint8(3);
+    this.tt_deadzone = this.supports_encoder_deadzone ? Math.min(50, configData.getUint8(3)) : configData.getUint8(3);
     this.bar_effect = numberToBarMode[configData.getUint8(4)];
     this.disable_leds = configData.getUint8(5) as unknown as boolean;
     this.tt_static_hsv = new Hsv(
@@ -183,6 +197,7 @@ export class Config {
       configData.getUint8(29)
     );
     this.tt_ratio = configData.getUint8(30);
+    if (this.supports_multiplier) this.tt_multiplier = configData.getUint16(71, true) / 1000;
     this.controller_type = numberToControllerType[configData.getUint8(31)];
     this.iidx_input_mode = numberToInputMode[configData.getUint8(32)];
     this.sdvx_input_mode = numberToInputMode[configData.getUint8(33)];
@@ -219,7 +234,7 @@ export class Config {
         this.sdvx_keys.fx_buttons[i] = configData.getUint8(offset++);
       }
 
-      const hasLegacyPhoenixwanBarCount = this.version >= 42 && this.supports_bar_led_count;
+      const hasLegacyPhoenixwanBarCount = this.version >= 42 && this.bar_led_count_at_tail;
       if (hasLegacyPhoenixwanBarCount) this.legacy_phoenixwan_bar_count = configData.getUint8(offset++);
       offset += this.sdvx_keys.padding_1.length - (hasLegacyPhoenixwanBarCount ? 1 : 0);
 
@@ -329,7 +344,10 @@ export async function updateConfig(config: Config): Promise<void> {
     configView.setUint8(0, config.version);
     configView.setUint8(1, Number(config.reverse_tt));
     configView.setUint8(2, turntableModeToNumber[config.tt_effect]);
-    if (config.version >= 33) {
+    if (config.supports_encoder_deadzone) {
+      if (!Number.isInteger(config.tt_deadzone) || config.tt_deadzone < 0 || config.tt_deadzone > 50)
+        throw new Error('Turntable deadzone must be 0–50 encoder counts');
+    } else if (config.supports_angle_deadzone) {
       if (!Number.isInteger(config.tt_deadzone) || config.tt_deadzone < 0 || config.tt_deadzone > 30)
         throw new Error('Turntable deadzone must be 0–30°');
     } else if (config.version >= 22 && (!Number.isInteger(config.tt_deadzone) || config.tt_deadzone < 0 || config.tt_deadzone > 255)) {
@@ -414,7 +432,7 @@ export async function updateConfig(config: Config): Promise<void> {
       }
 
       // Skip padding
-      const hasLegacyPhoenixwanBarCount = config.version >= 42 && config.supports_bar_led_count;
+      const hasLegacyPhoenixwanBarCount = config.version >= 42 && config.bar_led_count_at_tail;
       if (hasLegacyPhoenixwanBarCount) {
         const allowedCounts = new Set([0, 2, 4, 6, 8, 10, 12, 14, 16]);
         if (!allowedCounts.has(config.legacy_phoenixwan_bar_count))
@@ -443,8 +461,8 @@ export async function updateConfig(config: Config): Promise<void> {
     }
 
     if (config.version >= 16) {
-      if (!Number.isInteger(config.tt_leds) || config.tt_leds < 1 || config.tt_leds > 255)
-        throw new Error('Turntable LED count must be 1–255');
+      if (!Number.isInteger(config.tt_leds) || config.tt_leds < 0 || config.tt_leds > 255)
+        throw new Error('Turntable LED count must be 0–255');
       configView.setUint8(offset++, config.led_refresh);
       configView.setUint8(offset++, config.rainbow_spin_speed);
       configView.setUint8(offset++, config.tt_leds);
@@ -500,13 +518,18 @@ export async function updateConfig(config: Config): Promise<void> {
       for (const value of config.button_mapping) configView.setUint8(offset++, value);
     }
     if (config.supports_bar_led_count) {
-      if (!Number.isInteger(config.bar_leds) || config.bar_leds < 1 || config.bar_leds > 255)
-        throw new Error('Center bar LED count must be 1–255');
-      configView.setUint8(offset++, config.bar_leds);
+      if (!Number.isInteger(config.bar_leds) || config.bar_leds < 0 || config.bar_leds > 255)
+        throw new Error('Center bar LED count must be 0–255');
+      if (config.bar_led_count_at_tail) configView.setUint8(offset++, config.bar_leds);
+      else configView.setUint8(61, config.bar_leds);
     }
     // WebHID feature reports must match the report length advertised by the
     // connected firmware. `configBuffer` is intentionally oversized while we
     // serialize, so only send the bytes that belong to this config version.
+    if (config.supports_multiplier) {
+      if (!Number.isFinite(config.tt_multiplier) || config.tt_multiplier < 0 || config.tt_multiplier > 2) throw new Error('Turntable multiplier must be 0.000–2.000');
+      configView.setUint16(71, Math.round(config.tt_multiplier * 1000), true);
+    }
     const data = new Uint8Array(configBuffer, 0, offset);
     const device = appState.device;
     const pending = writeQueue.then(async () => {

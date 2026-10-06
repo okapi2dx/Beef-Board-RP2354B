@@ -24,7 +24,7 @@
   }
 </script>
 
-<section class="space-y-5">
+<section class="space-y-5 settings-group">
   <h2 class="text-xl font-semibold">RP2354B</h2>
   <p>{tr('RP2354Bは内蔵ROMのBOOTSELモードでUF2を書き込みます。', 'RP2354B uses the built-in ROM BOOTSEL mode to flash a UF2 file.')}</p>
 

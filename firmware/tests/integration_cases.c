@@ -23,8 +23,23 @@ static void mapping_tests(void) {
  memset(cfg,0,sizeof(cfg));previous_input_mode=0xff;report_count=0;reported_buttons=0;
  puts("PASS mappings: all 11 physical inputs x 12 destinations, physical keyboard bindings, duplicate B8 and release");
 }
+static void digital_diagnostics_tests(void) {
+ for(unsigned mode=0;mode<2;mode++) for(unsigned digital=0;digital<2;digital++) for(int direction=-1;direction<=1;direction++) {
+  cfg[32]=mode;cfg[85]=digital;stable_buttons=0x401;turntable.output.direction=direction;
+  button_debouncer.raw=0x203;
+  update_diagnostics();
+  uint16_t expected=stable_buttons;
+  if(digital && direction<0)expected|=1u<<11;
+  if(digital && direction>0)expected|=1u<<12;
+  assert(diagnostics.buttons==expected);
+  assert(diagnostics.raw_buttons==0x203);
+ }
+ memset(cfg,0,sizeof(cfg));stable_buttons=0;turntable.output.direction=0;
+ puts("PASS digital diagnostics: physical buttons plus B13/B14 direction; keyboard/joystick, release and analog isolation");
+}
 int main(void){
  mapping_tests();
+ digital_diagnostics_tests();
  cfg[30]=10;cfg[78]=60;cfg[79]=3;cfg[80]=24;cfg[138]=16;cfg[7]=255;cfg[8]=255;
  for(unsigned i=0;i<11;i++)cfg[127+i]=i;
  cfg[32]=1;cfg[85]=1;cfg[47]=0x52;pending_tt_buttons=1u<<12;

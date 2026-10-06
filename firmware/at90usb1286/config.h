@@ -122,6 +122,7 @@ struct callback {
 extern config current_config;
 
 void config_init(config* self);
+void reset_config(config* self);
 void config_update(config* self);
 void config_update_setting(uint8_t* addr, uint8_t val);
 void config_save(const config &new_config);
@@ -139,3 +140,5 @@ callback increase_ratio(config* self);
 callback decrease_ratio(config* self);
 callback cycle_bar_effects(config* self);
 callback toggle_disable_leds(config* self);
+
+inline uint16_t turntable_multiplier(const config &c) { return uint16_t(c.sdvx_keys.padding[0]) | (uint16_t(c.sdvx_keys.padding[1]) << 8); }

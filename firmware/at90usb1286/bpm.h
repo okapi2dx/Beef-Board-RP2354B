@@ -8,6 +8,7 @@ public:
   explicit Bpm(uint8_t max_level);
 
   uint8_t update(uint16_t button_state);
+  void set_max_level(uint8_t value) { max_level = value; if (current_level > value) current_level = value; }
 
 private:
   uint8_t max_level;

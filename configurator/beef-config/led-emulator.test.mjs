@@ -7,7 +7,15 @@ for(const mode of ['Spin','Shift','Rainbow Spin','Rainbow Static','Rainbow React
  for(let i=0;i<2000;i++){
   const f=tick(cfg,{direction:i%3-1,buttons:i%8},17);
   assert.equal(f.ring.length,24);assert.equal(f.bar.length,16);
-  f.bar.forEach((v,j)=>assert.equal(v,f.ring[mode === 'Rainbow Spin' || mode === 'Rainbow Reactive' ? 23-Math.floor(j*24/16) : Math.floor(j*24/16)]));
+  if (mode.startsWith('Rainbow')) {
+    const colorHue=v=>Number(v.match(/hsl\(([^ ]+)/)[1]);
+    const origin=colorHue(f.ring[mode === 'Rainbow Spin' || mode === 'Rainbow Reactive' ? 23 : 0]);
+    f.bar.forEach((v,j)=>{
+      const expected=(origin+j*360/16)%360;
+      const difference=((colorHue(v)-expected+540)%360)-180;
+      assert(Math.abs(difference)<1e-8,'Linked rainbow retains phase with equal 22.5-degree hue spacing');
+    });
+  } else f.bar.forEach((v,j)=>assert.equal(v,f.ring[Math.floor(j*24/16)]));
  }
 }
 cfg.disable_leds=true;assert(createLedEmulator()(cfg,{},16).bar.every(v=>v==='#000000'));
@@ -72,7 +80,15 @@ const {readFile}=await import('node:fs/promises');
 const {default:vm}=await import('node:vm');
 const {default:ts}=await import('typescript');
 const source=await readFile(new URL('./src/lib/ControllerMonitor.svelte',import.meta.url),'utf8');
-const effect=source.slice(source.indexOf('\t$effect(() => {\n\t\t// Reset'),source.indexOf('</script>'));
+const monitorStateSource=source.slice(source.indexOf('\tfunction logicalButtonState'),source.indexOf('\tconst digitalB13Pressed'));
+for (const digital of [false,true]) for (const direction of [-1,0,1]) for (const inputBits of [1,1|(1<<11),1|(1<<12)]) {
+  const stateContext=vm.createContext({config:{version:47,iidx_input_mode:'Joystick',digital_tt:digital,button_mapping:[11,1,2,3,4,5,6,7,8,9,10]},data:{buttons:inputBits,direction},$derived:value=>value});
+  vm.runInContext(ts.transpileModule(monitorStateSource,{compilerOptions:{target:ts.ScriptTarget.ESNext}}).outputText+'\nglobalThis.result=displayedButtons;',stateContext);
+  const turntableBits=digital ? direction<0 ? 1<<11 : direction>0 ? 1<<12 : 0 : 0;
+  assert.equal(stateContext.result,(1<<13)|turntableBits,'Digital monitor uses reported direction on AT90/RP without remapping physical buttons twice');
+}
+console.log('PASS: digital monitor directions with RP physical-only and AT90 button diagnostics; analog ignores stale TT bits');
+const effect=source.slice(source.lastIndexOf('\t$effect(() => {',source.indexOf('</script>')),source.indexOf('</script>'));
 let startEffect, draw, emulatorCount=0;
 const elapsed=[];
 const context=vm.createContext({
@@ -93,9 +109,16 @@ assert.equal(emulatorCount,1,'Changing tabs must retain the animation phase');
 dispose();startEffect();
 assert.equal(emulatorCount,2,'Reconnection must start a new local phase');
 context.data=null;draw(32);
+assert.equal(context.frame.time,32,'Missing diagnostics must still publish the local preview');
+context.createLedEmulator=createLedEmulator;
+context.config={...cfg,tt_effect:'Static',bar_effect:'Static',link_bar_effect:false,tt_leds:24,bar_leds:16};
+startEffect();draw(16);
+assert(context.frame.ring.some(c=>c!=='#000000'),'Configured ring must remain visible without diagnostics');
+assert(context.frame.bar.some(c=>c!=='#000000'),'Configured bar must remain visible without diagnostics');
+assert(context.frame.buttonLevels.every(level=>level===0),'Missing diagnostics must not invent button presses');
+context.config.tt_leds=0;context.config.bar_leds=0;draw(32);
 assert(context.frame.ring.every(c=>c==='#000000'));
 assert(context.frame.bar.every(c=>c==='#000000'));
-assert(context.frame.buttonLevels.every(level=>level===0),'Missing diagnostics must clear the visible LEDs');
 console.log('PASS: monitor tab switching, throttled display catch-up and connection reset');
 
 // Logical destinations must not move the LEDs attached to physical buttons.

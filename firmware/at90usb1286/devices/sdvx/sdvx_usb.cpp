@@ -88,7 +88,7 @@ namespace SDVX {
   }
 
   void UsbHandler::config_update(const config &new_config) {
-    debouncer.init(new_config.sdvx_buttons_debounce);
+    debouncer.configure(new_config.sdvx_buttons_debounce);
   }
 
   void usb_init(const config &config) {

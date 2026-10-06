@@ -2,16 +2,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "beef_protocol.h"
+#include "turntable_encoder_gate.h"
 
 typedef struct { uint8_t position; int8_t direction; } beef_tt_sample_t;
 typedef struct {
   uint8_t raw, filtered, position;
-  int8_t direction, gate_direction, digital_direction;
-  int32_t fraction;
-  uint32_t last_ms, motion_ms, gate_ms, gate_interval, digital_motion_ms;
-  uint16_t accumulated, hold_remainder;
-  bool initialized, qualified, moving;
-  uint8_t settings[6];
+  int8_t direction, digital_direction;
+  beef_encoder_gate_t gate;
+  int32_t fraction, accepted_fraction;
+  uint32_t last_ms, motion_ms, digital_motion_ms;
+  uint16_t hold_remainder;
+  bool initialized, moving;
+  uint8_t settings[8];
   beef_tt_sample_t history[256], previous, output;
 } beef_turntable_t;
 void beef_turntable_update(beef_turntable_t *s, const uint8_t *cfg,

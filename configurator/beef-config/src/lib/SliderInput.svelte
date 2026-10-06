@@ -34,5 +34,5 @@
 		value={displayedValue}
 		onValueCommit={change}
 	/>
-	<Input class={compact ? 'h-7 w-full px-2 text-right tabular-nums' : 'w-full text-right tabular-nums'} {id} {min} {max} {step} type="number" value={step < 1 ? displayedValue.toFixed(1) : displayedValue} oninput={(event) => change(event.currentTarget.valueAsNumber)} />
+	<Input class={compact ? 'h-7 w-full px-2 text-right tabular-nums' : 'w-full text-right tabular-nums'} {id} {min} {max} {step} type="number" value={step < 1 ? displayedValue.toFixed(step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3) : displayedValue} oninput={(event) => change(event.currentTarget.valueAsNumber)} />
 </div>
