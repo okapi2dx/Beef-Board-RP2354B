@@ -742,8 +742,8 @@
 		</div>
 
 		<aside class="panel settings-panel" aria-label={tr('チャタリング防止設定', 'Debounce settings')}>
-			<div class="toggle-row"><span class="toggle-label">{tr('自動設定', 'Auto setting')} <HelpText label={tr('自動設定', 'Auto setting')} side="left" sideOffset={8}><p>{tr('押下時・解放時の両方の揺れを検知すると、', 'When a bounce is found on press or release,')}</p><p>{tr('それぞれの操作開始から揺れまでの時間+0.1msに設定します。', 'set that phase to time since its start +0.1 ms.')}</p></HelpText></span><UiSwitch aria-label={tr('自動設定', 'Auto setting')} bind:checked={autoSetting} /></div>
-			<div class="toggle-row bulk-row"><span class="toggle-label">{tr('ボタン一括設定', 'Apply to all buttons')} <HelpText label={tr('ボタン一括設定', 'Apply to all buttons')} side="left" sideOffset={8}><p>{tr('ONにすると、選択中モードの値を', 'When on, changing a slider applies its value')}</p><p>{tr('B1〜B7へ一括適用します。', 'to B1–B7 in the selected mode.')}</p></HelpText></span><UiSwitch aria-label={tr('ボタン一括設定', 'Apply to all buttons')} checked={bulkSetting} onCheckedChange={setBulkSetting} /></div>
+			<div class="toggle-row"><span class="toggle-label">{tr('自動設定', 'Auto setting')} <HelpText label={tr('自動設定', 'Auto setting')} side="left" sideOffset={8}><p>{tr('押下時・解放時の両方の揺れを検知すると、', 'When a bounce is found on press or release,')}</p><p>{tr('それぞれの操作開始から揺れまでの時間+0.1msに設定します。', 'set that phase to time since its start +0.1 ms.')}</p></HelpText></span><span class="flex shrink-0 items-center gap-2"><span aria-hidden="true" class="text-xs font-medium text-muted-foreground">{autoSetting ? 'ON' : 'OFF'}</span><UiSwitch aria-label={tr('自動設定', 'Auto setting')} bind:checked={autoSetting} /></span></div>
+			<div class="toggle-row bulk-row"><span class="toggle-label">{tr('ボタン一括設定', 'Apply to all buttons')} <HelpText label={tr('ボタン一括設定', 'Apply to all buttons')} side="left" sideOffset={8}><p>{tr('ONにすると、選択中モードの値を', 'When on, changing a slider applies its value')}</p><p>{tr('B1〜B7へ一括適用します。', 'to B1–B7 in the selected mode.')}</p></HelpText></span><span class="flex shrink-0 items-center gap-2"><span aria-hidden="true" class="text-xs font-medium text-muted-foreground">{bulkSetting ? 'ON' : 'OFF'}</span><UiSwitch aria-label={tr('ボタン一括設定', 'Apply to all buttons')} checked={bulkSetting} onCheckedChange={setBulkSetting} /></span></div>
 			<div class="mode-row" role="group" aria-label={tr('チャタリング設定モード', 'Chatter setting mode')}>
 				<button type="button" class:mode-selected={edgeMode === 'press'} aria-pressed={edgeMode === 'press'} onclick={() => setEdgeMode('press')}>{tr('押下時', 'On press')}</button>
 				<button type="button" class:mode-selected={edgeMode === 'release'} aria-pressed={edgeMode === 'release'} onclick={() => setEdgeMode('release')}>{tr('解放時', 'On release')}</button>
@@ -860,9 +860,9 @@
 	.bulk-row { border-top:1px solid var(--border); padding-top:.7rem; }
 	.button-sliders { display:grid; grid-template-rows:repeat(7,minmax(0,1fr)); flex:1 1 auto; min-height:0; margin-top:.15rem; }
 	.mode-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:center; gap:4px; margin:.35rem 0 .25rem; padding:4px; border:1px solid var(--border); border-radius:9px; background:#f8fafc; }
-	.mode-row button { border:1px solid #cbd5e1; border-radius:6px; padding:.45rem .3rem; color:#0f172a; font-size:.8rem; background:#ffffff; opacity:1; transition:background .15s ease,border-color .15s ease,color .15s ease; }
+	.mode-row button { border:1px solid #cbd5e1; border-radius:6px; padding:.45rem .3rem; color:#0f172a; font-family:inherit; font-weight:600; font-size:.8rem; background:#ffffff; opacity:1; transition:background .15s ease,border-color .15s ease,color .15s ease; }
 	.mode-row button:hover { border-color:#0284c7; background:color-mix(in srgb,#0ea5e9 10%,var(--card)); }
-	.mode-row button.mode-selected { border-color:#0369a1; background:#0369a1; color:white; font-weight:700; box-shadow:0 0 0 1px rgba(2,132,199,.2) inset; }
+	.mode-row button.mode-selected { border-color:#0369a1; background:#0369a1; color:white; font-weight:600; box-shadow:0 0 0 1px rgba(2,132,199,.2) inset; }
 	:global(.dark) .log-filter button { color:var(--muted-foreground); background:rgba(15,23,42,.62); opacity:.72; }
 	:global(.dark) .log-filter button:hover { border-color:var(--muted-foreground); color:var(--foreground); opacity:1; }
 	:global(.dark) .log-filter button.log-filter-selected { border-color:#22d3ee; background:#0e7490; color:white; opacity:1; box-shadow:0 0 0 1px rgba(34,211,238,.22) inset; }

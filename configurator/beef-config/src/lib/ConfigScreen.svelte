@@ -200,7 +200,12 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 				<Switch
 					label={config.digital_tt ? tr('ターンテーブル入力：デジタル', 'Turntable Input: Digital') : tr('ターンテーブル入力：アナログ', 'Turntable Input: Analog')}
 					bind:checked={config.digital_tt}
-				/>
+					helpWrap
+				>
+					<p>{tr('アナログは回転をX軸、デジタルは回転方向を入力します。', 'Analog sends rotation as X-axis values; digital sends rotation direction.')}</p>
+					<p>{tr('デジタルはB13／B14、キーボードでは設定したキーを送信します。', 'Digital sends B13/B14 in Joystick mode, or assigned keys in Keyboard mode.')}</p>
+					<p>{tr('デジタルは入力が途切れないよう、保持時間の設定を推奨します。', 'For digital input, set a hold time to help prevent gaps between inputs.')}</p>
+				</Switch>
 				{#if !config.digital_tt && config.iidx_input_mode === InputMode.Keyboard}
 					<p class="mb-4 text-sm">{tr('アナログ入力を使う場合は、入力モードをジョイスティックにしてください。', 'Select Joystick input mode to use analog turntable input.')}</p>
 				{/if}

@@ -1,0 +1,195 @@
+/* Adopted C design: line tabs with a restrained blue palette. */
+html[data-design="blue-line"] {
+  color-scheme: light;
+  --radius: .5rem;
+  --background: #f2f4f6;
+  --foreground: #26313d;
+  --card: #ffffff;
+  --card-foreground: var(--foreground);
+  --popover: #ffffff;
+  --popover-foreground: var(--foreground);
+  --primary: #286eb3;
+  --primary-foreground: #ffffff;
+  --secondary: #e9edf1;
+  --secondary-foreground: var(--foreground);
+  --muted: #edf0f3;
+  --muted-foreground: #626e7b;
+  --accent: #e9f1fc;
+  --accent-foreground: #286eb3;
+  --border: #d9dfe5;
+  --input: #cbd3dc;
+  --ring: #80baff;
+  --destructive: #bf4949;
+  --equipment-active: #e4eefb;
+  --equipment-shell: #f2f4f6;
+  --equipment-header: #ffffff;
+  --equipment-input: #fafbfc;
+  --equipment-metal: #e6ebef;
+  --equipment-metal-edge: #a4b0bc;
+  --tooltip-background: #e7edf2;
+  --tooltip-foreground: #26313d;
+  --tooltip-border: #b4c3cf;
+  --tooltip-shadow: 0 4px 14px rgb(25 35 45 / .12);
+  --panel-slider: #5298e6;
+  --panel-slider-track: #e0e5eb;
+  --panel-key-highlight: #e5f3fb;
+  --panel-key-foreground: #24678f;
+  --panel-black-highlight: #294456;
+}
+html.dark[data-design="blue-line"] {
+  color-scheme: dark;
+  --background: #1b2028;
+  --foreground: #e9edf2;
+  --card: #252c37;
+  --popover: #2c3543;
+  --primary: #80baff;
+  --primary-foreground: #152b44;
+  --secondary: #303947;
+  --muted: #2b3442;
+  --muted-foreground: #a6b0bd;
+  --accent: #293b50;
+  --accent-foreground: #b1d4ff;
+  --border: #3c4858;
+  --input: #4b5c73;
+  --ring: #80baff;
+  --destructive: #ed9489;
+  --equipment-active: #293b50;
+  --equipment-shell: #1b2028;
+  --equipment-header: #202730;
+  --equipment-input: #202833;
+  --equipment-metal: #303c4b;
+  --equipment-metal-edge: #596777;
+  --tooltip-background: #344256;
+  --tooltip-foreground: #f1f5f9;
+  --tooltip-border: #6b8194;
+  --tooltip-shadow: 0 4px 14px rgb(0 0 0 / .28);
+  --panel-slider: #80baff;
+  --panel-slider-track: #414c5b;
+  --panel-key-highlight: #304c60;
+  --panel-key-foreground: #dbf0fc;
+  --panel-black-highlight: #2b495e;
+}
+html[data-design="blue-line"] .app-header { box-shadow: 0 1px 0 rgb(0 0 0 / .025); }
+html[data-design="blue-line"] :is(.settings-group,.panel,.device-info-card,.device-hero-card,.empty-state,.sidebar-device-card) {
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+html[data-design="blue-line"] .settings-group { padding: 12px !important; margin-bottom: 10px !important; }
+html[data-design="blue-line"] .settings-group > .mb-4 { margin-bottom: 12px; }
+html[data-design="blue-line"] .settings-group > .flex.items-center.justify-between {
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+html[data-design="blue-line"] .settings-group > .mb-4 > .mt-2.grid { margin-top: 6px; }
+html[data-design="blue-line"] .settings-group input[type="number"] { height: 32px; border-radius: 6px; }
+html[data-design="blue-line"] .sidebar-nav { gap: 0; }
+html[data-design="blue-line"] .sidebar-item {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-color: var(--border) !important;
+  border-radius: 0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+html[data-design="blue-line"] .sidebar-item.active,
+html[data-design="blue-line"] .sidebar-item.active:hover:not(:disabled) {
+  border-color: var(--border) !important;
+  box-shadow: inset 3px 0 var(--panel-slider) !important;
+}
+html[data-design="blue-line"] .sidebar-label { color: var(--muted-foreground); letter-spacing: .04em; }
+html[data-design="blue-line"] :is(.nav-subtitle,.firmware-nav-version,.sidebar-reset-button .nav-subtitle) { color: var(--muted-foreground) !important; }
+html[data-design="blue-line"] :is(.sidebar-item.active .nav-icon,.sidebar-item.active .nav-title) { color: var(--primary) !important; }
+html[data-design="blue-line"] [data-slot="slider"][data-orientation="horizontal"] { min-height: 24px; }
+html[data-design="blue-line"] [data-slot="slider-track"][data-orientation="horizontal"] { height: 5px; background: var(--panel-slider-track); }
+html[data-design="blue-line"] [data-slot="slider-range"] { background: var(--panel-slider); }
+html[data-design="blue-line"] [data-slot="slider-thumb"] {
+  width: 15px; height: 15px;
+  background: var(--equipment-input);
+  border: 1.5px solid var(--panel-slider);
+  box-shadow: none;
+}
+html[data-design="blue-line"] [data-slot="switch"][data-state="checked"] { background: var(--panel-slider); }
+html[data-design="blue-line"] .device-hero-card { background: var(--card); }
+html[data-design="blue-line"] .device-hero-icon { background: var(--accent); color: var(--primary); }
+html[data-design="blue-line"] .device { box-shadow: inset 0 1px rgb(255 255 255 / .06) !important; }
+html[data-design="blue-line"] :is(.stage,.remap-stage) { border-radius: 8px; }
+html[data-design="blue-line"] .remap-key:is(.changed,:hover,:focus-within) {
+  background: var(--panel-key-highlight) !important;
+  color: var(--panel-key-foreground) !important;
+  box-shadow: inset 0 -2px var(--input), 0 0 0 2px color-mix(in srgb, var(--primary) 15%, transparent) !important;
+}
+html[data-design="blue-line"] .remap-key.black:is(.changed,:hover,:focus-within) {
+  background: var(--panel-black-highlight) !important;
+  color: #e7f3fb !important;
+}
+html[data-design="blue-line"] .chatter-entry { color: #a34a16 !important; }
+html.dark[data-design="blue-line"] .chatter-entry { color: #f4a261 !important; }
+html[data-design="blue-line"] .selected-wave-edge { stroke: #dea444; }
+html[data-design="blue-line"] .lane-background { fill: var(--muted) !important; }
+html[data-design="blue-line"] .lane-background.lane-active { fill: var(--accent) !important; }
+
+/* Keep light-mode controls and waveform guides distinct from pale panels. */
+html:not(.dark)[data-design="blue-line"] [data-slot="switch"][data-state="unchecked"] {
+  background: #718096;
+  border-color: #5f7085;
+}
+html:not(.dark)[data-design="blue-line"] [data-slot="switch-thumb"] {
+  background: #ffffff;
+}
+html:not(.dark)[data-design="blue-line"] [data-slot="switch"][data-state="checked"] {
+  background: #286eb3;
+}
+html:not(.dark)[data-design="blue-line"] .lane-background { fill: #f7f8fa !important; }
+html:not(.dark)[data-design="blue-line"] .grid-line { stroke: #a5b2c1; }
+html:not(.dark)[data-design="blue-line"] .lane-line { stroke: #8999ad; }
+html:not(.dark)[data-design="blue-line"] .wave-segment:not(.pressed-segment) { fill: #485d75; }
+
+html[data-design="blue-line"] .settings-group > .flex.items-center.justify-between { background: var(--muted); }
+html:not(.dark)[data-design="blue-line"] .settings-group > .flex.items-center.justify-between { background: #f7f8fa; }
+html[data-design="blue-line"] .settings-group input[type="number"] { border-color: color-mix(in srgb, var(--primary) 48%, var(--input)); box-shadow: none; }
+html[data-design="blue-line"] .sidebar-item.active .nav-subtitle { color: var(--accent-foreground) !important; }
+html[data-design="blue-line"] .sidebar-item:focus-visible { outline-color: var(--primary); }
+html[data-design="blue-line"] { --control-selected: #286eb3; --control-hover: #e9f1fc; --control-highlight: #5298e6; --control-hover-foreground: var(--foreground); }
+html.dark[data-design="blue-line"] { --control-selected: #286eb3; --control-hover: #293b50; --control-highlight: #80baff; }
+html[data-design="blue-line"] :is(button:not([data-slot="switch"]),input[type="number"]):not(:disabled):not([aria-disabled="true"]):hover {
+  background: var(--control-hover) !important;
+  color: var(--control-hover-foreground) !important;
+  border-color: var(--control-highlight) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--control-highlight) 22%, transparent) !important;
+}
+html[data-design="blue-line"] [data-slot="switch"]:not(:disabled):not([aria-disabled="true"]):hover {
+  border-color: var(--control-highlight) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--control-highlight) 32%, transparent) !important;
+}
+html[data-design="blue-line"] :is(.side-buttons button.selected,.mode-row button.mode-selected,.log-filter button.log-filter-selected,.wave-mode button.wave-mode-selected,button[data-state="active"][role="tab"]) {
+  background: var(--control-selected) !important;
+  color: #ffffff !important;
+  border-color: var(--control-selected) !important;
+}
+html[data-design="blue-line"] :is(.side-buttons button.selected,.mode-row button.mode-selected,.log-filter button.log-filter-selected,.wave-mode button.wave-mode-selected,button[data-state="active"][role="tab"]):not(:disabled):not([aria-disabled="true"]):hover {
+  background: var(--control-selected) !important;
+  color: #ffffff !important;
+}
+/* Remapping keys retain light, readable hover colors in the dark theme. */
+html.dark[data-design="blue-line"] .remap-key {
+  --control-hover: #e9f1fc;
+  --control-hover-foreground: #172033;
+  --control-highlight: #5298e6;
+}
+html.dark[data-design="blue-line"] .remap-key:is(:hover,:focus-within) {
+  background: #e5f3fb !important;
+  color: #24678f !important;
+  border-color: #5298e6 !important;
+  box-shadow: inset 0 -2px #a4b0bc, 0 0 0 2px rgb(82 152 230 / .22) !important;
+}
+html.dark[data-design="blue-line"] .remap-key.black:is(:hover,:focus-within) {
+  background: #294456 !important;
+  color: #e7f3fb !important;
+}
+html.dark[data-design="blue-line"] .remap-key .remap-select:is(:hover,:focus-visible) {
+  background: #e9f1fc !important;
+  color: #172033 !important;
+}
+@media (max-height: 620px) and (min-width: 681px) {
+  html[data-design="blue-line"] .sidebar-item { padding-top: 5px; padding-bottom: 5px; }
+}

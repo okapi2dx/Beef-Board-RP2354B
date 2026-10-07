@@ -1,0 +1,121 @@
+/* Optional instrument-panel preview, enabled with VITE_BEEF_DESIGN=panel. */
+html[data-design="panel"] {
+  color-scheme: light;
+  --radius: .5rem;
+  --background: #f2f4f6;
+  --foreground: #26313d;
+  --card: #ffffff;
+  --card-foreground: var(--foreground);
+  --popover: #ffffff;
+  --popover-foreground: var(--foreground);
+  --primary: #2479ab;
+  --primary-foreground: #ffffff;
+  --secondary: #e9edf1;
+  --secondary-foreground: var(--foreground);
+  --muted: #edf0f3;
+  --muted-foreground: #626e7b;
+  --accent: #e7f2fa;
+  --accent-foreground: #226f9d;
+  --border: #d9dfe5;
+  --input: #cbd3dc;
+  --ring: #65b8e8;
+  --destructive: #bf4949;
+  --equipment-active: #e2eff8;
+  --equipment-shell: #f2f4f6;
+  --equipment-header: #ffffff;
+  --equipment-input: #fafbfc;
+  --equipment-metal: #e6ebef;
+  --equipment-metal-edge: #a4b0bc;
+  --tooltip-background: #e7edf2;
+  --tooltip-foreground: #26313d;
+  --tooltip-border: #b4c3cf;
+  --tooltip-shadow: 0 4px 14px rgb(25 35 45 / .12);
+  --panel-slider: #49a6de;
+  --panel-slider-track: #e0e5eb;
+  --panel-key-highlight: #e5f3fb;
+  --panel-key-foreground: #24678f;
+  --panel-black-highlight: #294456;
+}
+html.dark[data-design="panel"] {
+  color-scheme: dark;
+  --background: #1a1e24;
+  --foreground: #e9edf2;
+  --card: #242a32;
+  --popover: #2b323b;
+  --primary: #65b8e8;
+  --primary-foreground: #122737;
+  --secondary: #303842;
+  --muted: #2b323c;
+  --muted-foreground: #a6b0bd;
+  --accent: #293d4e;
+  --accent-foreground: #a1d8f6;
+  --border: #39434f;
+  --input: #4b5868;
+  --ring: #65b8e8;
+  --destructive: #ed9489;
+  --equipment-active: #293e52;
+  --equipment-shell: #1a1e24;
+  --equipment-header: #222830;
+  --equipment-input: #20262e;
+  --equipment-metal: #303944;
+  --equipment-metal-edge: #596777;
+  --tooltip-background: #35414e;
+  --tooltip-foreground: #f1f5f9;
+  --tooltip-border: #6b8194;
+  --tooltip-shadow: 0 4px 14px rgb(0 0 0 / .28);
+  --panel-slider: #65b8e8;
+  --panel-slider-track: #394450;
+  --panel-key-highlight: #304c60;
+  --panel-key-foreground: #dbf0fc;
+  --panel-black-highlight: #2b495e;
+}
+html[data-design="panel"] .app-header { box-shadow: 0 1px 0 rgb(0 0 0 / .025); }
+html[data-design="panel"] :is(.settings-group,.panel,.device-info-card,.device-hero-card,.empty-state,.sidebar-device-card) {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+html[data-design="panel"] .settings-group { padding: 12px !important; margin-bottom: 10px !important; }
+html[data-design="panel"] .settings-group > .mb-4 { margin-bottom: 12px; }
+html[data-design="panel"] .settings-group > .flex.items-center.justify-between {
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+html[data-design="panel"] .settings-group > .mb-4 > .mt-2.grid { margin-top: 6px; }
+html[data-design="panel"] .settings-group input[type="number"] { height: 32px; border-radius: 6px; }
+html[data-design="panel"] .sidebar-item { border-radius: 6px; }
+html[data-design="panel"] .sidebar-item.active,
+html[data-design="panel"] .sidebar-item.active:hover:not(:disabled) {
+  border-color: transparent !important;
+  box-shadow: inset 3px 0 var(--panel-slider) !important;
+}
+html[data-design="panel"] .sidebar-label { color: var(--muted-foreground); letter-spacing: .04em; }
+html[data-design="panel"] :is(.nav-subtitle,.firmware-nav-version,.sidebar-reset-button .nav-subtitle) { color: var(--muted-foreground) !important; }
+html[data-design="panel"] :is(.sidebar-item.active .nav-icon,.sidebar-item.active .nav-title) { color: var(--primary) !important; }
+html[data-design="panel"] [data-slot="slider"][data-orientation="horizontal"] { min-height: 24px; }
+html[data-design="panel"] [data-slot="slider-track"][data-orientation="horizontal"] { height: 5px; background: var(--panel-slider-track); }
+html[data-design="panel"] [data-slot="slider-range"] { background: var(--panel-slider); }
+html[data-design="panel"] [data-slot="slider-thumb"] {
+  width: 15px; height: 15px;
+  background: var(--equipment-input);
+  border: 1.5px solid var(--panel-slider);
+  box-shadow: none;
+}
+html[data-design="panel"] [data-slot="switch"][data-state="checked"] { background: var(--panel-slider); }
+html[data-design="panel"] .device-hero-card { background: var(--card); }
+html[data-design="panel"] .device-hero-icon { background: var(--accent); color: var(--primary); }
+html[data-design="panel"] .device { box-shadow: inset 0 1px rgb(255 255 255 / .06) !important; }
+html[data-design="panel"] :is(.stage,.remap-stage) { border-radius: 8px; }
+html[data-design="panel"] .remap-key:is(.changed,:hover,:focus-within) {
+  background: var(--panel-key-highlight) !important;
+  color: var(--panel-key-foreground) !important;
+  box-shadow: inset 0 -2px var(--input), 0 0 0 2px color-mix(in srgb, var(--primary) 15%, transparent) !important;
+}
+html[data-design="panel"] .remap-key.black:is(.changed,:hover,:focus-within) {
+  background: var(--panel-black-highlight) !important;
+  color: #e7f3fb !important;
+}
+html[data-design="panel"] .chatter-entry { color: #a34a16 !important; }
+html.dark[data-design="panel"] .chatter-entry { color: #f4a261 !important; }
+html[data-design="panel"] .selected-wave-edge { stroke: #dea444; }
+html[data-design="panel"] .lane-background { fill: var(--muted) !important; }
+html[data-design="panel"] .lane-background.lane-active { fill: var(--accent) !important; }

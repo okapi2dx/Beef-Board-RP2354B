@@ -2,6 +2,8 @@
 	import '../app.css';
 	import '../equipment-theme.css';
 	import '../simple-theme.css';
+	import '../panel-theme.css';
+	import '../blue-line-theme.css';
 	import { onMount } from 'svelte';
 	import { ModeWatcher, setMode } from 'mode-watcher';
 
@@ -10,7 +12,7 @@
 	}
 
 	let { children }: Props = $props();
-	const design = import.meta.env.VITE_BEEF_DESIGN === 'equipment' ? 'equipment' : 'simple';
+	const design = import.meta.env.VITE_BEEF_DESIGN === 'simple' ? 'simple' : import.meta.env.VITE_BEEF_DESIGN === 'panel' ? 'panel' : import.meta.env.VITE_BEEF_DESIGN === 'equipment' ? 'equipment' : 'blue-line';
 	onMount(() => {
 		document.documentElement.dataset.design = design;
 		const preferenceKey = `beef-${design}-design`;
