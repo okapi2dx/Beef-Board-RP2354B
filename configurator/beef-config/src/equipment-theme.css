@@ -1,5 +1,5 @@
 /* Experimental equipment-panel design. Components share these surface tokens. */
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) {
   --radius: .5rem;
   --background: #edf1f2;
   --foreground: #202b30;
@@ -27,7 +27,7 @@ html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"]
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
 }
-html.dark:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) {
+html.dark:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) {
   color-scheme: dark;
   --background: #171c21;
   --foreground: #e6edf0;
@@ -54,138 +54,138 @@ html.dark:is([data-design="equipment"], [data-design="simple"], [data-design="pa
   --equipment-metal: #2b333b;
   --equipment-metal-edge: #4f5d68;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) body { font-family: "Segoe UI", "Yu Gothic UI", sans-serif; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .app-shell {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) body { font-family: "Segoe UI", "Yu Gothic UI", sans-serif; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .app-shell {
   background: var(--equipment-shell) !important;
   --panel-border: var(--border);
   --panel-surface: var(--card);
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .app-header {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .app-header {
   background: var(--equipment-header) !important;
   border-color: var(--border) !important;
   box-shadow: 0 1px 0 rgb(255 255 255 / .025);
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .brand-icon { color: var(--primary) !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .header-title-row h1 { font-weight: 650; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .app-sidebar { background: transparent !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-device-card {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .brand-icon { color: var(--primary) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .header-title-row h1 { font-weight: 650; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .app-sidebar { background: transparent !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-device-card {
   background: var(--card) !important;
   border-color: var(--border) !important;
   color: var(--foreground) !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-item {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-item {
   background: transparent !important;
   border-color: transparent !important;
   color: var(--foreground) !important;
   box-shadow: none !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-item:hover:not(:disabled),
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-device-card:hover {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-item:hover:not(:disabled),
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-device-card:hover {
   background: var(--muted) !important;
   color: var(--foreground) !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-item.active,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-item.active:hover:not(:disabled),
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-device-card.active {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-item.active,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-item.active:hover:not(:disabled),
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-device-card.active {
   background: var(--equipment-active) !important;
   border-color: color-mix(in srgb, var(--primary) 25%, var(--border)) !important;
   color: var(--primary) !important;
   box-shadow: inset 3px 0 var(--primary) !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .nav-icon,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .nav-subtitle,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .status-subtitle { color: var(--muted-foreground) !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-item.active .nav-icon,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-item.active .nav-title { color: var(--primary) !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .sidebar-reset { border-color: var(--border) !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is(.settings-group,.panel,.device-info-card,.empty-state) {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .nav-icon,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .nav-subtitle,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .status-subtitle { color: var(--muted-foreground) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-item.active .nav-icon,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-item.active .nav-title { color: var(--primary) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .sidebar-reset { border-color: var(--border) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is(.settings-group,.panel,.device-info-card,.empty-state) {
   background: var(--card) !important;
   border-color: var(--border) !important;
   border-radius: 8px !important;
   box-shadow: none !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .reset-action-button {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .reset-action-button {
   background: var(--secondary) !important;
   border-color: var(--input) !important;
   color: var(--foreground) !important;
   box-shadow: none !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .reset-action-button:hover {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .reset-action-button:hover {
   border-color: var(--destructive) !important;
   background: color-mix(in srgb, var(--destructive) 8%, var(--card)) !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .app-header .reset-action-button:hover {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .app-header .reset-action-button:hover {
   border-color: var(--primary) !important;
   background: var(--accent) !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is(input:not([type="range"]):not([type="checkbox"]),[data-slot="select-trigger"]) {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is(input:not([type="range"]):not([type="checkbox"]),[data-slot="select-trigger"]) {
   background: var(--equipment-input);
   border-color: var(--input);
   color: var(--foreground);
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) input[type="number"] { font-variant-numeric: tabular-nums; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is([data-slot="select-content"],[data-slot="dropdown-menu-content"],[data-slot="alert-dialog-content"]) {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) input[type="number"] { font-variant-numeric: tabular-nums; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is([data-slot="select-content"],[data-slot="dropdown-menu-content"],[data-slot="alert-dialog-content"]) {
   background: var(--popover);
   color: var(--popover-foreground);
   border-color: var(--border);
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is(.stage,.remap-stage) {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is(.stage,.remap-stage) {
   background: var(--equipment-input) !important;
   border: 1px solid var(--border);
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .device {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .device {
   background: linear-gradient(135deg, var(--equipment-metal), var(--equipment-input)) !important;
   border: 1px solid var(--equipment-metal-edge) !important;
   box-shadow: inset 0 1px rgb(255 255 255 / .07), 0 8px 20px rgb(0 0 0 / .15) !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is(.disc-area,.keyboard,.remap-keyboard) {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is(.disc-area,.keyboard,.remap-keyboard) {
   background: linear-gradient(150deg, var(--equipment-metal), color-mix(in srgb, var(--equipment-metal) 86%, #000)) !important;
   border-color: var(--equipment-metal-edge) !important;
   box-shadow: inset 0 1px rgb(255 255 255 / .04) !important;
 }
-html.dark:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .disc {
+html.dark:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .disc {
   background: radial-gradient(circle, #171c21 35%, #343d46 36%, #343d46 52%, #14191e 53%);
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is(.side-buttons button,.mode-row button,.log-filter button,.wave-mode button,.wave-detail-button) {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is(.side-buttons button,.mode-row button,.log-filter button,.wave-mode button,.wave-detail-button) {
   background: var(--equipment-input) !important;
   color: var(--muted-foreground) !important;
   border-color: var(--input) !important;
   opacity: 1 !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is(.side-buttons button.selected,.mode-row button.mode-selected,.log-filter button.log-filter-selected,.wave-mode button.wave-mode-selected) {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is(.side-buttons button.selected,.mode-row button.mode-selected,.log-filter button.log-filter-selected,.wave-mode button.wave-mode-selected) {
   background: var(--equipment-active) !important;
   color: var(--primary) !important;
   border-color: var(--primary) !important;
   box-shadow: none !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .mode-row { background: var(--equipment-input) !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .wave-label { fill: var(--muted-foreground) !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .wave-label.label-active { fill: var(--primary) !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .wave-transition { stroke: var(--primary); }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .pressed-segment { fill: var(--primary); }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .chatter-marker { stroke: #f4a261; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .chatter-marker-point { fill: #f4a261; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .chatter-entry { color: #f4a261 !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .log-entry-row { border-color: var(--border); }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .log-entry-row.selected-log { background: var(--equipment-active) !important; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is(.metric b,.button-metrics b,.detail-chatter) { font-variant-numeric: tabular-nums; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .mode-description { white-space: normal; }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) :is(button,input,select):focus-visible { outline-color: var(--primary); }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .mode-row { background: var(--equipment-input) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .wave-label { fill: var(--muted-foreground) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .wave-label.label-active { fill: var(--primary) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .wave-transition { stroke: var(--primary); }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .pressed-segment { fill: var(--primary); }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .chatter-marker { stroke: #f4a261; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .chatter-marker-point { fill: #f4a261; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .chatter-entry { color: #f4a261 !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .log-entry-row { border-color: var(--border); }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .log-entry-row.selected-log { background: var(--equipment-active) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is(.metric b,.button-metrics b,.detail-chatter) { font-variant-numeric: tabular-nums; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .mode-description { white-space: normal; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) :is(button,input,select):focus-visible { outline-color: var(--primary); }
 
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .remap-key.changed,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .remap-key:hover,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .remap-key:focus-within {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .remap-key.changed,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .remap-key:hover,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .remap-key:focus-within {
   background: #e1f1ee !important;
   color: #14574e !important;
   border-color: var(--primary) !important;
   box-shadow: inset 0 -2px #9fcfc6, 0 0 0 2px rgb(77 214 199 / .12) !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .remap-key.black.changed,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .remap-key.black:hover,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .remap-key.black:focus-within {
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .remap-key.black.changed,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .remap-key.black:hover,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .remap-key.black:focus-within {
   background: #243f40 !important;
   color: #e7f6f4 !important;
   box-shadow: inset 0 -2px #153638, 0 0 0 2px rgb(77 214 199 / .12) !important;
 }
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .remap-select:focus-visible,
-html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"]) .remap-select:hover { border-color: var(--primary) !important; }
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .remap-select:focus-visible,
+html:is([data-design="equipment"], [data-design="simple"], [data-design="panel"], [data-design="blue-line"], [data-design="paper"], [data-design="instrument"]) .remap-select:hover { border-color: var(--primary) !important; }

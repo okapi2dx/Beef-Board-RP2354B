@@ -1,0 +1,164 @@
+/* Experimental C concept: minimal white and charcoal instrument UI with a single red accent. */
+html[data-design="instrument"] {
+  color-scheme: light;
+  --radius: .3rem;
+  --background: #dce2e1;
+  --foreground: #20292b;
+  --card: #f0f3f1;
+  --card-foreground: var(--foreground);
+  --popover: #f7f9f7;
+  --popover-foreground: var(--foreground);
+  --primary: #c7353c;
+  --primary-foreground: #ffffff;
+  --secondary: #cbd3d1;
+  --secondary-foreground: var(--foreground);
+  --muted: #e1e6e4;
+  --muted-foreground: #5e666b;
+  --accent: #f8e7e7;
+  --accent-foreground: #a51e27;
+  --border: #d0d4d5;
+  --input: #aeb5b7;
+  --ring: #db555b;
+  --destructive: #bb493e;
+  --equipment-active: #f8e7e7;
+  --equipment-shell: #eceeef;
+  --equipment-header: #ffffff;
+  --equipment-input: #ffffff;
+  --equipment-metal: #d9ddde;
+  --equipment-metal-edge: #9da5a7;
+  --tooltip-background: #e2e8e6;
+  --tooltip-foreground: #20292b;
+  --tooltip-border: #9ca9a6;
+  --tooltip-shadow: 0 5px 16px rgb(21 32 31 / .2);
+  --panel-slider: #c7353c;
+  --panel-slider-track: #d7dcdd;
+  --panel-key-highlight: #f8e7e7;
+  --panel-key-foreground: #7c2026;
+  --panel-black-highlight: #6c3438;
+  --control-selected: #c7353c;
+  --control-hover: #faeeee;
+  --control-highlight: #db555b;
+  --control-hover-foreground: #55272a;
+}
+
+html.dark[data-design="instrument"] {
+  color-scheme: dark;
+  --background: #171c20;
+  --foreground: #e4e9e6;
+  --card: #222a2e;
+  --card-foreground: var(--foreground);
+  --popover: #293236;
+  --popover-foreground: var(--foreground);
+  --primary: #ef6b70;
+  --primary-foreground: #ffffff;
+  --secondary: #303a3e;
+  --secondary-foreground: var(--foreground);
+  --muted: #283135;
+  --muted-foreground: #a3b0b0;
+  --accent: #452b2e;
+  --accent-foreground: #ffb8bb;
+  --border: #455256;
+  --input: #566469;
+  --ring: #ef6b70;
+  --destructive: #ef8074;
+  --equipment-active: #452b2e;
+  --equipment-shell: #171c20;
+  --equipment-header: #20272b;
+  --equipment-input: #1e262a;
+  --equipment-metal: #30393d;
+  --equipment-metal-edge: #667276;
+  --tooltip-background: #303b3e;
+  --tooltip-foreground: #f1f4ef;
+  --tooltip-border: #718083;
+  --tooltip-shadow: 0 5px 18px rgb(0 0 0 / .38);
+  --panel-slider: #ef6b70;
+  --panel-slider-track: #455256;
+  --control-selected: #a92d35;
+  --control-hover: #452b2e;
+  --control-highlight: #ef6b70;
+  --control-hover-foreground: #fff0f0;
+}
+
+html[data-design="instrument"] body { font-family: "Segoe UI", "Yu Gothic UI", sans-serif; }
+html[data-design="instrument"] .app-shell {
+  background: var(--equipment-shell) !important;
+  --panel-border: var(--border);
+  --panel-surface: var(--card);
+}
+html[data-design="instrument"] .app-header {
+  background: var(--equipment-header) !important;
+  border-color: var(--border) !important;
+  box-shadow: inset 0 -2px #879592, 0 2px 8px rgb(25 39 38 / .12);
+}
+html[data-design="instrument"] .app-sidebar {
+  background: #292d30 !important;
+  border: 1px solid #44494c;
+  border-radius: 4px;
+  color: #e8eeeb;
+}
+html[data-design="instrument"] .sidebar-label { color: #c0c5c7 !important; letter-spacing: .08em; text-transform: uppercase; }
+html[data-design="instrument"] .sidebar-item {
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+}
+html[data-design="instrument"] .sidebar-item.active,
+html[data-design="instrument"] .sidebar-item.active:hover:not(:disabled) {
+  background: #f8e7e7 !important;
+  border-color: #e5b4b6 !important;
+  color: #a51e27 !important;
+  box-shadow: inset 3px 0 #c7353c !important;
+}
+html[data-design="instrument"] :is(.settings-group,.panel,.device-info-card,.empty-state) {
+  border-radius: 5px !important;
+  box-shadow: inset 0 1px rgb(255 255 255 / .035), 0 3px 10px rgb(0 0 0 / .09) !important;
+}
+html[data-design="instrument"] .settings-group > .flex.items-center.justify-between {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 9px;
+}
+html[data-design="instrument"] :is(.stage,.remap-stage) {
+  border-radius: 5px;
+  border: 1px solid #aeb5b7 !important;
+  box-shadow: inset 0 1px #fff, 0 2px 5px rgb(25 39 38 / .12);
+}
+html[data-design="instrument"] .device {
+  background: linear-gradient(145deg, #e5e8e8, #c9cecf) !important;
+  border: 1px solid #8f989a !important;
+  box-shadow: inset 0 1px #fff, 0 8px 18px rgb(25 39 38 / .2) !important;
+}
+html[data-design="instrument"] :is(.disc-area,.keyboard,.remap-keyboard) {
+  background: linear-gradient(145deg, #d9ddde, #c4cacc) !important;
+  border: 1px solid #9da5a7 !important;
+  box-shadow: inset 0 1px #f4f5f5, inset 0 -2px #aeb5b7 !important;
+}
+html[data-design="instrument"] .disc { box-shadow: inset 0 0 0 2px #465458, 0 0 0 2px #879592, 0 2px 5px rgb(0 0 0 / .25); }
+html[data-design="instrument"] :is(button:not([data-slot="switch"]),input[type="number"]):not(:disabled):not([aria-disabled="true"]):hover {
+  border-color: var(--control-highlight) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--control-highlight) 20%, transparent), 0 0 10px color-mix(in srgb, var(--control-highlight) 12%, transparent) !important;
+}
+html[data-design="instrument"] [data-slot="switch"][data-state="checked"] { background: #087f74; }
+html[data-design="instrument"] [data-slot="switch"][data-state="unchecked"] { background: #687579; }
+html[data-design="instrument"] .lane-background { fill: #f7f8f8 !important; }
+html.dark[data-design="instrument"] .lane-background { fill: #20292c !important; }
+html[data-design="instrument"] .grid-line { stroke: color-mix(in srgb, var(--muted-foreground) 45%, transparent); }
+html[data-design="instrument"] .selected-wave-edge { stroke: #c7353c; }
+html[data-design="instrument"] .chatter-marker,
+html[data-design="instrument"] .chatter-entry { color: #c7353c !important; stroke: #c7353c; }
+html.dark[data-design="instrument"] .selected-wave-edge { stroke: #ffbd63; }
+html.dark[data-design="instrument"] .chatter-marker,
+html.dark[data-design="instrument"] .chatter-entry { color: #ffbd63 !important; stroke: #ffbd63; }
+html[data-design="instrument"] .remap-key:is(.changed,:hover,:focus-within) {
+  background: #f8e7e7 !important;
+  color: #7c2026 !important;
+  border-color: #c7353c !important;
+  box-shadow: inset 0 -2px #e2b4b6, 0 0 0 2px rgb(199 53 60 / .12) !important;
+}
+html[data-design="instrument"] .remap-key.black:is(.changed,:hover,:focus-within) {
+  background: #6c3438 !important;
+  color: #fff0f0 !important;
+}
+html[data-design="instrument"] :is(.side-buttons button.selected,.mode-row button.mode-selected,.log-filter button.log-filter-selected,.wave-mode button.wave-mode-selected,button[data-state="active"][role="tab"]) {
+  background: #c7353c !important;
+  color: #ffffff !important;
+  border-color: #c7353c !important;
+}

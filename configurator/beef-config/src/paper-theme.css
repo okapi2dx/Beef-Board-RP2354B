@@ -1,0 +1,234 @@
+/* Experimental A concept: warm paper surfaces, ink-navy navigation and restrained orange. */
+html[data-design="paper"] {
+  color-scheme: light;
+  --radius: .45rem;
+  --background: #f4eee3;
+  --foreground: #29323a;
+  --card: #fffdf8;
+  --card-foreground: var(--foreground);
+  --popover: #fffdf8;
+  --popover-foreground: var(--foreground);
+  --primary: #bd582f;
+  --primary-foreground: #fffaf4;
+  --secondary: #eee4d6;
+  --secondary-foreground: #29323a;
+  --muted: #f1e9dc;
+  --muted-foreground: #657078;
+  --accent: #f5e2d5;
+  --accent-foreground: #8f3f22;
+  --border: #d9cbbb;
+  --input: #cbbba8;
+  --ring: #d77a50;
+  --destructive: #b64035;
+  --sidebar: #1d3349;
+  --sidebar-foreground: #f2eee6;
+  --equipment-active: #f5e2d5;
+  --equipment-shell: #f0e8dc;
+  --equipment-header: #faf6ee;
+  --equipment-input: #fffdf8;
+  --equipment-metal: #f5eee3;
+  --equipment-metal-edge: #c4b5a2;
+  --tooltip-background: #fffaf1;
+  --tooltip-foreground: #29323a;
+  --tooltip-border: #cbbba8;
+  --tooltip-shadow: 0 5px 16px rgb(40 34 26 / .16);
+  --panel-slider: #bd582f;
+  --panel-slider-track: #e5d9c8;
+  --panel-key-highlight: #f8e6da;
+  --panel-key-foreground: #793b25;
+  --panel-black-highlight: #3a2b27;
+  --control-selected: #a94727;
+  --control-hover: #fae9dd;
+  --control-highlight: #c86238;
+  --control-hover-foreground: #402c25;
+}
+
+html.dark[data-design="paper"] {
+  color-scheme: dark;
+  --background: #202a34;
+  --foreground: #eee9df;
+  --card: #293541;
+  --card-foreground: var(--foreground);
+  --popover: #303d49;
+  --popover-foreground: var(--foreground);
+  --primary: #e7956d;
+  --primary-foreground: #35251e;
+  --secondary: #36424d;
+  --secondary-foreground: var(--foreground);
+  --muted: #303c47;
+  --muted-foreground: #b7b7b1;
+  --accent: #49372f;
+  --accent-foreground: #f2c2a7;
+  --border: #4b5861;
+  --input: #69747b;
+  --ring: #e7956d;
+  --destructive: #f09a8c;
+  --sidebar: #172735;
+  --sidebar-foreground: #eee9df;
+  --equipment-active: #49372f;
+  --equipment-shell: #202a34;
+  --equipment-header: #26323d;
+  --equipment-input: #252f39;
+  --equipment-metal: #313e48;
+  --equipment-metal-edge: #65717a;
+  --tooltip-background: #3d4b55;
+  --tooltip-foreground: #f7f2e9;
+  --tooltip-border: #68757d;
+  --tooltip-shadow: 0 5px 16px rgb(0 0 0 / .3);
+  --panel-slider: #e7956d;
+  --panel-slider-track: #4c5962;
+  --panel-key-highlight: #f3e6d7;
+  --panel-key-foreground: #44352e;
+  --panel-black-highlight: #4b352c;
+  --control-selected: #a94727;
+  --control-hover: #49372f;
+  --control-highlight: #e7956d;
+  --control-hover-foreground: #f5e9df;
+}
+
+html[data-design="paper"] .app-shell {
+  background: var(--equipment-shell) !important;
+  --panel-border: var(--border);
+  --panel-surface: var(--card);
+}
+html[data-design="paper"] .app-header {
+  background: var(--equipment-header) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 1px 0 rgb(82 64 44 / .08);
+}
+html[data-design="paper"] .brand-icon { color: var(--primary) !important; }
+html[data-design="paper"] .app-sidebar {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--sidebar) !important;
+}
+html[data-design="paper"] .sidebar-device-card {
+  background: #f8f2e8 !important;
+  border-color: #d8cbbb !important;
+  color: #29323a !important;
+}
+html[data-design="paper"] .sidebar-nav { gap: 2px; }
+html[data-design="paper"] .sidebar-label { color: #c2cbd0 !important; letter-spacing: .08em; }
+html[data-design="paper"] .sidebar-item {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgb(232 230 220 / .16) !important;
+  border-radius: 3px !important;
+  color: #eee9df !important;
+  box-shadow: none !important;
+}
+html[data-design="paper"] .sidebar-item:not(:disabled):hover,
+html[data-design="paper"] .sidebar-device-card:hover {
+  background: #2b4358 !important;
+  color: #fffaf4 !important;
+}
+html[data-design="paper"] .sidebar-item.active,
+html[data-design="paper"] .sidebar-item.active:hover:not(:disabled) {
+  background: #30485c !important;
+  border-color: rgb(232 230 220 / .24) !important;
+  color: #fffaf4 !important;
+  box-shadow: inset 4px 0 #dc8056 !important;
+}
+html[data-design="paper"] .sidebar-item.active :is(.nav-icon,.nav-title,.nav-subtitle,.firmware-nav-version) { color: #f3b08d !important; }
+html[data-design="paper"] .sidebar-reset { border-color: rgb(232 230 220 / .22) !important; }
+html[data-design="paper"] :is(.settings-group,.panel,.device-info-card,.device-hero-card,.empty-state) {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+html[data-design="paper"] .settings-group { padding: 13px !important; }
+html[data-design="paper"] .settings-group > .flex.items-center.justify-between { background: #f7f0e5; }
+html.dark[data-design="paper"] .settings-group > .flex.items-center.justify-between { background: #303c47; }
+html[data-design="paper"] :is(input:not([type="range"]):not([type="checkbox"]),[data-slot="select-trigger"]) {
+  background: var(--equipment-input);
+  border-color: var(--input);
+  color: var(--foreground);
+}
+html[data-design="paper"] :is(.stage,.remap-stage) { background: #faf6ee !important; border: 1px solid var(--border); }
+html.dark[data-design="paper"] :is(.stage,.remap-stage) { background: #252f39 !important; }
+html[data-design="paper"] .device {
+  background: #e8dece !important;
+  border: 1px solid #aa9a86 !important;
+  box-shadow: inset 0 1px rgb(255 255 255 / .55) !important;
+}
+html[data-design="paper"] :is(.disc-area,.keyboard,.remap-keyboard) {
+  background-color: #f6efe3 !important;
+  background-image: linear-gradient(45deg, rgb(62 70 74 / .055) 1px, transparent 1px), linear-gradient(-45deg, rgb(62 70 74 / .055) 1px, transparent 1px) !important;
+  background-size: 14px 14px !important;
+  border-color: #c7b8a5 !important;
+  box-shadow: inset 0 1px rgb(255 255 255 / .5) !important;
+}
+html.dark[data-design="paper"] :is(.disc-area,.keyboard,.remap-keyboard) {
+  background-color: #313e48 !important;
+  background-image: linear-gradient(45deg, rgb(240 233 223 / .045) 1px, transparent 1px), linear-gradient(-45deg, rgb(240 233 223 / .045) 1px, transparent 1px) !important;
+  border-color: #68747b !important;
+}
+html.dark[data-design="paper"] .disc { background: radial-gradient(circle, #202a34 35%, #454e54 36%, #454e54 52%, #1b242d 53%); }
+html[data-design="paper"] [data-slot="slider-track"][data-orientation="horizontal"] { height: 5px; background: var(--panel-slider-track); }
+html[data-design="paper"] [data-slot="slider-range"] { background: var(--panel-slider); }
+html[data-design="paper"] [data-slot="slider-thumb"] {
+  width: 15px;
+  height: 15px;
+  background: var(--equipment-input);
+  border: 1.5px solid var(--panel-slider);
+  box-shadow: none;
+}
+html[data-design="paper"] [data-slot="switch"][data-state="checked"] { background: var(--panel-slider); }
+html[data-design="paper"] :is(.side-buttons button,.mode-row button,.log-filter button,.wave-mode button,.wave-detail-button) {
+  background: var(--equipment-input) !important;
+  color: var(--foreground) !important;
+  border-color: var(--input) !important;
+  opacity: 1 !important;
+}
+html[data-design="paper"] :is(.side-buttons button.selected,.mode-row button.mode-selected,.log-filter button.log-filter-selected,.wave-mode button.wave-mode-selected) {
+  background: var(--control-selected) !important;
+  color: #fffaf4 !important;
+  border-color: var(--control-selected) !important;
+}
+html[data-design="paper"] .remap-key:is(.changed,:hover,:focus-within) {
+  background: var(--panel-key-highlight) !important;
+  color: var(--panel-key-foreground) !important;
+  border-color: var(--panel-slider) !important;
+  box-shadow: inset 0 -2px var(--input), 0 0 0 2px color-mix(in srgb, var(--panel-slider) 18%, transparent) !important;
+}
+html[data-design="paper"] .remap-key.black:is(.changed,:hover,:focus-within) {
+  background: var(--panel-black-highlight) !important;
+  color: #fff4eb !important;
+}
+html[data-design="paper"] .chatter-entry { color: #a34a16 !important; }
+html.dark[data-design="paper"] .chatter-entry { color: #f4a982 !important; }
+html[data-design="paper"] .selected-wave-edge { stroke: #c66d3d; }
+html[data-design="paper"] .lane-background { fill: var(--muted) !important; }
+html[data-design="paper"] .lane-background.lane-active { fill: var(--accent) !important; }
+html:not(.dark)[data-design="paper"] .lane-background { fill: #fbf8f1 !important; }
+html:not(.dark)[data-design="paper"] .grid-line { stroke: #c8bdad; }
+html:not(.dark)[data-design="paper"] .lane-line { stroke: #a99d8d; }
+html:not(.dark)[data-design="paper"] .wave-segment:not(.pressed-segment) { fill: #59636b; }
+html[data-design="paper"] :is(button:not([data-slot="switch"]),input[type="number"]):not(:disabled):not([aria-disabled="true"]):hover {
+  background: var(--control-hover) !important;
+  color: var(--control-hover-foreground) !important;
+  border-color: var(--control-highlight) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--control-highlight) 20%, transparent) !important;
+}
+html[data-design="paper"] [data-slot="switch"]:not(:disabled):not([aria-disabled="true"]):hover {
+  border-color: var(--control-highlight) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--control-highlight) 30%, transparent) !important;
+}
+html[data-design="paper"] :is(.side-buttons button.selected,.mode-row button.mode-selected,.log-filter button.log-filter-selected,.wave-mode button.wave-mode-selected,button[data-state="active"][role="tab"]) {
+  background: var(--control-selected) !important;
+  color: #fffaf4 !important;
+  border-color: var(--control-selected) !important;
+}
+html[data-design="paper"] :is(.side-buttons button.selected,.mode-row button.mode-selected,.log-filter button.log-filter-selected,.wave-mode button.wave-mode-selected,button[data-state="active"][role="tab"]):not(:disabled):not([aria-disabled="true"]):hover {
+  background: var(--control-selected) !important;
+  color: #fffaf4 !important;
+}
+html[data-design="paper"] .sidebar-item:focus-visible { outline-color: #f3b08d; }
+html[data-design="paper"] .app-header .reset-action-button:hover {
+  border-color: var(--primary) !important;
+  background: var(--accent) !important;
+}
+@media (max-height: 620px) and (min-width: 681px) {
+  html[data-design="paper"] .sidebar-item { padding-top: 5px; padding-bottom: 5px; }
+}

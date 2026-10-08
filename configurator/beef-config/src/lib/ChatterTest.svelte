@@ -10,6 +10,7 @@
 	import { diagnosticEventSlots } from '$lib/types/chatter-events';
 	import { WaveClock } from '$lib/types/wave-history';
 	import { replayDebounce } from '$lib/types/wave-debounce';
+	import { measureWaveInterval } from '$lib/types/wave-measure';
 
 	let { config, active }: { config: Config; active: boolean } = $props();
 	let outputButtons = $state(0);
@@ -30,6 +31,7 @@
 	let fixedViewEnd = $state(0);
 	let selectedLogId = $state<number>();
 	let waveFocus = $state<{ timestamp: number; buttonIndex: number }>();
+	let measurementEdges = $state<number[]>([]);
 	let wavePanned = $state(false);
 	let waveDragging = $state(false);
 	let wavePointer: { id: number; x: number; end: number; scale: number; minCenter: number; maxCenter: number; markerId?: string } | undefined;
@@ -73,6 +75,12 @@
 	const displayedEnd = $derived(detailView ? detailView.centerTimestamp + detailWindowMs / 2 : viewEnd);
 	const replayedSamples = $derived(replayDebounce(detailView?.samples ?? signalSamples,
 		config.iidx_button_debounce, config.sdvx_keys.button_release_debounce, detailView?.gaps ?? waveGaps));
+	const intervalMeasurement = $derived(detailView && measurementEdges.length === 2
+		? measureWaveInterval((waveMode === 'before' ? detailView.samples : replayedSamples)
+			.filter(sample => sample.buttonIndex === detailView?.entry.buttonIndex),
+			measurementEdges[0], measurementEdges[1], detailView.gaps) : undefined);
+	const measurementPositions = $derived(measurementEdges.map(timestamp => 48 +
+		(timestamp - displayedEnd + displayedWindowMs) / displayedWindowMs * 646));
 	const displayedGaps = $derived((detailView?.gaps ?? waveGaps)
 		.filter((gap) => gap.end >= displayedEnd - displayedWindowMs && gap.start <= displayedEnd)
 		.map((gap) => {
@@ -107,6 +115,7 @@
 	}
 
 	function showLogDetail(entry: (typeof edgeEvents)[number], centerTimestamp = entry.waveTimestamp): void {
+		measurementEdges = [];
 		wavePanned = false;
 		waveFocus = undefined;
 		detailView = {
@@ -124,16 +133,20 @@
 
 	function focusWaveAt(buttonIndex: number, timestamp: number): void {
 		if (timestamp < 0 || timestamp > (detailView?.availableUntil ?? waveformNow)) return;
+		if (detailView) {
+			const edges = waveforms.find(wave => wave.buttonIndex === buttonIndex)?.edgeLabels ?? [];
+			const edge = edges.find(edge => Math.abs(edge.timestamp - timestamp) < 1e-7);
+			if (!edge) return;
+			if (measurementEdges.some(selected => Math.abs(selected - edge.timestamp) < 1e-7)) return;
+			measurementEdges = measurementEdges.length === 1 ? [...measurementEdges, edge.timestamp] : [edge.timestamp];
+			return;
+		}
 		const tolerance = displayedWindowMs * 10 / 646;
 		const nearby = edgeEvents.filter((entry) => entry.buttonIndex === buttonIndex)
 			.reduce<(typeof edgeEvents)[number] | undefined>((closest, entry) =>
 				!closest || Math.abs(entry.waveTimestamp - timestamp) < Math.abs(closest.waveTimestamp - timestamp) ? entry : closest, undefined);
 		const entry = nearby && Math.abs(nearby.waveTimestamp - timestamp) <= tolerance ? nearby : undefined;
-		if (detailView) {
-			detailView.centerTimestamp = timestamp;
-			if (entry) { detailView.entry = { ...entry }; selectedLogId = entry.id; }
-		}
-		else selectedLogId = entry?.id;
+		selectedLogId = entry?.id;
 		wavePanned = false;
 		waveFocus = { timestamp, buttonIndex };
 		viewingLive = false;
@@ -171,10 +184,10 @@
 		const toleranceY = 6 * 320 / bounds.height;
 		const wave = waveforms.find((wave) => y >= wave.high - toleranceY && y <= wave.low + toleranceY);
 		if (!wave) return;
-		const edge = wave.transitions.reduce<number | undefined>((closest, edge) =>
-			closest === undefined || Math.abs(edge - x) < Math.abs(closest - x) ? edge : closest, undefined);
-		if (edge === undefined || Math.abs(edge - x) > toleranceX) return;
-		focusWaveAt(wave.buttonIndex, displayedEnd - displayedWindowMs + (edge - 48) / 646 * displayedWindowMs);
+		const edge = wave.edgeLabels.reduce<(typeof wave.edgeLabels)[number] | undefined>((closest, edge) =>
+			closest === undefined || Math.abs(edge.x - x) < Math.abs(closest.x - x) ? edge : closest, undefined);
+		if (edge === undefined || Math.abs(edge.x - x) > toleranceX) return;
+		focusWaveAt(wave.buttonIndex, edge.timestamp);
 	}
 
 	function startWaveDrag(event: PointerEvent): void {
@@ -230,9 +243,9 @@
 		if (event.key !== 'Enter' && event.key !== ' ') return;
 		event.preventDefault();
 		const wave = waveforms.find((wave) => wave.buttonIndex === (detailView?.entry.buttonIndex ?? selectedLog?.buttonIndex ?? 0));
-		const edge = wave?.transitions.reduce<number | undefined>((closest, edge) =>
-			closest === undefined || Math.abs(edge - 371) < Math.abs(closest - 371) ? edge : closest, undefined);
-		if (wave && edge !== undefined) focusWaveAt(wave.buttonIndex, displayedEnd - displayedWindowMs + (edge - 48) / 646 * displayedWindowMs);
+		const edge = wave?.edgeLabels.reduce<(typeof wave.edgeLabels)[number] | undefined>((closest, edge) =>
+			closest === undefined || Math.abs(edge.x - 371) < Math.abs(closest.x - 371) ? edge : closest, undefined);
+		if (wave && edge !== undefined) focusWaveAt(wave.buttonIndex, edge.timestamp);
 	}
 
 	function closeLogDetail(): void {
@@ -398,7 +411,7 @@
 
 	const waveforms = $derived.by(() => labels.flatMap((label, buttonIndex) => {
 		if (detailView && buttonIndex !== detailView.entry.buttonIndex) return [];
-		const y = detailView ? 160 : 34 + buttonIndex * 41;
+		const y = detailView ? 160 : 34 + buttonIndex * 38;
 		const windowStart = displayedEnd - displayedWindowMs;
 		const sourceSamples = (waveMode === 'before' ? detailView?.samples ?? signalSamples
 			: replayedSamples)
@@ -411,6 +424,7 @@
 		let startX = 48;
 		const segments: { x: number; width: number; pressed: boolean }[] = [];
 		const transitions: number[] = [];
+		const edgeLabels: { x: number; pressed: boolean; timestamp: number }[] = [];
 		const points: { x: number; phase: 'press' | 'release'; pressed: boolean; id: number }[] = [];
 		for (const sample of samples) {
 			const nextState = sample.pressed;
@@ -418,6 +432,7 @@
 			const x = Math.max(48, Math.min(694, 48 + (sample.timestamp - windowStart) / displayedWindowMs * 646));
 			segments.push({ x: startX, width: Math.max(0, x - startX), pressed: state });
 			transitions.push(x);
+			edgeLabels.push({ x, pressed: nextState, timestamp: sample.timestamp });
 			startX = x;
 			state = nextState;
 		}
@@ -435,7 +450,7 @@
 			? Math.max(48, Math.min(694, 48 + (focusTimestamp - windowStart) / displayedWindowMs * 646)) : undefined;
 		const detailTimestamp = detailView?.centerTimestamp;
 		const displayedPressed = sourceSamples.findLast((sample) => sample.timestamp <= (detailTimestamp ?? waveformNow))?.pressed ?? false;
-		return [{ label, buttonIndex, y, high, low, segments, transitions, points, selectedX, active: displayedPressed }];
+		return [{ label, buttonIndex, y, high, low, segments, transitions, edgeLabels, points, selectedX, active: displayedPressed }];
 	}));
 
 	$effect(() => {
@@ -644,55 +659,80 @@
 {:else}
 	<div class="chatter-test">
 		<div class="left-column">
-			<section class="panel waveform-panel" aria-label={tr('チャタリング波形', 'Chatter waveform')}>
+			<section class="panel waveform-panel" class:wave-detail-panel={detailView !== undefined} aria-label={tr('チャタリング波形', 'Chatter waveform')}>
 				<div class="panel-heading wave-heading">
 					<div class="wave-title">
-						<h2>{detailView ? `${detailView.entry.button} ${tr('詳細', 'details')} · 50ms` : tr('チャタリング波形', 'Chatter waveform')}</h2>
+						<h2>{detailView ? `${tr('入力波形', 'Input waveform')} — ${detailView.entry.button} · 50ms` : tr('チャタリング波形', 'Chatter waveform')}</h2>
 						<HelpText label={tr('チャタリング波形と詳細表示', 'Chatter waveform and details')} side="bottom" sideOffset={8} wrap>
-							<p>{tr('ログを選んで「詳細」で50ms表示。「戻る」で選択ログへ戻ります。エッジクリックで選択、ドラッグで移動。新入力またはEscで最新表示へ戻ります。', 'Select a log and press Details for 50ms; Back returns to that log. Click an edge to focus, drag to pan. New input or Esc returns to live view.')}</p>
+							<p>{tr('「詳細」で50ms表示。2つのエッジを選ぶと区間・押下・解放時間を測定します。3つ目で選び直し、ドラッグで移動。「戻る」で選択ログへ、新入力・Escで最新へ戻ります。', 'Details shows 50ms. Select two edges to measure total, pressed and released time. A third edge starts a new measurement; drag to pan. Back returns to the log; new input or Esc returns to live view.')}</p>
 						</HelpText>
 					</div>
 					<div class="wave-actions">
 						<div class="wave-mode" role="group" aria-label={tr('波形の表示', 'Waveform display')}>
-							<button type="button" class:wave-mode-selected={waveMode === 'before'} aria-pressed={waveMode === 'before'} onclick={() => waveMode = 'before'}>{tr('抑制前', 'Before suppression')}</button>
-							<button type="button" class:wave-mode-selected={waveMode === 'after'} aria-pressed={waveMode === 'after'} onclick={() => waveMode = 'after'}>{tr('抑制後', 'After suppression')}</button>
+							<button type="button" class:wave-mode-selected={waveMode === 'before'} aria-pressed={waveMode === 'before'} onclick={() => { if (waveMode !== 'before') measurementEdges = []; waveMode = 'before'; }}>{tr('抑制前', 'Before suppression')}</button>
+							<button type="button" class:wave-mode-selected={waveMode === 'after'} aria-pressed={waveMode === 'after'} onclick={() => { if (waveMode !== 'after') measurementEdges = []; waveMode = 'after'; }}>{tr('抑制後', 'After suppression')}</button>
 						</div>
 					{#if detailView}
-						<button type="button" class="wave-detail-button" onclick={closeLogDetail}>{tr('戻る', 'Back')}</button>
-					{:else}
-						<button type="button" class="wave-detail-button" disabled={!selectedLog} onclick={() => { if (selectedLog) showLogDetail(selectedLog); }} title={tr('入力ログを選択して、そのボタンの50ms波形を表示します。', 'Select an input log to show its button waveform over 50ms.')} data-testid="wave-detail">{tr('詳細', 'Details')}</button>
-					{/if}
-					</div>
-				</div>
-
-				{#if detailView}
-					<div class="detail-info" data-testid="wave-detail-info"><span>{detailView.entry.pressed ? tr('押下', 'Press') : tr('解放', 'Release')}</span><span>{selectedLog!.phase === 'press' ? tr('押下時', 'On press') : tr('解放時', 'On release')}</span><span>{tr('間隔', 'Interval')} {(detailView.entry.interval / 10).toFixed(1)}ms</span><span>{tr('設定値', 'Setting')} {(selectedLog!.threshold / 10).toFixed(1)}ms</span><span class:detail-chatter={selectedLog!.chatter}>{selectedLog!.chatter ? tr('チャタリング検知', 'Chatter detected') : tr('通常入力', 'Normal input')}</span></div>
-				{/if}
-				<div class="wave-legend"><span class="legend-press">{tr('押下中', 'Pressed')}</span><span class="legend-release">{tr('解放中', 'Released')}</span><span class="legend-chatter">{tr('チャタリング', 'Chatter')}</span>{#if displayedGaps.length}<span class="wave-note missing-note">{tr('入力イベントの欠落あり・再現できない区間', 'Missing input events: this range cannot be replayed')}</span>{/if}</div>
+  <button type="button" class="wave-detail-button" onclick={closeLogDetail}>{tr('戻る', 'Back')}</button>
+{:else}
+  <button type="button" class="wave-detail-button" disabled={!selectedLog} onclick={() => { if (selectedLog) showLogDetail(selectedLog); }} title={tr('入力ログを選択して、そのボタンの50ms波形を表示します。', 'Select an input log to show its button waveform over 50ms.')} data-testid="wave-detail">{tr('詳細', 'Details')}</button>
+{/if}
+</div>
+</div>
+<div class="wave-legend"><span class="legend-press">{tr('押下中', 'Pressed')}</span><span class="legend-release">{tr('解放中', 'Released')}</span><span class="legend-chatter">{tr('チャタリング', 'Chatter')}</span>{#if displayedGaps.length}<span class="wave-note missing-note">{tr('入力イベントの欠落あり・再現できない区間', 'Missing input events: this range cannot be replayed')}</span>{/if}</div>
 				<svg class="waveform" class:detail-waveform={detailView !== undefined} viewBox="0 0 700 320" preserveAspectRatio="none" role="button" tabindex="0" class:wave-dragging={waveDragging} onpointerdown={startWaveDrag} onpointermove={moveWaveDrag} onpointerup={stopWaveDrag} onpointercancel={stopWaveDrag} onlostpointercapture={stopWaveDrag} onkeydown={focusWaveFromKeyboard} aria-label={detailView ? `${detailView.entry.button} ${tr('詳細波形・50ms', 'detail waveform, 50ms')}` : tr('ボタン入力波形', 'Button input waveform')} data-testid="button-waveform">
+					{#if detailView}
+						<rect x="48" y="10" width="646" height="275" rx="4" class="detail-plot-background" />
+						{#each Array.from({ length: 21 }, (_, i) => i) as tick}
+							<line x1={48 + tick * 32.3} x2={48 + tick * 32.3} y1="10" y2="285" class="minor-grid-line" />
+						{/each}
+					{/if}
 					{#each [0, 1, 2, 3, 4] as tick}
-						<line x1={48 + tick * 161.5} x2={48 + tick * 161.5} y1="10" y2={detailView ? 285 : 310} class="grid-line" />
-						{#if detailView}<text x={48 + tick * 161.5} y="310" text-anchor={tick === 0 ? 'start' : tick === 4 ? 'end' : 'middle'} class="time-label">{tick === 2 ? '0' : `${tick > 2 ? '+' : ''}${-25 + tick * 12.5}`}ms</text>{/if}
+						<line x1={48 + tick * 161.5} x2={48 + tick * 161.5} y1="10" y2="285" class="grid-line" />
+						<text x={48 + tick * 161.5} y="310" text-anchor={tick === 0 ? 'start' : tick === 4 ? 'end' : 'middle'} class="time-label">{detailView ? tick * 12.5 : Math.round(-displayedWindowMs + tick * displayedWindowMs / 4)}ms</text>
 					{/each}
+					{#if detailView && measurementPositions.length === 2}
+						<rect x={Math.max(48, Math.min(...measurementPositions))} y="45" width={Math.max(0, Math.min(694, Math.max(...measurementPositions)) - Math.max(48, Math.min(...measurementPositions)))} height="220" class="measurement-range" />
+					{/if}
 					{#each waveforms as wave}
-						<rect x="0" y={wave.y - (detailView ? 125 : 19)} width="700" height={detailView ? 250 : 38} rx="5" class:lane-active={!detailView && wave.active} class="lane-background" />
+						{#if !detailView}<rect x="0" y={wave.y - 17} width="700" height="34" rx="5" class:lane-active={wave.active} class="lane-background" />{/if}
 						<circle cx="9" cy={wave.y} r="7" class:status-active={wave.active} class="status-dot" />
 						<text x="18" y={wave.y + 4} class:label-active={wave.active} class="wave-label">{wave.label}</text>
 						<line x1="48" x2="694" y1={wave.low} y2={wave.low} class="lane-line" />
+						{#if !detailView}<line x1="0" x2="694" y1={wave.y + 19} y2={wave.y + 19} class="lane-divider" />{/if}
+						{#if detailView}
+							<line x1="48" x2="694" y1={wave.high} y2={wave.high} class="lane-line" />
+							<text x="44" y={wave.high - 12} text-anchor="end" class="state-label">{tr('押下', 'ON')}</text>
+							<text x="44" y={wave.low + 24} text-anchor="end" class="state-label">{tr('解放', 'OFF')}</text>
+						{/if}
 						{#each wave.segments as segment}
-							<rect x={segment.x} y={segment.pressed ? wave.high - 4 : wave.low - 2} width={segment.width} height={segment.pressed ? 16 : 4} rx="2" class:pressed-segment={segment.pressed} class="wave-segment" />
+							{#if detailView}
+								<line x1={segment.x} x2={segment.x + segment.width} y1={segment.pressed ? wave.high : wave.low} y2={segment.pressed ? wave.high : wave.low} class="detail-signal" />
+							{:else}
+							<line x1={segment.x} x2={segment.x + segment.width} y1={segment.pressed ? wave.high : wave.low} y2={segment.pressed ? wave.high : wave.low} class:signal-pressed={segment.pressed} class="overview-signal" />
+							{/if}
 						{/each}
 						{#each wave.transitions as x}
-							<line x1={x} x2={x} y1={wave.high} y2={wave.low} class="wave-transition" />
+							<line x1={x} x2={x} y1={wave.high} y2={wave.low} class:overview-transition={!detailView} class="wave-transition" />
 						{/each}
 						{#each wave.points as point (point.id)}
+							{#if detailView}<line x1={point.x} x2={point.x} y1="50" y2="260" class="detail-chatter-guide" />{/if}
 							<line x1={point.x} x2={point.x} y1={(point.pressed ? wave.high : wave.low) - 7} y2={(point.pressed ? wave.high : wave.low) + 7} class="chatter-marker" />
 							<circle cx={point.x} cy={point.pressed ? wave.high : wave.low} r="5" class="chatter-marker-point" data-wave-marker-id={point.id}><title>{wave.label} · {point.phase === 'press' ? tr('押下時', 'On press') : tr('解放時', 'On release')} · {tr('チャタリング', 'Chatter')}</title></circle>
 						{/each}
-						{#if wave.selectedX !== undefined}
+						{#if wave.selectedX !== undefined && !detailView}
 							<line x1={wave.selectedX} x2={wave.selectedX} y1={detailView ? 20 : wave.high - 14} y2={detailView ? 285 : wave.low + 14} class="selected-wave-edge" data-testid="selected-wave-edge" />
 						{/if}
+						{#if detailView}{#each wave.edgeLabels as edge}
+							<circle cx={edge.x} cy={edge.pressed ? wave.high : wave.low} r="6" class="detail-edge-hit"><title>{edge.pressed ? tr('押下', 'Press') : tr('解放', 'Release')}</title></circle>
+						{/each}{/if}
 					{/each}
+					{#if detailView}{#each measurementPositions as x, index}
+						{#if x >= 48 && x <= 694}
+							<line x1={x} x2={x} y1="40" y2="280" class="measurement-edge" data-testid="measurement-edge" />
+							<text x={Math.max(58, Math.min(684, x))} y="30" text-anchor="middle" class="measurement-number">{index + 1}</text>
+							{/if}
+					{/each}{/if}
 					{#each displayedGaps as gap}
 						<rect x={gap.x} y="10" width={gap.width} height={detailView ? 275 : 300} class="missing-wave" data-testid="wave-gap"><title>{tr('入力イベントを取得できなかった範囲', 'Range with missing input events')}</title></rect>
 					{/each}
@@ -701,13 +741,29 @@
 						{#if 694 - detailUnavailableX > 55}<text x={(detailUnavailableX + 694) / 2} y="270" text-anchor="middle" class="time-label">{tr('未取得', 'No data')}</text>{/if}
 					{/if}
 				</svg>
-				{#if !detailView}<div class="wave-history">
+				<div class="wave-footer">
+				{#if detailView}
+					<div class="detail-info" data-testid="wave-detail-info"><span>{detailView.entry.pressed ? tr('押下', 'Press') : tr('解放', 'Release')}</span><span>{selectedLog!.phase === 'press' ? tr('押下時', 'On press') : tr('解放時', 'On release')}</span><span>{tr('間隔', 'Interval')} {(detailView.entry.interval / 10).toFixed(1)}ms</span><span>{tr('設定値', 'Setting')} {(selectedLog!.threshold / 10).toFixed(1)}ms</span><span class:detail-chatter={selectedLog!.chatter}>{selectedLog!.chatter ? tr('チャタリング検知', 'Chatter detected') : tr('通常入力', 'Normal input')}</span></div>
+					<div class="measurement-info" aria-live="polite" data-testid="wave-measurement">
+						{#if intervalMeasurement}
+							<span>{tr('区間', 'Interval')} <b>{intervalMeasurement.total.toFixed(1)} ms</b></span>
+							<span>{tr('押下', 'Pressed')} <b>{intervalMeasurement.pressed.toFixed(1)} ms</b></span>
+							<span>{tr('解放', 'Released')} <b>{intervalMeasurement.released.toFixed(1)} ms</b></span>
+						{:else}
+							<span>{measurementEdges.length === 2 ? tr('欠落または設定変更により測定できません。選び直してください。', 'Cannot measure across missing data or changed edges. Select again.') : measurementEdges.length === 1 ? tr('2つ目のエッジを選択してください', 'Select the second edge') : tr('2つのエッジを選択して区間を測定', 'Select two edges to measure an interval')}</span>
+						{/if}
+						<button type="button" disabled={!measurementEdges.length} onclick={() => measurementEdges = []}>{tr('解除', 'Clear')}</button>
+					</div>
+				{:else}
+				<div class="wave-history">
 					<input type="range" min="0" max={maxBackMs} step="any" value={viewBackMs} oninput={moveWaveHistory} aria-label={tr('波形履歴', 'Waveform history')} title={tr('左へ動かすと保持中の入力ログまでさかのぼります。右端で最新の波形に戻ります。', 'Move left to review the retained input log. Move to the right edge to follow live input.')} data-testid="wave-history" />
-				</div>{/if}
+				</div>
 				<div class="summary-row">
 					<div class="summary total"><span>{tr('総エッジ数', 'Total edges')}</span><strong>{totalEdges}</strong></div>
 					<div class="summary chatter"><span>{tr('検知数', 'Detected')}</span><strong>{detectedCount}</strong></div>
 					<div class="summary percent"><span>{tr('割合', 'Percent')}</span><strong>{detectionRate.toFixed(1)}%</strong></div>
+				</div>
+				{/if}
 				</div>
 			</section>
 			<section class="panel log-panel" aria-label={tr('入力ログ', 'Input log')}>
@@ -772,6 +828,31 @@
 {/if}
 
 <style>
+
+	.detail-waveform { border:1px solid var(--border); border-radius:6px; }
+	.detail-plot-background { fill:var(--card); }
+	.minor-grid-line { stroke:var(--muted-foreground); stroke-opacity:.09; stroke-width:1; }
+	.detail-waveform .grid-line { stroke:var(--muted-foreground); stroke-opacity:.22; }
+	.detail-waveform .lane-line { stroke:var(--muted-foreground); stroke-opacity:.2; stroke-dasharray:3 4; }
+	.detail-signal { stroke:var(--primary); stroke-width:3; vector-effect:non-scaling-stroke; }
+	.detail-waveform .wave-transition { stroke:var(--primary); stroke-width:3; vector-effect:non-scaling-stroke; }
+	.detail-chatter-guide { stroke:#d97706; stroke-width:1.2; stroke-dasharray:4 4; opacity:.65; }
+	.detail-waveform .chatter-marker { stroke:#d97706; }
+	.detail-waveform .chatter-marker-point { fill:#d97706; stroke:var(--card); }
+	.detail-waveform .selected-wave-edge { stroke:var(--primary); stroke-width:1.5; stroke-dasharray:5 4; }
+	.state-label { fill:var(--foreground); font-size:15px; font-weight:600; }
+	.measurement-range { fill:var(--primary); opacity:.09; pointer-events:none; }
+	.measurement-edge { stroke:var(--primary); stroke-width:1.5; stroke-dasharray:4 3; pointer-events:none; vector-effect:non-scaling-stroke; }
+	.measurement-number { fill:var(--primary); font-size:19px; font-weight:700; pointer-events:none; }
+	.measurement-info { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; padding:5px 7px; margin-top:5px; border:1px solid var(--border); border-radius:5px; font-size:.7rem; color:var(--muted-foreground); font-variant-numeric:tabular-nums; }
+	.measurement-info b { color:var(--foreground); }
+	.measurement-info button { margin-left:auto; border:1px solid var(--border); border-radius:4px; padding:1px 5px; background:var(--card); color:var(--foreground); cursor:pointer; }
+	.measurement-info button:disabled { opacity:.4; cursor:default; }
+	.detail-edge-hit { fill:transparent; cursor:pointer; }
+	.wave-footer { flex:0 0 72px; height:72px; display:flex; flex-direction:column; justify-content:space-between; gap:3px; padding-top:3px; }
+	.wave-legend .legend-press::before { background:var(--primary); }
+	.wave-detail-panel .legend-release::before { background:var(--primary); }
+	.wave-legend .legend-chatter::before { background:#d97706; }
 	.chatter-test { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr); gap:10px; align-items:stretch; height:100%; min-height:0; }
 	.left-column { display:grid; grid-template-rows:minmax(0,1fr) 264px; gap:4px; min-width:0; min-height:0; }
 	.panel { min-width:0; border:1px solid var(--border); border-radius:12px; background:var(--card); padding:10px; }
@@ -796,16 +877,19 @@
 	.wave-label.label-active { fill:#0369a1; }
 	:global(.dark) .wave-label { fill:#cbd5e1; }
 	:global(.dark) .wave-label.label-active { fill:#67e8f9; }
-	.wave-segment { fill:#64748b; }
-	.wave-segment.pressed-segment { fill:#22d3ee; }
+	.overview-signal { stroke:var(--muted-foreground); stroke-width:1.5; vector-effect:non-scaling-stroke; }
+	.overview-signal.signal-pressed { stroke:var(--primary); }
+	.wave-transition.overview-transition { stroke:var(--primary); stroke-width:1.5; vector-effect:non-scaling-stroke; }
+	.lane-divider { stroke:var(--border); stroke-width:1; stroke-opacity:.55; }
 	.wave-transition { stroke:#22d3ee; stroke-width:3; }
 	.chatter-marker { stroke:#c2410c; stroke-width:4; }
 	.chatter-marker-point { fill:#c2410c; stroke:#0f172a; stroke-width:1.4; }
 	.selected-wave-edge { stroke:#facc15; stroke-width:3; stroke-dasharray:4 3; }
 	.time-label { fill:var(--muted-foreground); font-size:18px; }
 	.unavailable-wave { fill:var(--card); opacity:.9; }
-	.wave-heading { flex-wrap:wrap; gap:4px; }
-	.wave-title { display:flex; align-items:center; gap:6px; min-width:0; }
+	.wave-heading { flex-wrap:nowrap; gap:4px; }
+	.wave-title { display:flex; align-items:center; gap:6px; min-width:0; overflow:hidden; }
+	.wave-title h2 { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 	.wave-actions { display:flex; align-items:center; gap:6px; margin-left:auto; flex-shrink:0; }
 	.wave-mode { display:flex; gap:4px; }
 	.wave-mode button { border:1px solid var(--border); border-radius:5px; padding:3px 6px; background:var(--card); color:var(--foreground); font-size:.7rem; cursor:pointer; }
