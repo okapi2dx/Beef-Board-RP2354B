@@ -6,7 +6,7 @@ const { pathToFileURL } = require('node:url');
 const { ORIGIN, trusted, allowedDevice } = require('./policy.cjs');
 const { waitForHidDevice } = require('./hid-chooser.cjs');
 const { createFlasher } = require('./native-flash.cjs');
-const { checkForUpdate } = require('./update-check.cjs');
+const { checkForUpdate, checkForFirmwareUpdate } = require('./update-check.cjs');
 
 const startupLogPath = path.join(os.tmpdir(), 'Beef Board Configurator-startup.log');
 function startupLog(message) {
@@ -124,6 +124,15 @@ async function start() {
       return await checkForUpdate((url, options) => net.fetch(url, options), app.getVersion());
     } catch (error) {
       console.warn('Update check failed:', error);
+      return null;
+    }
+  });
+  ipcMain.handle('beef:check-firmware-update', async (event, board, currentVersion) => {
+    authorize(event);
+    try {
+      return await checkForFirmwareUpdate((url, options) => net.fetch(url, options), board, currentVersion);
+    } catch (error) {
+      console.warn('Firmware update check failed:', error);
       return null;
     }
   });

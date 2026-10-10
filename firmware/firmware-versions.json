@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "firmwares": {
+    "rp2354b": {
+      "version": "1.0.0",
+      "asset": "Beef-Board-RP2354B.uf2"
+    },
+    "at90": {
+      "version": "1.0.0",
+      "asset": "Beef-Board-AT90USB1286.hex"
+    }
+  }
+}

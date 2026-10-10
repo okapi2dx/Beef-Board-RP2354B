@@ -34,6 +34,7 @@
 	let nativeFlash = $state(false);
 	let appVersion = $state('');
 	let updateInfo = $state<Awaited<ReturnType<NonNullable<Window['beefNative']>['checkForUpdates']>>>(null);
+	let firmwareUpdate = $state<Awaited<ReturnType<NonNullable<Window['beefNative']>['checkForFirmwareUpdates']>>>(null);
 	let firmwareInfo = $state<FirmwareInfo | null>(null);
 	let resetDialogOpen = $state(false);
 	let firmwareTarget = $state<'auto' | 'rp2354b' | 'at90'>('auto');
@@ -138,12 +139,26 @@
 			firmwareInfo = null;
 			return;
 		}
+		firmwareInfo = null;
 		void readFirmwareInfo().then((info) => {
 			if (appState.device === current) firmwareInfo = info;
 		}).catch(() => {
 			if (appState.device === current) firmwareInfo = null;
 		});
 	});
+    $effect(() => {
+        const device = appState.device;
+        const version = firmwareInfo?.version;
+        const boardInfo = appState.boardInfo;
+        firmwareUpdate = null;
+        if (!device || !version || !boardInfo || !window.beefNative?.checkForFirmwareUpdates) return;
+        const board = isRp2354bBoard(boardInfo) ? 'rp2354b' : 'at90';
+        let cancelled = false;
+        void window.beefNative.checkForFirmwareUpdates(board, version).then(result => {
+            if (!cancelled && appState.device === device) firmwareUpdate = result;
+        }).catch(() => {});
+        return () => { cancelled = true; };
+    });
 </script>
 
 <main class="app-shell">
@@ -186,6 +201,18 @@
 		</Alert>
 	{/if}
 
+    {#if appState.device && firmwareUpdate?.updateAvailable}
+        <Alert class="mb-4" data-testid="firmware-update-notice">
+            <AlertTitle>{tr('新しいファームウェアがあります', 'New firmware available')}</AlertTitle>
+            <AlertDescription class="flex flex-wrap items-center justify-between gap-3">
+                <span>{firmwareUpdate.board === 'rp2354b' ? 'RP2354B' : 'AT90USB1286'} · {formatDisplayVersion(firmwareUpdate.currentVersion)} → {formatDisplayVersion(firmwareUpdate.latestVersion)}</span>
+                <div class="flex gap-2">
+                    <Button variant="outline" size="sm" onclick={() => { firmwareTarget = firmwareUpdate!.board; activeTab = Tab.Firmware; }}>{tr('更新方法を確認', 'How to update')}</Button>
+                    <Button variant="outline" size="sm" onclick={() => window.beefNative?.openUpdate(firmwareUpdate!.releaseUrl)}>{tr('Releaseを開く', 'Open Release')}</Button>
+                </div>
+            </AlertDescription>
+        </Alert>
+    {/if}
 	{#if loading}
 		<Skeleton class="h-10" />
 	{:else if !browserSupported}

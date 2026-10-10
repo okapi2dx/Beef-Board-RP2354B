@@ -19,6 +19,10 @@ declare global {
 				releaseUrl: string;
 				updateAvailable: boolean;
 			} | null>;
+            checkForFirmwareUpdates(board: 'rp2354b' | 'at90', version: string): Promise<{
+                board: 'rp2354b' | 'at90'; currentVersion: string; latestVersion: string;
+                releaseUrl: string; updateAvailable: boolean;
+            } | null>;
 			openUpdate(url: string): Promise<void>;
 			onLog(callback: (text: string) => void): () => void;
 		};

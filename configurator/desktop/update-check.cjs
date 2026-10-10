@@ -42,4 +42,30 @@ async function checkForUpdate(fetchImpl, currentVersion) {
   };
 }
 
-module.exports = { RELEASE_API, parseVersion, compareVersions, checkForUpdate };
+const FIRMWARE_ASSETS = {
+  rp2354b: 'Beef-Board-RP2354B.uf2',
+  at90: 'Beef-Board-AT90USB1286.hex'
+};
+async function checkForFirmwareUpdate(fetchImpl, board, currentVersion) {
+  if (!Object.hasOwn(FIRMWARE_ASSETS, board) || !parseVersion(currentVersion)) throw new Error('Invalid firmware update request');
+  const response = await fetchImpl(RELEASE_API, { signal: AbortSignal.timeout(10000), headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Beef-Board-Configurator' } });
+  if (!response.ok) throw new Error(`Firmware release check failed (${response.status})`);
+  const release = await response.json();
+  const releaseUrl = String(release.html_url || '');
+  const prefix = 'https://github.com/okapi2dx/Beef-Board-RP2354B/';
+  if (!releaseUrl.startsWith(prefix + 'releases/tag/')) throw new Error('Invalid firmware release URL');
+  const assets = Array.isArray(release.assets) ? release.assets : [];
+  const metadata = assets.find(asset => asset.name === 'firmware-versions.json');
+  if (!metadata) return null;
+  if (typeof metadata.browser_download_url !== 'string' || !metadata.browser_download_url.startsWith(prefix + 'releases/download/')) throw new Error('Invalid firmware metadata URL');
+  const manifestResponse = await fetchImpl(metadata.browser_download_url, { signal: AbortSignal.timeout(10000) });
+  if (!manifestResponse.ok) throw new Error('Firmware metadata download failed');
+  const manifest = await manifestResponse.json();
+  if (manifest.schemaVersion !== 1) throw new Error('Unsupported firmware metadata');
+  const entry = manifest.firmwares?.[board];
+  if (!entry) return null;
+  if (!parseVersion(entry.version) || entry.asset !== FIRMWARE_ASSETS[board]) throw new Error('Invalid firmware metadata');
+  if (!assets.some(asset => asset.name === entry.asset && asset.state === 'uploaded')) return null;
+  return { board, currentVersion, latestVersion: entry.version, releaseUrl, updateAvailable: compareVersions(entry.version, currentVersion) > 0 };
+}
+module.exports = { RELEASE_API, parseVersion, compareVersions, checkForUpdate, checkForFirmwareUpdate };

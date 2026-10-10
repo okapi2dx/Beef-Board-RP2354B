@@ -127,3 +127,9 @@ Sensitivity 6 is 1:1 encoder-to-X movement. Values 1–5 use value/6; 7–10 use
 Config bytes 71–72 store the little-endian multiplier in thousandths (0..2000). Reset uses 1000. Old sensitivity migrates to its multiplier. Both boards accumulate fractional encoder movement in thousandths; zero disables turntable input. The app exposes 0.000–2.000 at 0.001 increments. AT90 hardware sensitivity shortcuts adjust by 0.100.
 
 Factory reset uses a 0 ms hold on both boards. Switching to digital mode preserves the configured deadzone and hold; it does not apply a separate preset. RP diagnostics include B13/B14 when digital turntable mode is enabled. The app also derives these buttons from accepted output direction for compatibility with older RP diagnostics. AT90 hardware color shortcuts use qualified encoder motion without extending color changes through the hold period.
+
+## ファームウェア更新通知用の公開情報
+
+リリースに `firmware-versions.json` を、対応するUF2・HEXと一緒に添付します。このファイルの `firmwares.rp2354b.version` と `firmwares.at90.version` は、それぞれのファームウェアがHIDで返す実際のバージョンに合わせてください。アプリのバージョンとは独立して管理します。
+
+Configuratorは接続時に基板別のバージョンを比較し、新しいバージョンだけを通知します。通信に失敗した場合や、公開情報・対応バイナリがない場合は通知しません。同じバージョン番号のファームウェア差し替えは検出しません。

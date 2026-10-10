@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('beefNative', {
   authorizeHidIdentity: identity => ipcRenderer.invoke('beef:authorize-hid-identity', identity),
   getVersion: () => ipcRenderer.invoke('beef:get-version'),
   checkForUpdates: () => ipcRenderer.invoke('beef:check-update'),
+  checkForFirmwareUpdates: (board, version) => ipcRenderer.invoke('beef:check-firmware-update', board, version),
   openUpdate: url => ipcRenderer.invoke('beef:open-update', url),
   onLog: callback => {
     const listener = (_event, text) => callback(text);
