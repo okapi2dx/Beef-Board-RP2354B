@@ -8,6 +8,16 @@ Beef Board RP2354B の基板設計、ファームウェア、Windows 用 Configu
 
 Configurator は [HWXLR8/beef-board](https://github.com/HWXLR8/beef-board) を基にした Beef Board ソフトウェアのフォーク／派生コードを出発点として、RP2354B 対応を加えています。
 
+## 基板の接続案内
+
+端子の位置と用途をまとめた接続案内図です。J番号で接続先を確認できます。
+
+![Beef Board RP2354Bの端子位置と用途](docs/wiring/connection-guide.png)
+
+[接続案内図を拡大する](docs/wiring/connection-guide.png) · [SVG版](docs/wiring/connection-guide.svg)
+
+J18～J21の標準入力は **B9～B12** です。基板にはB8～B11と印字されています。キー割り当てを変更した場合は、設定した出力になります。
+
 ## Configurator
 
 RP2354B・AT90USB1286に対応するWindowsアプリです。入力、LED、キー割り当てを設定し、モニターと波形で動作を確認できます。
