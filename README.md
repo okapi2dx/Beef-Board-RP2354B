@@ -84,4 +84,4 @@ J2には2.54 mmピッチの3ピンヘッダとショートピンを取り付け�
 
 [接続案内図を拡大する](docs/wiring/connection-guide.png) · [SVG版](docs/wiring/connection-guide.svg)
 
-J18～J21の標準入力は **B9～B12** です。キー割り当てを変更した場合は、設定した出力になります。
+キー割り当てを変更した場合は、設定した出力になります。
