@@ -11317,5 +11317,4 @@ L30.3710 4.0700
 <text x="1190" y="1030" class="body">J60：リセット　J61：BOOTSEL</text>
 <text x="1190" y="1059" class="body">J33・J34：アナログ入力</text>
 <text x="40" y="982" class="sub">端子の用途を色分けしています。J番号で基板上の位置と右側の説明を確認できます。</text>
-<text x="40" y="1014" class="sub">B9〜B12の端子は、基板にはB8〜B11と印字されています。</text>
 </svg>
