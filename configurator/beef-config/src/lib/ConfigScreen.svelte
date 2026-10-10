@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HeadingIcon from '$lib/HeadingIcon.svelte';
 	import { onMount } from 'svelte';
 	import * as Tabs from '$lib/components/ui/tabs';
 
@@ -149,15 +150,16 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 
 <Tabs.Root bind:value={settingsTab}>
   {#if showTabs}
-  <Tabs.List class="mb-5 grid h-auto w-full grid-cols-5" aria-label={tr('設定カテゴリ', 'Settings categories')}>
+  <Tabs.List class="mb-5 grid h-auto w-full grid-cols-6" aria-label={tr('設定カテゴリ', 'Settings categories')}>
     <Tabs.Trigger value="input">{tr('入力設定', 'Input')}</Tabs.Trigger>
-    <Tabs.Trigger value="led">{tr('LED設定', 'LEDs')}</Tabs.Trigger>
+    <Tabs.Trigger value="led">{tr('ボタンLED設定', 'Button LEDs')}</Tabs.Trigger>
+    <Tabs.Trigger value="rgb">{tr('RGB LED設定', 'RGB LEDs')}</Tabs.Trigger>
     <Tabs.Trigger value="keys">{tr('キー割り当て', 'Key Bindings')}</Tabs.Trigger>
     <Tabs.Trigger value="monitor">{tr('モニター', 'Monitor')}</Tabs.Trigger>
     <Tabs.Trigger value="chatter">{tr('チャタリングテスト', 'Chatter Test')}</Tabs.Trigger>
   </Tabs.List>
   {/if}
-  <Tabs.Content value="input" class="settings-card">
+  <Tabs.Content value="input" class="settings-card input-card">
 	<div class="settings-group mode-settings mb-4">
 		<div class="mode-field">
 		<Label for="controller-type">{tr('コントローラーモード', 'Controller Mode')}</Label>
@@ -193,7 +195,7 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 
 	{#if Object.values(ControllerType).includes(config.controller_type)}
 		<div class="settings-group">
-			<h3 class="mb-2 text-xl font-bold">{tr('ターンテーブル', 'Turntable')}</h3>
+			<h3 class="icon-panel-heading mb-2 text-xl font-bold"><HeadingIcon kind="turntable" />{tr('ターンテーブル', 'Turntable')}</h3>
 
 			<Switch label={tr('回転方向を反転', 'Reverse Turntable')} bind:checked={config.reverse_tt} />
 			{#if config.version >= 20}
@@ -297,7 +299,7 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 			{#if config.version >= 15 && config.version < 34}
 				<Separator class="mb-4" />
 
-				<h3 class="mb-2 text-xl font-bold">{tr('チャタリング防止', 'Debouncing')}</h3>
+				<h3 class="icon-panel-heading mb-2 text-xl font-bold"><HeadingIcon kind="chatter" />{tr('チャタリング防止', 'Debouncing')}</h3>
 				<div class="mb-4">
 					<ToolTipLabel forId="iidx-button-debounce" label={tr('ボタンのデバウンス（ms）', 'Button Debounce (ms)')}>
 						<p>{tr('ボタンのチャタリングを防止します。', 'Prevents button switch chatter.')}</p>
@@ -318,18 +320,17 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 		</div>
 	{/if}
 </Tabs.Content>
-  <Tabs.Content value="led" class="settings-card">
+  <Tabs.Content value="led" class="settings-card led-card">
 	{#if Object.values(ControllerType).includes(config.controller_type)}
 		<div>
 			<div class="settings-group">
-			<h3 class="mb-2 text-xl font-bold">{tr('ライティング', 'Lights')}</h3>
+			<h3 class="icon-panel-heading mb-2 text-xl font-bold"><HeadingIcon kind="led" />{tr('ボタンLED設定', 'Button LED Settings')}</h3>
 
-			<Switch label={tr('LEDを無効にする', 'Disable LEDs')} bind:checked={config.disable_leds} />
+			<Switch id="button-led-disable" label={tr('LEDを無効にする', 'Disable LEDs')} bind:checked={config.disable_leds} />
 			</div>
 			{#if !config.disable_leds}
-				{@const legacyPhoenixwanMode = appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled}
-				<div class="settings-group">
-				<h3 class="mb-2 text-xl font-bold">{tr('ボタンLED', 'Button LEDs')}</h3>
+				<div class="settings-group button-led-settings">
+				<h3 class="icon-panel-heading mb-2 text-xl font-bold"><HeadingIcon kind="led" />{tr('ボタンLED', 'Button LEDs')}</h3>
 				{#if config.version >= 23}
 					<div class="mb-4">
 						<ToolTipLabel forId="button-led-fade" label={tr('フェードアウト時間（ms）', 'Fade-out Time (ms)')}>
@@ -357,22 +358,34 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 					<p class="mb-4">{tr('ボタンLEDの調整にはファームウェアV1.00以降へ更新してください。', 'Update to firmware V1.00 or later to adjust button LEDs.')}</p>
 				{/if}
 				</div>
+            {/if}
+        </div>
+    {/if}
+</Tabs.Content>
+<Tabs.Content value="rgb" class="settings-card rgb-card">
+    {#if Object.values(ControllerType).includes(config.controller_type)}
+        <div class:legacy-rgb-layout={appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled}>
+            <div class="settings-group">
+                <h3 class="icon-panel-heading"><HeadingIcon kind="rgb" />{tr('RGB LED設定', 'RGB LED Settings')}</h3>
+                <Switch id="rgb-led-disable" label={tr('LEDを無効にする', 'Disable LEDs')} bind:checked={config.disable_leds} />
+            </div>
+            {#if !config.disable_leds}
+				{@const legacyPhoenixwanMode = appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled}
+				{@const ttModeMapping = Object.values(TurntableMode)}
 				<div class="settings-group">
-				{#if config.version >= 19}
+				{#if config.version >= 19 && !legacyPhoenixwanMode}
 					<Switch label={tr('ターンテーブルとセンターバーの発光効果を連動', 'Link Turntable and Light Bar Effects')} bind:checked={config.link_bar_effect} disabled={appState.boardInfo?.boardType === BoardType.RP2354B && config.legacy_phoenixwan_enabled} />
 				{/if}
 				{#if appState.boardInfo?.boardType === BoardType.RP2354B && (appState.boardInfo.capabilities & BoardCapability.LegacyPhoenixwan) !== 0}
 					<Switch label={tr('旧Phoenixwanを使用', 'Use legacy Phoenixwan')} bind:checked={config.legacy_phoenixwan_enabled} onchange={setLegacyPhoenixwan} disabled={legacyPhoenixwanBusy} helpWrap>
 						<p>{tr('ONにすると、旧PhoenixwanのLEDをUART接続で制御します。', 'When ON, controls legacy Phoenixwan LEDs over UART.')}</p>
 						<p>{tr('OFFにしても、旧PhoenixwanのLEDは最後の点灯状態を保つ場合があります。', 'When OFF, legacy Phoenixwan LEDs may retain their last lighting state.')}</p>
+                        <p>{tr('センターバーは固定発光で、色と点灯数を相対調整します。', 'The center bar uses fixed lighting with relative color and LED count adjustments.')}</p>
 					</Switch>
 				{/if}
-				{#if config.version >= 42 && legacyPhoenixwanMode}
-					<p class="mb-4 text-sm">{tr('旧Phoenixwanのセンターバーは固定設定で色と点灯数を調整できます。色は相対調整で、絶対色の読み取りや本体のオーディオライトモード切替はUART仕様にありません。', 'The legacy Phoenixwan center bar is configured as a fixed light with adjustable color and LED count. Color changes are relative; the UART protocol does not expose absolute color readback or Audio Light mode selection.')}</p>
-				{/if}
+
 				</div>
-				{@const ttModeMapping = Object.values(TurntableMode)}
-				<div class="grid gap-x-6 gap-y-2 md:grid-cols-2">
+				<div class="rgb-effects-grid grid gap-x-6 gap-y-2 md:grid-cols-2">
 					<div class="min-w-0 settings-group">
 		<LightEffectSelect
 							label={tr('ターンテーブルの発光効果', 'Turntable Effect')}
@@ -405,13 +418,13 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 						{:else if config.tt_effect === TurntableMode.Spin}
 							<ColorPicker bind:hsv={config.tt_spin_hsv} />
 						{:else if config.tt_effect === TurntableMode.Shift}
-							<ColorPicker bind:hsv={config.tt_shift_hsv} />
+							<ColorPicker bind:hsv={config.tt_shift_hsv} disabled />
 						{:else if config.tt_effect === TurntableMode.RainbowStatic}
-							<ColorPicker bind:hsv={config.tt_rainbow_static_hsv} />
+							<ColorPicker bind:hsv={config.tt_rainbow_static_hsv} disabled />
 						{:else if config.tt_effect === TurntableMode.RainbowReactive}
-							<ColorPicker bind:hsv={config.tt_rainbow_react_hsv} />
+							<ColorPicker bind:hsv={config.tt_rainbow_react_hsv} disabled />
 						{:else if config.tt_effect === TurntableMode.RainbowSpin}
-							<ColorPicker bind:hsv={config.tt_rainbow_spin_hsv} />
+							<ColorPicker bind:hsv={config.tt_rainbow_spin_hsv} disabled />
 						{:else if config.tt_effect === TurntableMode.Reactive}
 							<ColorPicker bind:hsv={config.tt_react_hsv} />
 						{:else if config.tt_effect === TurntableMode.Breathing}
@@ -428,7 +441,7 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 							/>
 							{#if config.version >= 42 && config.supports_bar_led_count}
 								<PhoenixwanColorControls centerBar />
-								<div class="mb-4 flex items-center justify-between gap-4">
+								<div class="legacy-bar-count mb-4 flex items-center justify-between gap-4">
 								<ToolTipLabel forId="legacy-phoenixwan-bar-count" wrap label={tr('センターバーの点灯数', 'Center Bar LED Count')}>
 									<p>{tr('「−／＋」で2灯ずつ変更します。', 'Use −/+ to change the count by 2 LEDs.')}</p>
 									<p>{tr('0灯で消灯し、2〜16灯を中央から左右対称に点灯します。', 'Set 0 to turn the light off, or 2–16 LEDs to light symmetrically from the center.')}</p>
@@ -463,8 +476,8 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 				</div>
 
 				{#if !legacyPhoenixwanMode && config.version >= 16}
-					<div class="settings-group">
-					<h3>{tr('RGB LED設定', 'RGB LED Settings')}</h3>
+					<div class="settings-group rgb-adjust-settings">
+					<h3 class="icon-panel-heading"><HeadingIcon kind="adjust" />{tr('RGB LED調整', 'RGB LED Adjustments')}</h3>
 					<div class="mb-4">
 						<ToolTipLabel forId="led-refresh" label={tr('RGB LED更新頻度', 'RGB LED Refresh Rate')}>
 							<p>{tr('RGB LEDを更新する頻度です。', 'Sets the RGB LED refresh rate.')}</p>
@@ -477,11 +490,11 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 					<div class="mb-4">
 						<ToolTipLabel
 							forId="rainbow-spin-speed"
-							label={tr('レインボー効果の回転速度', 'Rainbow Effect Spin Speed')}
+							label={tr('変化速度', 'Color Change Speed')}
 						>
-							<p>{tr('レインボーの色が動く速さです。', 'Sets how fast the rainbow colors move.')}</p>
-							<p>{tr('値を大きくすると動きが速くなります。', 'Higher values make the movement faster.')}</p>
-							<p>{tr('好みに合わせて調整してください。', 'Adjust it to your preference.')}</p>
+							<p>{tr('回転・シフト・動くレインボー・呼吸の速度です。', 'Controls Spin, Shift, moving rainbow effects and Breathing.')}</p>
+							<p>{tr('1がゆっくり、5が速い設定です。', '1 is slow; 5 is fast.')}</p>
+							<p>{tr('固定色・固定レインボーには影響しません。', 'Does not affect fixed colors or a static rainbow.')}</p>
 						</ToolTipLabel>
 						<SliderInput
 							bind:value={config.rainbow_spin_speed}
@@ -492,15 +505,24 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 					</div>
 
 					<div class="mb-4">
-						<span>{tr('ターンテーブルLED数', 'Turntable LEDs')}</span>
+						<ToolTipLabel forId="tt-leds" wrap label={tr('ターンテーブルLED数', 'Turntable LEDs')}>
+							<p>{tr('ターンテーブルのRGB LED数を設定します。', 'Sets the number of turntable RGB LEDs.')}</p>
+							<p>{tr('接続しているLED数に合わせてください。', 'Match the number of LEDs connected.')}</p>
+							<p>{tr('初期値は24。0にすると消灯します。', 'Default: 24. Set 0 to turn them off.')}</p>
+						</ToolTipLabel>
 						<SliderInput bind:value={config.tt_leds} min={0} max={255} id="tt-leds" />
 					</div>
 					<div class="mb-4">
-						<span>{tr('センターバーLED数', 'Center Bar LEDs')}</span>
+						<ToolTipLabel forId="bar-leds" wrap label={tr('センターバーLED数', 'Center Bar LEDs')}>
+							<p>{tr('センターバーのRGB LED数を設定します。', 'Sets the number of center bar RGB LEDs.')}</p>
+							<p>{tr('接続しているLED数に合わせてください。', 'Match the number of LEDs connected.')}</p>
+							<p>{tr('初期値は16。0にすると消灯します。', 'Default: 16. Set 0 to turn them off.')}</p>
+						</ToolTipLabel>
 						{#if config.supports_bar_led_count}<SliderInput bind:value={config.bar_leds} min={0} max={255} id="bar-leds" />{:else}<span>{tr('ファーム更新が必要です', 'Firmware update required')}</span>{/if}
 					</div>
 					</div>
 				{/if}
+
 			{/if}
 		</div>
 	{/if}
@@ -517,10 +539,50 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
 {/if}
 
 <style>
+  .rgb-effects-grid > :global(.settings-group) { min-height: 142px; }
+  :global(.rgb-card .rgb-adjust-settings) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
+  :global(.rgb-card .rgb-adjust-settings > h3) { grid-column: 1 / -1; }
+  :global(.rgb-card [data-slot="select-trigger"]) { width: 100%; }
+  :global(.rgb-card .settings-group > .mb-4:not(.flex):not(.cp-dark)) { margin-bottom: 10px; }
+  :global(.rgb-card .settings-group > .mb-4 > .mt-2.grid) { margin-top: 4px; }
+  :global(.rgb-card .settings-group input[type="number"]) { height: 30px; }
+  @media (max-height: 650px) {
+    .rgb-effects-grid > :global(.settings-group) { min-height: 130px; }
+    :global(html[data-design="blue-line"] .rgb-card .settings-group) { padding: 8px 10px !important; margin-bottom: 6px !important; }
+    :global(.rgb-card .settings-group h3) { margin-bottom: 6px; }
+    :global(html[data-design="blue-line"] .rgb-card .settings-group > .flex.items-center.justify-between) { padding: 4px 10px; }
+    :global(.rgb-card .settings-group > .mb-4:not(.flex):not(.cp-dark)) { margin-bottom: 6px; }
+    :global(.rgb-card .settings-group > .mb-4 > .mt-2.grid) { margin-top: 2px; }
+    :global(.rgb-card .settings-group input[type="number"]) { height: 28px; }
+  }
+  @media (min-width: 681px) {
+    .rgb-effects-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    :global(.rgb-card .rgb-adjust-settings) { grid-template-columns: 1fr; }
+  }
   .mode-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
   .mode-field { min-width: 0; }
   .mode-input :global(.mb-4) { margin-bottom: 0; }
   .mode-input :global([data-slot="select-trigger"]) { width: 100%; min-width: 0; }
+  :global(html[data-design="blue-line"] .input-card .settings-group) { padding: 10px 12px !important; margin-bottom: 8px !important; }
+  :global(html[data-design="blue-line"] .input-card .settings-group > .mb-4) { margin-bottom: 8px; }
+  :global(html[data-design="blue-line"] .input-card .settings-group h3) { margin-bottom: 6px; }
+  :global(html[data-design="blue-line"] .input-card .settings-group > .flex.items-center.justify-between) { padding: 6px 12px; }
+  :global(html[data-design="blue-line"] .input-card .settings-group > .mb-4 > .mt-2.grid) { margin-top: 4px; }
+  :global(.input-card .mode-settings) { gap: 12px; }
+  @media (max-height: 650px) {
+    :global(html[data-design="blue-line"] .input-card .settings-group) { padding: 6px 10px !important; margin-bottom: 6px !important; }
+    :global(html[data-design="blue-line"] .input-card .settings-group > .mb-4) { margin-bottom: 5px; }
+    :global(html[data-design="blue-line"] .input-card .settings-group > .flex.items-center.justify-between) { padding: 4px 10px; }
+    :global(html[data-design="blue-line"] .input-card .settings-group > .mb-4 > .mt-2.grid) { margin-top: 2px; }
+    :global(html[data-design="blue-line"] .input-card .settings-group input[type="number"]) { height: 28px; }
+  }
+  @media (max-height: 620px) {
+    :global(html[data-design="blue-line"] .input-card .settings-group > .mb-4:not(.flex)) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 10px; align-items: center; }
+    :global(html[data-design="blue-line"] .input-card .settings-group > .mb-4:not(.flex) > .mt-2.grid) { margin-top: 0; }
+    :global(html[data-design="blue-line"] .input-card .settings-group label) { font-size: 12px; }
+  }
   :global(.settings-card) { border: 0; border-radius: 0; padding: 0; background: transparent; }
   :global(.settings-card .mb-4) { margin-bottom: 0.75rem; }
   :global(.settings-card h2), :global(.settings-card h3) { font-size: 1rem; margin-top: 0; margin-bottom: 0.75rem; }
@@ -528,4 +590,27 @@ import { BoardCapability, BoardType, defaultUsbIdentity, isRp2354bBoard } from '
   :global(.keys-card), :global(.chatter-card) { padding: 0; }
   :global(.app-content:has(.chatter-card[data-state="active"]) > .flex.flex-col.gap-2) { display: flex; flex-direction: column; min-height: 0; height: 100%; }
   :global(.chatter-card[data-state="active"]) { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+
+  :global(.legacy-rgb-layout .rgb-effects-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-height: 650px) {
+    :global(html[data-design="blue-line"] .legacy-rgb-layout .settings-group) { padding: 6px 10px !important; margin-bottom: 6px !important; }
+    :global(.legacy-rgb-layout .settings-group > .mb-4) { margin-bottom: 8px !important; }
+    :global(html[data-design="blue-line"] .legacy-rgb-layout .settings-group > .flex.items-center.justify-between) { padding: 5px 8px; }
+    :global(.legacy-rgb-layout .settings-group h3) { margin-bottom: 8px; }
+  }
+
+  :global(.legacy-rgb-layout > .settings-group:first-child) { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  :global(.legacy-rgb-layout > .settings-group:first-child h3) { margin: 0; white-space: nowrap; }
+  :global(.legacy-rgb-layout > .settings-group:first-child > .flex) { margin: 0; }
+  :global(.legacy-rgb-layout .legacy-bar-count) { flex-direction: column; align-items: stretch; gap: 4px; padding: 0 !important; background: transparent !important; }
+  :global(.legacy-rgb-layout .legacy-bar-count > .flex:last-child) { justify-content: flex-end; }
+  :global(.legacy-rgb-layout .legacy-bar-count label) { white-space: nowrap; font-size: 12px; }
+  :global(.legacy-rgb-layout .settings-group > .flex.items-center.justify-between) { padding: 5px 8px; }
+  @media (max-height: 650px) {
+    :global(.legacy-rgb-layout .settings-group label) { font-size: 12px; }
+    :global(.legacy-rgb-layout .rgb-effects-grid) { gap: 8px; }
+    :global(.legacy-rgb-layout .rgb-effects-grid button) { height: 28px !important; min-height: 28px !important; }
+    :global(.legacy-rgb-layout .rgb-effects-grid [data-slot="select-trigger"]) { height: 30px; min-height: 30px; }
+    :global(.legacy-rgb-layout .settings-group > .mb-4:not(.flex)) { margin-bottom: 6px !important; }
+  }
 </style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HeadingIcon from '$lib/HeadingIcon.svelte';
 	import { tick } from 'svelte';
 	import { parseChatterCounts, parseDiagnostics, ReportId, type ChatterCounts, type Diagnostics } from '$lib/types/hid';
 	import type { Config } from '$lib/types/config.svelte';
@@ -662,7 +663,7 @@
 			<section class="panel waveform-panel" class:wave-detail-panel={detailView !== undefined} aria-label={tr('チャタリング波形', 'Chatter waveform')}>
 				<div class="panel-heading wave-heading">
 					<div class="wave-title">
-						<h2>{detailView ? `${tr('入力波形', 'Input waveform')} — ${detailView.entry.button} · 50ms` : tr('チャタリング波形', 'Chatter waveform')}</h2>
+						<h2 class="icon-panel-heading"><HeadingIcon kind="chatter" />{detailView ? `${tr('入力波形', 'Input waveform')} — ${detailView.entry.button} · 50ms` : tr('チャタリング波形', 'Chatter waveform')}</h2>
 						<HelpText label={tr('チャタリング波形と詳細表示', 'Chatter waveform and details')} side="bottom" sideOffset={8} wrap>
 							<p>{tr('「詳細」で50ms表示。2つのエッジを選ぶと区間・押下・解放時間を測定します。3つ目で選び直し、ドラッグで移動。「戻る」で選択ログへ、新入力・Escで最新へ戻ります。', 'Details shows 50ms. Select two edges to measure total, pressed and released time. A third edge starts a new measurement; drag to pan. Back returns to the log; new input or Esc returns to live view.')}</p>
 						</HelpText>
@@ -768,7 +769,7 @@
 			</section>
 			<section class="panel log-panel" aria-label={tr('入力ログ', 'Input log')}>
 				<div class="panel-heading">
-					<h2>{tr('入力ログ', 'Input log')}</h2>
+					<h2 class="icon-panel-heading"><HeadingIcon kind="log" />{tr('入力ログ', 'Input log')}</h2>
 					<div class="log-heading-actions">
 						<div class="log-filter" role="group" aria-label={tr('入力ログ表示', 'Input log filter')}>
 							<button type="button" class:log-filter-selected={logFilter === 'all'} aria-pressed={logFilter === 'all'} onclick={() => logFilter = 'all'}>{tr('すべて', 'All')}</button>

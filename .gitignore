@@ -18,7 +18,8 @@ configurator/beef-config/build/
 configurator/beef-config/.vite/
 configurator/desktop/dist/
 configurator/build/
-configurator/rp-emulator/
+configurator/rp-emulator/ui/
+configurator/rp-emulator/dist/
 
 # OS files
 .DS_Store

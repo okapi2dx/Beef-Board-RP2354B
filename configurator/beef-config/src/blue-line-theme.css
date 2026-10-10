@@ -149,6 +149,51 @@ html:not(.dark)[data-design="blue-line"] .settings-group > .flex.items-center.ju
 html[data-design="blue-line"] .settings-group input[type="number"] { border-color: color-mix(in srgb, var(--primary) 48%, var(--input)); box-shadow: none; }
 html[data-design="blue-line"] .sidebar-item.active .nav-subtitle { color: var(--accent-foreground) !important; }
 html[data-design="blue-line"] .sidebar-item:focus-visible { outline-color: var(--primary); }
+
+/* Experimental icon navigation, independent of the older line-style rules. */
+html[data-design="blue-line"] .app-sidebar.sidebar-icon-style {
+  --icon-nav-surface: #eaf0f8;
+  --icon-nav-badge: #d8e4f3;
+  --icon-nav-hover: #dce7f5;
+  --icon-nav-selected: #2563ae;
+  background: var(--icon-nav-surface) !important;
+}
+html.dark[data-design="blue-line"] .app-sidebar.sidebar-icon-style {
+  --icon-nav-surface: #1b2735;
+  --icon-nav-badge: #2a3d53;
+  --icon-nav-hover: #28394c;
+  --icon-nav-selected: #20578e;
+}
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-nav { gap: 4px; }
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-item,
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-device-card {
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-item { padding-top: 6px; padding-bottom: 6px; }
+html[data-design="blue-line"] .sidebar-icon-style .nav-icon,
+html[data-design="blue-line"] .sidebar-icon-style .device-status-icon { background: var(--icon-nav-badge); }
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-item:hover:not(:disabled),
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-device-card:hover {
+  background: var(--icon-nav-hover) !important;
+  border-color: transparent !important;
+}
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-item.active,
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-item.active:hover:not(:disabled),
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-device-card.active {
+  background: var(--icon-nav-selected) !important;
+  color: white !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-item.active :is(.nav-title,.nav-subtitle,.firmware-nav-version,.nav-icon),
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-device-card.active :is(.status-title,.status-subtitle) { color: white !important; }
+html[data-design="blue-line"] .sidebar-icon-style .sidebar-item.active .nav-icon { background: #1686f5; }
+@media (max-height: 620px) {
+  html[data-design="blue-line"] .sidebar-icon-style .sidebar-item { padding-top: 4px; padding-bottom: 4px; }
+}
 html[data-design="blue-line"] { --control-selected: #286eb3; --control-hover: #e9f1fc; --control-highlight: #5298e6; --control-hover-foreground: var(--foreground); }
 html.dark[data-design="blue-line"] { --control-selected: #286eb3; --control-hover: #293b50; --control-highlight: #80baff; }
 html[data-design="blue-line"] :is(button:not([data-slot="switch"]),input[type="number"]):not(:disabled):not([aria-disabled="true"]):hover {
@@ -193,3 +238,27 @@ html.dark[data-design="blue-line"] .remap-key .remap-select:is(:hover,:focus-vis
 @media (max-height: 620px) and (min-width: 681px) {
   html[data-design="blue-line"] .sidebar-item { padding-top: 5px; padding-bottom: 5px; }
 }
+
+/* Match setting panels to the icon navigation without adding header rows. */
+html[data-design="blue-line"] .app-content {
+  --settings-icon-background: #d8e4f3;
+  --settings-icon-foreground: #286eb3;
+  --settings-panel-border: #d5dfec;
+}
+html.dark[data-design="blue-line"] .app-content {
+  --settings-icon-background: #2a3d53;
+  --settings-icon-foreground: #9acbff;
+  --settings-panel-border: #35485e;
+}
+html[data-design="blue-line"] .app-content :is(.settings-group,.panel,.device-info-card,.device-hero-card,.empty-state) {
+  border-radius: 10px !important;
+  border-color: var(--settings-panel-border) !important;
+}
+.icon-panel-heading { display: flex; align-items: center; gap: 8px; }
+.panel-heading-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; flex: 0 0 22px; border-radius: 6px;
+  background: var(--settings-icon-background, var(--accent));
+  color: var(--settings-icon-foreground, var(--primary));
+}
+html[data-design="blue-line"] .app-content .settings-group > .flex.items-center.justify-between { border-radius: 8px; }

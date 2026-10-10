@@ -1,4 +1,5 @@
 #include "../../smooth_rainbow.h"
+#include "../../../src/color_change.h"
 #include "../../diagnostics.h"
 #include <util/atomic.h>
 #include "../beef.h"
@@ -19,10 +20,19 @@ namespace IIDX {
       bool force_update;
 
       // Add a second-long rest period
-      BreathingPattern breathing_pattern(BREATHING_TIMER);
+      beef_breathing_t breathing_state = {};
 
       bool set_hsv(const HSV &hsv) {
         return RgbHelper::set_hsv(tt_leds, RgbHelper::num_tt_leds, hsv);
+      }
+
+      bool render_breathing(const HSV &hsv) {
+        uint32_t now;
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { now = milliseconds; }
+        const uint16_t time = beef_breathing_update(&breathing_state, now,
+                                                   current_config.rainbow_spin_speed);
+        const uint16_t theta = time / 8u;
+        return set_hsv({ hsv.h, hsv.s, quadwave8(theta > 255u ? 255u : theta) });
       }
 
       bool set_leds_off() {
@@ -32,7 +42,7 @@ namespace IIDX {
       SpinPattern spin_pattern;
       // Render two spinning LEDs
       bool spin(const HSV &hsv, const int8_t tt_report) {
-        if (spin_pattern.update(tt_report)) {
+        if (spin_pattern.update(tt_report, current_config.rainbow_spin_speed)) {
           set_leds_off();
 
           const auto colour = CHSV(hsv.h, 255, 255);
@@ -45,16 +55,13 @@ namespace IIDX {
         return false;
       }
 
-      Ticker colour_shift_ticker(100);
+      beef_color_shift_t colour_shift_state = {};
       bool colour_shift(const HSV &hsv) {
-        static uint8_t h;
-
-        const auto ticks = colour_shift_ticker.get_ticks();
-        if (ticks > 0) {
-          h += ticks;
-          return set_hsv({ h, hsv.s, hsv.v });
-        }
-        return false;
+        uint32_t now;
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { now = milliseconds; }
+        const auto h = beef_color_shift_update(&colour_shift_state, now,
+                                               current_config.rainbow_spin_speed);
+        return set_hsv({ h, hsv.s, hsv.v });
       }
 
       bool render_rainbow(const HSV &hsv, const uint8_t pos) {
@@ -214,9 +221,7 @@ namespace IIDX {
             update |= react(tt_report, current_config.tt_react_hsv);
             break;
           case TurntableMode::Breathing:
-            update |= RgbHelper::breathing(breathing_pattern,
-                                           tt_leds, RgbHelper::num_tt_leds,
-                                           current_config.tt_breathing_hsv);
+            update |= render_breathing(current_config.tt_breathing_hsv);
             break;
           case TurntableMode::HID:
             update |= RgbHelper::hid(tt_leds, RgbHelper::num_tt_leds, lights);

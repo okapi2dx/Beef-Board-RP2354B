@@ -1,6 +1,7 @@
 <script lang="ts">
+	import HeadingIcon from '$lib/HeadingIcon.svelte';
 	import { onMount } from 'svelte';
-	import { Settings, Sun, Keyboard, Gamepad2, Activity, Cpu, RotateCcw, Monitor } from '@lucide/svelte';
+	import { Settings, Sun, Palette, Keyboard, Gamepad2, Activity, Cpu, RotateCcw, Monitor } from '@lucide/svelte';
 
 	import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js';
@@ -197,7 +198,8 @@
 		</Alert>
 	{:else}
 		<div class="desktop-layout">
-			<aside class="app-sidebar">
+			<aside class="app-sidebar sidebar-icon-style">
+				<div class="sidebar-label">{tr('デバイス', 'DEVICE')}</div>
 				<button
 					class:active={activeTab === Tab.DeviceInfo}
 					class="sidebar-device-card"
@@ -207,7 +209,7 @@
 					onclick={() => { activeTab = Tab.DeviceInfo; }}
 				>
 					<div class="device-status-row">
-						<span class:connected={!!appState.device} class="status-dot"></span>
+						<span class="device-status-icon" aria-hidden="true"><span class:connected={!!appState.device} class="status-dot"></span></span>
 						<div>
 							<div class="status-title">{tr('ボード', 'Board')}</div>
 							<div class="status-subtitle">{appState.device ? connectedDeviceLabel(appState.device) : tr('未接続', 'Disconnected')}</div>
@@ -216,7 +218,7 @@
 				</button>
 
 				<nav class="sidebar-nav" aria-label={tr('メインメニュー', 'Main menu')}>
-					<div class="sidebar-label">{tr('コントローラー設定', 'CONTROLLER')}</div>
+					<div class="sidebar-label">{tr('設定', 'SETTINGS')}</div>
 					<button class:active={activeTab === Tab.Config && settingsSection === 'input'} class="sidebar-item" disabled={!appState.device || appState.disableConfigTab} onclick={() => { activeTab = Tab.Config; settingsSection = 'input'; }}>
 						<span class="nav-icon" aria-hidden="true"><Settings size={23} /></span>
 						<span class="nav-title">{tr('入力設定', 'Input')}</span>
@@ -224,8 +226,13 @@
 					</button>
 					<button class:active={activeTab === Tab.Config && settingsSection === 'led'} class="sidebar-item" disabled={!appState.device || appState.disableConfigTab} onclick={() => { activeTab = Tab.Config; settingsSection = 'led'; }}>
 						<span class="nav-icon" aria-hidden="true"><Sun size={23} /></span>
-						<span class="nav-title">{tr('LED設定', 'LEDs')}</span>
-						<span class="nav-subtitle led-nav-subtitle"><span>{tr('ボタン・ターンテーブル', 'Buttons, turntable')}</span><span>{tr('・センターバー', ' & bar')}</span></span>
+						<span class="nav-title">{tr('ボタンLED設定', 'Button LEDs')}</span>
+						<span class="nav-subtitle">{tr('明るさ・フェード・反転', 'Brightness, fade & invert')}</span>
+					</button>
+					<button class:active={activeTab === Tab.Config && settingsSection === 'rgb'} class="sidebar-item" disabled={!appState.device || appState.disableConfigTab} onclick={() => { activeTab = Tab.Config; settingsSection = 'rgb'; }}>
+						<span class="nav-icon" aria-hidden="true"><Palette size={23} /></span>
+						<span class="nav-title">{tr('RGB LED設定', 'RGB LEDs')}</span>
+						<span class="nav-subtitle">{tr('ターンテーブル・センターバー', 'Turntable & center bar')}</span>
 					</button>
 					<button class:active={activeTab === Tab.Config && settingsSection === 'keys'} class="sidebar-item" disabled={!appState.device || appState.disableConfigTab} onclick={() => { activeTab = Tab.Config; settingsSection = 'keys'; }}>
 						<span class="nav-icon" aria-hidden="true"><Keyboard size={23} /></span>
@@ -237,7 +244,6 @@
 						<span class="nav-title">{tr('コントローラーモニター', 'Controller Monitor')}</span>
 						<span class="nav-subtitle">{tr('入力状態をリアルタイム表示', 'Live input status')}</span>
 					</button>
-					<div class="sidebar-label sidebar-label-spaced">{tr('メンテナンス', 'MAINTENANCE')}</div>
 					<button class:active={activeTab === Tab.Config && settingsSection === 'chatter'} class="sidebar-item" disabled={!appState.device || appState.disableConfigTab} onclick={() => { activeTab = Tab.Config; settingsSection = 'chatter'; }}>
 						<span class="nav-icon" aria-hidden="true"><Activity size={23} /></span>
 						<span class="nav-title">{tr('チャタリングテスト', 'Chatter Test')}</span>
@@ -257,6 +263,7 @@
 				</nav>
 
 				<div class="sidebar-reset">
+					<div class="sidebar-label">{tr('メンテナンス', 'MAINTENANCE')}</div>
 					<AlertDialog.Root bind:open={resetDialogOpen}>
 						<AlertDialog.Trigger>
 							{#snippet child({ props })}
@@ -300,7 +307,7 @@
 						<div class="device-info-heading">
 							<div>
 								<p class="device-info-eyebrow">{tr('デバイス', 'DEVICE')}</p>
-								<h2>{tr('接続中の基板', 'Connected board')}</h2>
+								<h2 class="icon-panel-heading"><HeadingIcon kind="board" />{tr('接続中の基板', 'Connected board')}</h2>
 							</div>
 							<span class:connected={!!appState.device} class="device-info-status">
 								<span class="status-dot"></span>
@@ -661,28 +668,32 @@
 	.header-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 	.desktop-layout { grid-template-columns: 248px minmax(0, 1fr); gap: 12px; padding: 12px; }
 	.app-sidebar {
-		padding: 0;
-		border: 0; border-radius: 0;
-		background: transparent;
+		padding: 12px 10px;
+		border: 0; border-radius: 12px;
+		background: #eaf0f8;
 		box-shadow: none;
 		overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
 	}
 	.app-sidebar::-webkit-scrollbar { display: none; }
 	.sidebar-device-card {
-		margin: 0 0 8px; width: 100%; padding: 10px 12px;
-		border: 1px solid #d4dfec; border-radius: 8px; border-bottom: 1px solid #d4dfec;
-		background: #fff;
+		margin: 4px 0 8px; width: 100%; padding: 8px;
+		border: 1px solid transparent; border-radius: 9px;
+		background: transparent;
 	}
+	.device-status-row { gap: 10px; }
+	.device-status-row > div { min-width: 0; }
+	.device-status-icon { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 9px; background: #d8e4f3; }
+	.status-subtitle { overflow-wrap: anywhere; }
 	.sidebar-nav { gap: 6px; padding-top: 8px; overflow: visible; flex-shrink: 0; }
-	.sidebar-label { padding-left: 10px; font-size: 9px; font-weight: 700; }
+	.sidebar-label { padding-left: 8px; font-size: 10px; font-weight: 700; color: #64748b; }
 	.sidebar-item {
-		display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: 12px;
-		align-items: center; padding: 8px 10px; border: 1px solid #d4dfec;
-		border-radius: 8px; background: #fff; cursor: pointer;
+		display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 10px;
+		align-items: center; padding: 8px; border: 1px solid transparent;
+		border-radius: 9px; background: transparent; cursor: pointer;
 		color: #334155;
-		box-shadow: 0 2px 6px rgba(15, 23, 42, .025);
+		box-shadow: none;
 	}
-	.nav-icon { grid-column: 1; grid-row: 1 / 3; display: flex; color: #64748b; }
+	.nav-icon { grid-column: 1; grid-row: 1 / 3; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9px; background: #d8e4f3; color: #526d8e; }
 	.nav-title { grid-column: 2; font-size: 14px; font-weight: 600; line-height: 1.5; }
 	.nav-subtitle { grid-column: 2; min-width: 0; font-size: 10.5px; line-height: 1.4; overflow-wrap: anywhere; }
 	.led-nav-subtitle { white-space: normal; overflow: visible; text-overflow: clip; }
@@ -696,15 +707,17 @@
 	}
 	.sidebar-item.active,
 	.sidebar-item.active:not(:disabled):hover {
-		background: #eaf2ff;
-		border-color: #9bb9ed; color: #1d4ed8; box-shadow: inset 3px 0 0 #3b82f6;
+		background: #2563ae;
+		border-color: transparent; color: #fff; box-shadow: none;
 	}
 	.sidebar-item.active .nav-title { font-weight: 650; }
 	.sidebar-item.active .nav-icon,
 	.sidebar-item.active .nav-subtitle,
-	.sidebar-item.active .firmware-nav-version { color: #496b9c; }
+	.sidebar-item.active .firmware-nav-version { color: #e2efff; }
+	.sidebar-item.active .nav-icon { background: #1686f5; color: #fff; }
 	.sidebar-item:focus-visible { outline: 2px solid #60a5fa; outline-offset: -2px; }
-	.sidebar-reset { margin-top: auto; padding: 16px 0 0; border-top: 1px solid #d4dfec; flex: 0 0 auto; }
+	.sidebar-reset { margin-top: auto; padding: 10px 0 0; border-top: 1px solid #cbd8e8; flex: 0 0 auto; }
+	.sidebar-reset > .sidebar-label { margin-bottom: 4px; }
 	.app-content { padding: 0; }
 	:global(.app-content .settings-group),
 	:global(.app-content .panel),
@@ -728,19 +741,21 @@
 		border-color: #24354f;
 	}
 	:global(.dark) .brand-icon { color: #9bd7ff; }
-	:global(.dark) .app-sidebar { background: transparent; }
+	:global(.dark) .app-sidebar { background: #1b2735; }
 	:global(.dark) .sidebar-device-card,
-	:global(.dark) .sidebar-item { background: #101c30; border-color: #24354f; }
+	:global(.dark) .sidebar-item { background: transparent; border-color: transparent; }
 	:global(.dark) .sidebar-item { color: #d3dfef; }
-	:global(.dark) .nav-icon { color: #9fb7d4; }
+	:global(.dark) .nav-icon, :global(.dark) .device-status-icon { background: #2a3d53; color: #c6d8ee; }
+	:global(.dark) .sidebar-label { color: #9db6d1; }
 	:global(.dark) .sidebar-item.active,
 	:global(.dark) .sidebar-item.active:not(:disabled):hover {
-		background: #172b49;
-		border-color: #3b6598; color: #bfdbfe; box-shadow: inset 3px 0 0 #60a5fa;
+		background: #20578e;
+		border-color: transparent; color: #fff; box-shadow: none;
 	}
 	:global(.dark) .sidebar-item.active .nav-icon,
 	:global(.dark) .sidebar-item.active .nav-subtitle,
 	:global(.dark) .sidebar-item.active .firmware-nav-version { color: #bfdbfe; }
+	:global(.dark) .sidebar-item.active .nav-icon { background: #1686f5; color: #fff; }
 	:global(.dark) .sidebar-item:not(:disabled):hover,
 	:global(.dark) .sidebar-device-card:hover,
 	:global(.dark) .sidebar-device-card:focus-visible { background: #13243d; border-color: #365273; color: #bfdbfe; }
@@ -749,9 +764,9 @@
 	:global(.dark) .empty-state { background: #101a2d; border-color: #283b56; }
 	@media (max-height: 760px) and (min-width: 681px) {
 		.app-header { min-height: 64px; padding: 10px 18px; }
-		.app-sidebar { padding: 0; }
-		.sidebar-device-card { padding: 6px 12px; margin-bottom: 4px; }
-		.sidebar-item { padding: 6px 9px; }
+		.app-sidebar { padding: 10px 8px; }
+		.sidebar-device-card { padding: 6px; margin-bottom: 4px; }
+		.sidebar-item { padding: 6px; }
 		.sidebar-nav { gap: 4px; }
 		.nav-title { font-size: 13px; line-height: 1.3; }
 		.nav-subtitle { margin-top: 2px; font-size: 10.5px; line-height: 1.35; }
@@ -761,7 +776,10 @@
 	@media (max-height: 620px) and (min-width: 681px) {
 		.sidebar-label { display: none; }
 		.sidebar-nav { gap: 3px; }
-		.sidebar-item { padding: 4px 8px; }
+		.app-sidebar { padding: 8px 6px; }
+		.sidebar-item { padding: 4px 6px; grid-template-columns: 30px minmax(0, 1fr); }
+		.nav-icon, .device-status-icon { width: 30px; height: 30px; border-radius: 8px; }
+		.device-status-icon { flex-basis: 30px; }
 		.nav-title { font-size: 12px; line-height: 1.2; }
 		.nav-subtitle { font-size: 10px; line-height: 1.3; }
 		.sidebar-device-card { margin-bottom: 2px; }

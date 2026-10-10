@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#include "color_change.h"
 #define BEEF_MAX_LEDS 255u
 typedef struct { uint8_t r,g,b; } beef_rgb_t;
 typedef struct {
@@ -9,6 +10,8 @@ typedef struct {
   uint16_t previous_buttons;
   uint8_t previous_position, level, reactive_hue;
   bool initialized, motion_seen, guard_seen;
+  beef_color_shift_t color_shift;
+  beef_breathing_t breathing;
 } beef_lighting_t;
 void beef_lighting_update(beef_lighting_t *s, const uint8_t *cfg, uint32_t now,
                           uint8_t position, int8_t direction, uint16_t buttons);

@@ -100,6 +100,34 @@ static void lighting_tests(void) {
  c[5]=0;c[4]=1;memset(&s,0,sizeof(s));beef_lighting_update(&s,c,0,127,0,0);
  beef_lighting_update(&s,c,1,127,0,1);beef_lighting_render(&s,c,false,host,host,ring,bar);assert(s.level==1);
  beef_lighting_update(&s,c,1000,127,0,1);assert(s.level==0);
- puts("PASS lighting: moving effects, linked pixels, HID timeout, 255 pixels, tail clearing, disable, 1..60 Hz and key spectrum decay");
+ for(unsigned speed=1;speed<=5;speed++) {
+  c[79]=speed;c[1]=1;
+  memset(&s,0,sizeof(s));beef_lighting_update(&s,c,0,127,0,0);
+  beef_lighting_update(&s,c,150,127,0,0);assert(s.spin==(float)speed);
+  memset(&s,0,sizeof(s));beef_lighting_update(&s,c,0,127,1,0);
+  beef_lighting_update(&s,c,75,127,1,0);assert(s.spin==(float)speed);
+  memset(&s,0,sizeof(s));beef_lighting_update(&s,c,0,127,-1,0);
+  beef_lighting_update(&s,c,75,127,-1,0);assert(s.spin==12.0f-speed);
+ }
+ puts("PASS lighting: moving effects, linked pixels, bounds, disable and all five spin speeds/directions");
+ defaults();c[2]=1;
+ for(unsigned count=0;count<=255;count++) {
+  c[80]=count;
+  for(unsigned phase=0;phase<192;phase++) {
+   s.spin=phase/16.0f;
+   beef_lighting_render(&s,c,false,host,host,ring,bar);
+   unsigned lit=0;
+   for(unsigned i=0;i<255;i++) {
+    bool on=ring[i].r || ring[i].g || ring[i].b;
+    if(i>=count)assert(!on);
+    lit+=on;
+   }
+   if(lit!=(count>1?2:count)) {
+    fprintf(stderr,"Spin lost pixels: count=%u phase=%f lit=%u\n",count,(double)s.spin,lit);
+    assert(0);
+   }
+  }
+ }
+ puts("PASS RP spin: exactly two rotating pixels at every phase for LED counts 2..255, one at 1, none at 0");
 }
 int main(void){input_tests();lighting_tests();defaults();assert(beef_config_valid(c));c[80]=0;c[138]=0;assert(beef_config_valid(c));return 0;}

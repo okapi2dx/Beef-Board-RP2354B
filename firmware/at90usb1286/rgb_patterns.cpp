@@ -49,15 +49,19 @@ void SpinPattern::init(const uint8_t spin_duration,
   this->fast_spin_duration = fast_spin_duration;
   this->limit = limit;
   this->ticker.init(spin_duration);
+  this->last_speed = 0;
 }
 
-bool SpinPattern::update(const int8_t tt_report) {
-  if (last_tt_report != tt_report) {
-    const auto duration = tt_report != 0 ?
+bool SpinPattern::update(const int8_t tt_report, uint8_t speed) {
+  speed = speed < 1 ? 1 : speed > 5 ? 5 : speed;
+  if (last_tt_report != tt_report || last_speed != speed) {
+    const uint16_t base = tt_report != 0 ?
                           fast_spin_duration :
                           spin_duration;
-    ticker.reset(duration);
+    const uint16_t duration = base * 3u / speed;
+    ticker.reset(duration > 255 ? 255 : duration ? duration : 1);
     last_tt_report = tt_report;
+    last_speed = speed;
   }
 
   const auto ticks = ticker.get_ticks();

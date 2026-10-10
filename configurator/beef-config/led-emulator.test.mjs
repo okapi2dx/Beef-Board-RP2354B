@@ -1,5 +1,21 @@
 import assert from 'node:assert/strict';
 import {createLedEmulator,ledRgbToCss} from './src/lib/led-emulator.js';
+
+// Changing the speed must preserve phase and affect breathing as well as hue.
+const speedColor={h:180,s:100,v:100};
+for (let speed=1;speed<=5;speed++) {
+ const settings={tt_effect:'Shift',link_bar_effect:true,rainbow_spin_speed:speed,tt_shift_hsv:speedColor,tt_breathing_hsv:speedColor};
+ const shift=createLedEmulator();
+ assert.equal(shift(settings,{},300).ring[0].split(' ')[0],`hsl(${speed*360/256}`);
+ const before=shift(settings,{},0);
+ assert.deepEqual(shift({...settings,rainbow_spin_speed:6-speed},{},0),before);
+ const breathing=createLedEmulator();
+ settings.tt_effect='Breathing';
+ const dark=breathing(settings,{},0);
+ assert.notDeepEqual(breathing(settings,{},4500/speed),dark);
+ assert.deepEqual(breathing(settings,{},4500/speed),dark);
+}
+console.log('PASS: five shift/breathing speeds, breathing periods and continuous speed edits');
 const c={h:180,s:100,v:100};
 const cfg={tt_effect:'Spin',bar_effect:'Static',link_bar_effect:true,rainbow_spin_speed:1,tt_spin_hsv:c,tt_shift_hsv:c,tt_rainbow_spin_hsv:c,tt_rainbow_static_hsv:c,tt_rainbow_react_hsv:c,tt_breathing_hsv:c,tt_react_hsv:c,tt_static_hsv:c,bar_static_hsv:c};
 for(const mode of ['Spin','Shift','Rainbow Spin','Rainbow Static','Rainbow Reactive','Breathing','Reactive']){
@@ -63,7 +79,7 @@ const expected=combined(rainbowCfg,{direction:0},10003);
 let actual;
 for(let i=0;i<10003;i++) actual=split(rainbowCfg,{direction:0},1);
 assert.deepEqual(actual,expected,'Long display gaps must retain every elapsed hue tick');
-const spinCfg={...cfg,tt_effect:'Spin',tt_leds:12};
+const spinCfg={...cfg,tt_effect:'Spin',tt_leds:12,rainbow_spin_speed:3};
 const spinTick=createLedEmulator();
 const beforeTick=spinTick(spinCfg,{direction:0},99);
 assert.notDeepEqual(spinTick(spinCfg,{direction:0},1),beforeTick,'12 LEDs use a 100ms AVR spin interval');
@@ -73,6 +89,27 @@ for(let i=0;i<24;i++) {
     'Downsampling rings larger than the preview must not hide a moving LED');
 }
 console.log('PASS: AVR hue tick boundaries, elapsed-time catch-up and LED-count spin periods');
+for(let speed=1;speed<=5;speed++) {
+ const tick=createLedEmulator(),settings={...spinCfg,tt_leds:24,rainbow_spin_speed:speed};
+ const start=tick(settings,{direction:0},0),duration=Math.floor(150/speed);
+ assert.deepEqual(tick(settings,{direction:0},duration-1),start);
+ assert.notDeepEqual(tick(settings,{direction:0},1),start);
+}
+console.log('PASS: every Spin speed changes the actual pixel step interval');
+const changedSpin=createLedEmulator(),changeCfg={...spinCfg,tt_leds:24};
+const oldSpin=changedSpin(changeCfg,{direction:0},49);
+assert.deepEqual(changedSpin({...changeCfg,rainbow_spin_speed:5},{direction:0},0),oldSpin,
+ 'Changing spin speed must reset the old interval without jumping pixels');
+assert.notDeepEqual(changedSpin({...changeCfg,rainbow_spin_speed:5},{direction:0},30),oldSpin);
+console.log('PASS: AVR spin speed edits preserve displayed position and restart the timer');
+for (let count=1;count<=255;count++) {
+ const tick=createLedEmulator(),settings={...spinCfg,tt_leds:count,rainbow_spin_speed:3};
+ for(let time=0;time<600;time+=17) {
+  assert(tick(settings,{direction:0},17,true).ring.some(c=>c!=='#000000'),
+    'RP Spin must not go dark between steps at LED count '+count);
+ }
+}
+console.log('PASS: RP spin preview stays lit throughout the rotation for 1..255 LEDs');
 
 // Exercise the monitor's actual animation effect with tab changes and a
 // throttled animation clock. No USB calls are involved in the animation.

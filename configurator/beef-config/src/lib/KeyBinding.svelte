@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HeadingIcon from '$lib/HeadingIcon.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
@@ -126,7 +127,7 @@
 
 <div class="key-binding-root">
 	<div class="key-binding-header flex items-center justify-between">
-		<h3 class="text-xl font-bold">{tr('キー割り当て', 'Key Bindings')}</h3>
+		<h3 class="icon-panel-heading text-xl font-bold"><HeadingIcon kind="keys" />{tr('キー割り当て', 'Key Bindings')}</h3>
 		{#if config.iidx_input_mode === InputMode.Keyboard || (config.iidx_input_mode === InputMode.Joystick && config.version >= 28)}
 			<AlertDialog.Root bind:open={resetOpen}>
 				<AlertDialog.Trigger>
@@ -154,7 +155,7 @@
 		{#if config.iidx_input_mode === InputMode.Joystick && config.version >= 28}
 			<div class="remap-section settings-group">
 				<div class="remap-heading">
-					<h3 class="text-xl font-bold">{tr('ボタン配置入れ替え', 'Button Layout Remapping')}</h3>
+					<h3 class="icon-panel-heading text-xl font-bold"><HeadingIcon kind="remap" />{tr('ボタン配置入れ替え', 'Button Layout Remapping')}</h3>
 					<HelpText label={tr('ボタン配置入れ替え', 'Button Layout Remapping')}>
 						<p>{tr('各ボタンの入力先を変更できます。', 'Changes the input destination for each button.')}</p>
 						<p>{tr('プルダウンから割り当て先を選択します。', 'Select the destination from the drop-down menu.')}</p>

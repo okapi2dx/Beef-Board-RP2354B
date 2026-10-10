@@ -29,6 +29,9 @@ function color(c, h = c.h, v = c.v) {
 export function createLedEmulator() {
   let time = 0, spin = 0, rainbow = 0, react = 0, hue = 0;
   let spinRemainder = 0, rainbowRemainder = 0, lastDirection = 0;
+  let lastSpinSpeed = 3;
+  let shiftHue = 0, shiftRemainder = 0;
+  let breathingTime = 0;
   let lastButtons = 0, level = 0, guard = -Infinity, decay = 0;
   let lastMotion = -Infinity, targetVelocity = 0, velocity = 0;
   /** @type {import('$lib/types/hid').Diagnostics | null} */
@@ -50,9 +53,10 @@ export function createLedEmulator() {
     time += dt;
     const direction = (input?.direction ?? 0) * (cfg.reverse_tt ? 1 : -1);
     const count = Math.max(1, Math.min(255, cfg.tt_leds ?? 24));
+    const speed = Math.max(1, Math.min(5, cfg.rainbow_spin_speed ?? 3));
     if (useLedTelemetry) {
       // RP2354B integrates continuous phase in beef_lighting_update.
-      spin = wrap(spin + dt / (direction ? 25 : 50) * (direction === -1 ? -1 : 1), 12);
+      spin = wrap(spin + dt / (direction ? 25 : 50) * (direction === -1 ? -1 : 1) * speed / 3, 12);
       rainbow = wrap(rainbow + dt / (direction ? 2 : 3) * (direction === -1 ? -1 : 1), 256);
     } else {
       // AVR SpinPattern resets its ticker on direction changes and advances
@@ -62,7 +66,11 @@ export function createLedEmulator() {
         spinRemainder += dt;
         rainbowRemainder += dt;
       }
-      const spinDuration = Math.max(1, Math.min(255, Math.floor((direction ? 25 : 50) * 24 / count)));
+      // The AVR resets the spin ticker when its speed is changed.
+      // Do not reinterpret time accumulated at the previous interval.
+      if (speed !== lastSpinSpeed) spinRemainder = 0;
+      const spinBase = Math.max(1, Math.min(255, Math.floor((direction ? 25 : 50) * 24 / count)));
+      const spinDuration = Math.max(1, Math.min(255, Math.floor(spinBase * 3 / speed)));
       const rainbowDuration = direction ? 2 : 3;
       const sign = direction === -1 ? -1 : 1;
       spin = wrap(spin + Math.floor(spinRemainder / spinDuration) * sign, Math.ceil(count / 2));
@@ -71,6 +79,7 @@ export function createLedEmulator() {
       rainbowRemainder %= rainbowDuration;
     }
     lastDirection = direction;
+    lastSpinSpeed = speed;
     // Estimate motion from successive input packets, not individual direction pulses.
     if (input && input !== previousInput) {
       const position = input.output;
@@ -95,7 +104,10 @@ export function createLedEmulator() {
     const target = age <= 60 ? targetVelocity : targetVelocity * Math.max(0,1-(age-60)/90);
     // Exponential easing is independent of display refresh rate.
     velocity += (target-velocity) * (1-Math.exp(-dt/40));
-    const speed = cfg.rainbow_spin_speed ?? 3;
+    shiftRemainder += dt * speed;
+    shiftHue = wrap(shiftHue + Math.floor(shiftRemainder / 300), 256);
+    shiftRemainder %= 300;
+    breathingTime = wrap(breathingTime + dt * speed / 3, 3000);
     react = wrap(react + dt / 3 * velocity * speed, 256);
     if (direction) { guard = time; hue = direction === 1 ? 0 : 180; }
     const buttons = displayButtons ?? input?.buttons ?? 0;
@@ -104,8 +116,8 @@ export function createLedEmulator() {
     else if (time - decay >= 30) { level = Math.max(0, level - Math.floor((time-decay)/30)); decay = time; }
     lastButtons = buttons;
     /** @param {number} cycle */
-    const wave = cycle => {
-      const theta = Math.min(255, (time % cycle) / 8);
+    const wave = (cycle, clock = time) => {
+      const theta = Math.min(255, (clock % cycle) / 8);
       const triangle = theta < 128 ? theta * 2 : (255 - theta) * 2;
       const x = triangle / 255;
       return 100 * (x < .5 ? 2*x*x : 1-2*(1-x)*(1-x));
@@ -126,19 +138,19 @@ export function createLedEmulator() {
       if (!c) return black;
       if (mode === 'Spin') {
         const pixel = Math.floor(i * count / 24);
-        const on = useLedTelemetry ? (pixel * 24 / count | 0) % 12 === Math.floor(spin)
-          : count <= 24 ? pixel === spin || pixel === spin + Math.floor(count / 2)
-          : i === Math.floor(spin * 24 / count) || i === Math.floor((spin + Math.floor(count / 2)) * 24 / count);
+        const spinPixel = useLedTelemetry ? Math.floor(spin * Math.ceil(count / 2) / 12) : spin;
+        const on = count <= 24 ? pixel === spinPixel || pixel === spinPixel + Math.floor(count / 2)
+          : i === Math.floor(spinPixel * 24 / count) || i === Math.floor((spinPixel + Math.floor(count / 2)) * 24 / count);
         return on ? color({h:c.h,s:100,v:100}) : black;
       }
-      if (mode === 'Shift') return color(c, Math.floor(time/100)*360/256);
+      if (mode === 'Shift') return color(c, shiftHue*360/256);
       if (mode.startsWith('Rainbow')) {
         const pos = mode === 'Rainbow Static' ? 0 : mode === 'Rainbow Reactive' ? react
           : useLedTelemetry ? rainbow*speed : wrap(rainbow*speed,256);
         return color(c, i*360/24 - pos*360/256);
       }
       if (mode === 'Reactive') return color(c,c.h+hue,time-guard<500?100:25);
-      if (mode === 'Breathing') return color(c,c.h,wave(3000));
+      if (mode === 'Breathing') return color(c,c.h,wave(3000, breathingTime));
       return color(c);
     });
     // The physical ring's data direction is opposite to its monitor drawing

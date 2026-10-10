@@ -29,8 +29,10 @@ void beef_lighting_update(beef_lighting_t *s,const uint8_t *c,uint32_t now,
     memset(s,0,sizeof(*s)); s->last_ms=now; s->previous_position=position; s->initialized=true;
   }
   uint32_t dt=now-s->last_ms; s->elapsed_ms+=dt;
+  beef_color_shift_update(&s->color_shift,now,c[79]);
+  beef_breathing_update(&s->breathing,now,c[79]);
   int d=direction*(c[1]?1:-1);
-  s->spin=wrap(s->spin+(float)dt/(d?25:50)*(d==-1?-1:1),12);
+  s->spin=wrap(s->spin+(float)dt/(d?25:50)*(d==-1?-1:1)*beef_change_speed(c[79])/3.0f,12);
   s->rainbow=wrap(s->rainbow+(float)dt/(d?2:3)*(d==-1?-1:1),256);
   int delta=(int)position-s->previous_position;
   if(delta>127)delta-=256;
@@ -62,20 +64,23 @@ void beef_lighting_render(const beef_lighting_t *s,const uint8_t *c,
   memset(ring,0,BEEF_MAX_LEDS*sizeof(*ring));memset(bar,0,BEEF_MAX_LEDS*sizeof(*bar));
   if(c[5])return;
   unsigned n=c[80],m=c[138],effect=c[2];
+  // Convert the normalized rotation phase to actual LED indices. Comparing
+  // against a virtual 24-pixel grid leaves gaps when fewer LEDs are fitted.
+  unsigned spin_index=(unsigned)(s->spin*((n+1u)/2u)/12.0f);
   unsigned offset=effect<=7 ? 6+3*effect : 6;
   uint8_t h=c[offset],sat=c[offset+1],v=c[offset+2];
   for(unsigned i=0;i<n;++i){
     switch(effect){
       case 0:ring[i]=hsv(h,sat,v);break;
-      case 1:if((i*24/n)%12==(unsigned)s->spin)ring[i]=hsv(h,255,255);break;
-      case 2:ring[i]=hsv((s->elapsed_ms/100)%256,sat,v);break;
+      case 1:if(i==spin_index || i==spin_index+n/2u)ring[i]=hsv(h,255,255);break;
+      case 2:ring[i]=hsv(s->color_shift.hue,sat,v);break;
       case 3:case 4:case 5:{
         float pos=effect==3?0:effect==4?s->reactive:s->rainbow*c[79];
         ring[i]=hsv((uint8_t)wrap(i*256.0f/n-pos,256),sat,v);break;
       }
       case 6:ring[i]=hsv(h+s->reactive_hue,sat,
           s->guard_seen && s->last_ms-s->guard_ms<500 ? 255:64);break;
-      case 7:ring[i]=hsv(h,sat,breathing(s->elapsed_ms));break;
+      case 7:ring[i]=hsv(h,sat,breathing(s->breathing.phase/3u));break;
       case 8:if(host_active)ring[i]=(beef_rgb_t){tt_rgb[0],tt_rgb[1],tt_rgb[2]};break;
       default:break;
     }

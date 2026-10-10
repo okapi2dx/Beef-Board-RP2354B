@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HeadingIcon from '$lib/HeadingIcon.svelte';
   import { Button } from '$lib/components/ui/button';
   import { Command, sendCommand } from '$lib/types/hid';
   import { appState } from '$lib/types/state.svelte';
@@ -25,7 +26,7 @@
 </script>
 
 <section class="space-y-5 settings-group">
-  <h2 class="text-xl font-semibold">RP2354B</h2>
+  <h2 class="icon-panel-heading text-xl font-semibold"><HeadingIcon kind="firmware" />RP2354B</h2>
   <p>{tr('RP2354Bは内蔵ROMのBOOTSELモードでUF2を書き込みます。', 'RP2354B uses the built-in ROM BOOTSEL mode to flash a UF2 file.')}</p>
 
   {#if appState.device && isRp2354bBoard(appState.boardInfo)}

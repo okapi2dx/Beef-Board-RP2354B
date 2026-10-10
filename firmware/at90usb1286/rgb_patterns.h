@@ -27,13 +27,14 @@ public:
   void init(uint8_t spin_duration,
             uint8_t fast_spin_duration,
             uint8_t limit);
-  bool update(int8_t tt_report);
+  bool update(int8_t tt_report, uint8_t speed = 3);
   uint8_t get() const;
 
 private:
   uint8_t spin_duration = 1;
   uint8_t fast_spin_duration = 1;
   int8_t last_tt_report = 0;
+  uint8_t last_speed = 3;
   uint8_t spin_counter = 0;
   uint8_t limit = 0;
   Ticker ticker{};

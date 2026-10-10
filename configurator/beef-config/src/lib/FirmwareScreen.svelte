@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HeadingIcon from '$lib/HeadingIcon.svelte';
   import { onMount } from 'svelte';
   import MemoryMap from 'nrf-intel-hex';
   import { Button } from '$lib/components/ui/button';
@@ -129,7 +130,7 @@
 </script>
 
 <div class="space-y-5">
-  <h2 class="text-xl font-bold">ファームウェア書き込み</h2>
+  <h2 class="icon-panel-heading text-xl font-bold"><HeadingIcon kind="firmware" />ファームウェア書き込み</h2>
   {#if firmwareInfo}<p>Firmware: <strong>{firmwareInfo.version ? formatDisplayVersion(firmwareInfo.version) : 'version unavailable'}</strong></p>{/if}
   <div class="space-y-2">
     <Label for="firmware-file">1. BEEF BOARD用ファームウェア（.hex）を選択</Label>

@@ -15,6 +15,7 @@ int main(void){
  memset(fake_flash,255,sizeof(fake_flash));beef_config_store_init();
  uint8_t c[BEEF_CONFIG_SIZE];memcpy(c,beef_config_store_data(),sizeof(c));
  assert(beef_config_valid(c)); assert(c[30]==6); assert(((unsigned)c[71]+256u*c[72])==1000);
+ assert(c[79]==3);
  c[0]=43;c[30]=10;c[3]=5;assert(beef_config_store_write(c));beef_config_store_init();
  assert(beef_config_store_data()[0]==45 && beef_config_store_data()[30]==6 && beef_config_store_data()[3]==5);
  memcpy(c,beef_config_store_data(),sizeof(c));
@@ -95,6 +96,7 @@ int main(void){
  }
  assert(beef_config_store_reset());
  assert(beef_config_store_data()[80]==24 && beef_config_store_data()[138]==16);
+ assert(beef_config_store_data()[79]==3);
  puts("PASS storage: journal recovery, reset defaults and LED counts 0..255");
  return 0;
 }

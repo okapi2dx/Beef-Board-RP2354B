@@ -2,6 +2,7 @@
   import { readDiagnostics, parseDiagnostics, ReportId } from '$lib/types/hid';
   import { appState } from '$lib/types/state.svelte';
   import { tr } from '$lib/types/locale.svelte';
+  import HelpText from '$lib/HelpText.svelte';
   let { supported, digital, active, streaming = false }: { supported: boolean; digital: boolean; active: boolean; streaming?: boolean } = $props();
   let value = $state<number | null>(null);
   let sensorAB = $state<number | null>(null);
@@ -49,9 +50,16 @@
   });
 </script>
 
-<section class="mb-5 rounded-lg border p-3" aria-label={tr('ターンテーブルテスト', 'Turntable Test')}>
+<section class="mb-5 rounded-lg border p-3" aria-label={tr('X軸', 'X axis')}>
   <div class="mb-3 flex items-center justify-between gap-3">
-    <span class="font-medium">{tr('ターンテーブルテスト', 'Turntable Test')}</span>
+    <div class="flex items-center gap-2">
+      <span class="font-medium">{tr('X軸', 'X axis')}</span>
+      <HelpText label={tr('X軸', 'X axis')} wrap>
+        <p>{tr('感度・デッドゾーンなどを反映したX軸値です。', 'Shows the X-axis value after sensitivity, deadzone and other settings.')}</p>
+        <p>{tr('停止後も、設定した保持時間は入力が続きます。', 'Input continues after stopping for the configured hold time.')}</p>
+        <p>{digital ? tr('デジタル設定中は確認用の値です。ゲームにはB13/B14を送ります。', 'In digital mode this is a preview; B13/B14 are sent to the game.') : tr('値は0～255で、端に達すると反対側へ戻ります。', 'Values wrap from one end of the 0–255 range to the other.')}</p>
+      </HelpText>
+    </div>
     <div class="flex items-center gap-4">
       <output data-testid="turntable-phases" class="font-mono text-sm tabular-nums">
         <span class="text-muted-foreground">{tr('A/B相', 'A/B phase')}</span>
@@ -64,14 +72,29 @@
     <div class="h-full rounded-full bg-primary" style:width={`${(value ?? 0) / 255 * 100}%`}></div>
     {#if value !== null}<div class="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background bg-primary shadow" style:left={`${value / 255 * 100}%`}></div>{/if}
   </div>
-  <div class="mt-2 flex justify-between text-xs text-muted-foreground"><span>0</span><span>128</span><span>255</span></div>
-  <div class="mt-2 text-sm text-muted-foreground">
-    <p>{tr('アナログ設定では、各設定を反映したX軸値を表示します。', 'In analog mode, this shows the X-axis value after applying the settings.')}</p>
-    <p>{tr('停止後は、設定した保持時間だけ最後の方向へ入力を続けます。', 'After rotation stops, input continues in the last direction for the configured hold time.')}</p>
-    <p>{tr('デジタル設定では、X軸ではなくTT-/TT+をゲームへ送ります。', 'In digital mode, TT-/TT+ is sent to the game instead of the X-axis.')}</p>
+  <div class="axis-scale mx-2 mt-2" aria-hidden="true">
+    {#each Array.from({ length: 52 }, (_, i) => i * 5) as tick}
+      <span class="axis-tick" class:major={tick % 10 === 0 || tick === 255} style:left={`${tick / 255 * 100}%`}></span>
+    {/each}
+    {#each [0, 32, 64, 96, 128, 160, 192, 224, 255] as tick}
+      <span class="axis-label" class:first={tick === 0} class:last={tick === 255} style:left={`${tick / 255 * 100}%`}>{tick}</span>
+    {/each}
   </div>
-  {#if digital}<p class="mt-1 text-sm text-muted-foreground">{tr('デジタル設定中は、確認用のアナログX軸値を表示します。ゲームへ送るデジタル入力とは異なります。', 'In digital mode, this displays the analog X-axis preview, not the digital input sent to the game.')}</p>{/if}
   {#if !supported}<p class="mt-2 text-sm">{tr('表示するにはファームウェアV1.00以降へ更新してください。', 'Update to firmware V1.00 or later to enable this display.')}</p>{/if}
 </section>
+
+<style>
+  .axis-scale { position: relative; height: 28px; color: var(--muted-foreground); }
+  .axis-tick { position: absolute; top: 0; height: 4px; border-left: 1px solid currentColor; opacity: .55; }
+  .axis-tick.major { height: 7px; opacity: .85; }
+  .axis-label { position: absolute; top: 10px; transform: translateX(-50%); font-size: 10px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .axis-label.first { transform: none; }
+  .axis-label.last { transform: translateX(-100%); }
+  @media (max-height: 620px) {
+    section { padding: 8px; }
+    section > .mb-3 { margin-bottom: 8px; }
+    .axis-scale { height: 24px; }
+  }
+</style>
 
 

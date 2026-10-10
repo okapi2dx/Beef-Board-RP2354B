@@ -79,7 +79,17 @@ int main() {
  // A batch bigger than a non-power-of-two cycle must retain exact phase.
  milliseconds=0;SpinPattern bounded(1,1,7);bounded.update(-1);
  milliseconds=200;bounded.update(-1);assert(bounded.get()==2);
- puts("PASS AT90 lighting: LED counts 1..255, pixel bounds, motion/hue wrap and stable rainbow brightness");
+ for(unsigned speed=1;speed<=5;speed++) {
+  milliseconds=0;SpinPattern spin(50,25,12);
+  spin.update(0,speed);unsigned first=spin.get();
+  unsigned duration=150/speed;
+  milliseconds=duration-1;spin.update(0,speed);assert(spin.get()==first);
+  milliseconds=duration;spin.update(0,speed);assert(spin.get()==(first+1)%12);
+  milliseconds=0;SpinPattern active(50,25,12);
+  active.update(-1,speed);first=active.get();duration=75/speed;
+  milliseconds=duration;active.update(-1,speed);assert(active.get()==(first+11)%12);
+ }
+ puts("PASS AT90 lighting: LED counts, wrap, rainbow brightness and five spin speeds in both states");
 }
 '''
 with tempfile.TemporaryDirectory(prefix='beef-at90-lighting-') as directory:

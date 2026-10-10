@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HeadingIcon from '$lib/HeadingIcon.svelte';
 	import { readDiagnostics, parseDiagnostics, ReportId, type Diagnostics } from '$lib/types/hid';
 	import { appState } from '$lib/types/state.svelte';
 	import { isRp2354bBoard } from '$lib/types/board';
@@ -190,7 +191,7 @@
 
 <section aria-label={tr('コントローラーモニター', 'Controller Monitor')}>
 	<div class="monitor-heading">
-		<strong>{tr('コントローラーモニター', 'Controller Monitor')}</strong><span
+		<strong class="icon-panel-heading"><HeadingIcon kind="monitor" />{tr('コントローラーモニター', 'Controller Monitor')}</strong><span
 			class="text-muted-foreground text-sm"
 			>{config.version < 24
 				? tr('対応ファームウェアへ更新してください', 'Update firmware to enable monitoring')

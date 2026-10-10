@@ -7,9 +7,10 @@
 
 	interface Props {
 		hsv: Hsv;
+		disabled?: boolean;
 	}
 
-	let { hsv = $bindable() }: Props = $props();
+	let { hsv = $bindable(), disabled = false }: Props = $props();
 
 	let hsva = $state({
 		h: hsv.h,
@@ -41,10 +42,16 @@
 	class:cp-dark={mode.current === 'dark'}
 	role="none"
 >
-	<ColorPicker position="responsive" isAlpha={false} bind:hsv={hsva} onInput={colorChanged} />
+	{#if disabled}
+		<button type="button" disabled class="disabled-picker" data-testid="color-picker-disabled"><span class="disabled-swatch"></span>Choose a color</button>
+	{:else}
+		<ColorPicker position="responsive" isAlpha={false} bind:hsv={hsva} onInput={colorChanged} />
+	{/if}
 </div>
 
 <style>
+	.disabled-picker { display: flex; align-items: center; gap: 8px; color: var(--muted-foreground); opacity: .55; cursor: not-allowed; padding: 0; }
+	.disabled-swatch { width: 24px; height: 24px; border-radius: 50%; background: var(--muted-foreground); }
 	.cp-dark {
 		/* Comes from the dark class in app.css */
 		--cp-bg-color: hsl(222.2 84% 4.9%);

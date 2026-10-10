@@ -122,7 +122,7 @@ export class Config {
   iidx_effectors_debounce = $state(0);
   sdvx_buttons_debounce = $state(0);
   led_refresh = $state(0);
-  rainbow_spin_speed = $state(1);
+  rainbow_spin_speed = $state(3);
   tt_leds = $state(24);
   bar_leds = $state(16);
   legacy_phoenixwan_bar_count = $state(16);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HelpText from '$lib/HelpText.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Command, sendCommand } from '$lib/types/hid';
 	import { appState } from '$lib/types/state.svelte';
@@ -39,10 +40,11 @@
 	}
 </script>
 
-<div class="mb-4 space-y-3 rounded-md border p-3">
-	<p class="text-sm text-muted-foreground">
-		{tr('調整できない項目はグレーアウトします。「−／＋」で1段階ずつ相対調整します。', 'Controls unavailable for the selected mode are grayed out. Use −/+ to make relative adjustments one step at a time.')}
-	</p>
+<div class="phoenixwan-color-controls">
+  <div class="phoenixwan-color-help"><span>{tr('色の調整', 'Color adjustments')}</span><HelpText wrap>
+    <p>{tr('「−／＋」で1段階ずつ調整します。', 'Use −/+ to adjust one step at a time.')}</p>
+    <p>{tr('調整できない項目はグレーアウトします。', 'Unavailable controls are grayed out.')}</p>
+  </HelpText></div>
 	{#each [
 		{ key: 'hue', label: tr('色相', 'Hue') },
 		{ key: 'saturation', label: tr('彩度', 'Saturation') },
@@ -58,3 +60,11 @@
 			</div>
 	{/each}
 </div>
+
+<style>
+ .phoenixwan-color-controls { display: grid; gap: 8px; margin-bottom: 12px; }
+ .phoenixwan-color-help { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground); }
+ @media (max-height: 650px) {
+  .phoenixwan-color-controls { gap: 5px; margin-bottom: 8px; }
+ }
+</style>

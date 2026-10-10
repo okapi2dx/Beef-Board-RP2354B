@@ -37,6 +37,7 @@ with tempfile.TemporaryDirectory(prefix="beef-tests-") as directory:
     protocol_source = re.sub(r'^#include "(?:pico/[^\"]+|hardware/[^\"]+|tusb.h)"\s*$', '', protocol_source, flags=re.M)
     (temp / "protocol_under_test.c").write_text(protocol_source, encoding="utf-8")
     for name, sources in [
+        ("color_change", [tests / "color_change_test.c"]),
         ("button_debounce", [tests / "button_debounce_test.c"]),
         ("button_chatter", [tests / "button_chatter_test.c"]),
         ("protocol_stream", [tests / "protocol_stream_test.c"]),

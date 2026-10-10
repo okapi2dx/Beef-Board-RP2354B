@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HeadingIcon from '$lib/HeadingIcon.svelte';
   import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import * as AlertDialog from '$lib/components/ui/alert-dialog';
@@ -65,7 +66,7 @@
 </script>
 
 <div class="space-y-5">
-  <h2 class="text-xl font-bold">{tr('ファームウェア書き込み（beef-tool方式）', 'Firmware Flashing (beef-tool method)')}</h2>
+  <h2 class="icon-panel-heading text-xl font-bold"><HeadingIcon kind="firmware" />{tr('ファームウェア書き込み（beef-tool方式）', 'Firmware Flashing (beef-tool method)')}</h2>
   <p>{tr('旧beef-toolと同じ書き込みツールを内蔵しています。書き込み成功後は通常モードへ自動で再起動・再接続します。', 'The app includes the same flashing tool as beef-tool and automatically restarts and reconnects the board in normal mode after a successful flash.')}</p>
   <div class="space-y-2 settings-group">
     <h3 class="font-semibold">{tr('1. ファームウェアを選択', '1. Select firmware')}</h3>
