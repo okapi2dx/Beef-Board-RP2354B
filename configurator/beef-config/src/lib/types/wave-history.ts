@@ -27,3 +27,21 @@ export class WaveClock {
 		return this.virtualNow;
 	}
 }
+
+// USB receipt times can move between reports. Within one operation, the
+// firmware's cumulative edge intervals must define both logs and waveforms.
+export class WavePhaseClock {
+	private starts = Array<number | undefined>(7).fill(undefined);
+
+	reset(): void { this.starts.fill(undefined); }
+
+	shift(delta: number): void {
+		this.starts = this.starts.map(start => start === undefined ? undefined : start + delta);
+	}
+
+	record(button: number, phaseStart: boolean, elapsed: number | undefined, estimated: number): number {
+		if (phaseStart) this.starts[button] = estimated;
+		const start = this.starts[button];
+		return start !== undefined && elapsed !== undefined ? start + elapsed / 10 : estimated;
+	}
+}
