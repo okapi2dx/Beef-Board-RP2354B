@@ -268,8 +268,11 @@ export async function waitForReconnection(
     }
     if (selectedDevice) {
       appState.device = selectedDevice;
-      appState.boardInfo = await readBoardInfo(selectedDevice);
+      appState.boardInfo = null;
       navigator.hid.addEventListener('disconnect', onDisconnect);
+      const boardInfo = await readBoardInfo(selectedDevice);
+      if (appState.device !== selectedDevice) continue;
+      appState.boardInfo = boardInfo;
       appState.error = undefined;
       return;
     }

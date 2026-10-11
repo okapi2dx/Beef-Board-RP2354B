@@ -183,6 +183,21 @@ try {
  assert.equal(parseChatterCounts(new DataView(paddedCounterBytes.buffer)).edges[0],1234);
  assert.equal(parseChatterCounts(new DataView(paddedCounterBytes.buffer)).detected[0],12);
  assert.throws(()=>parseChatterCounts(new DataView(new Uint8Array(27).buffer)));
+ // Removal during the final board report must retry rather than return a
+ // disconnected handle as a successful reconnection.
+ let removalListener, boardReads=0;
+ const disappearingDevice={...defaultDevice,receiveFeatureReport:async id=>{
+  if(id===6 && ++boardReads===2) await removalListener({device:disappearingDevice});
+  return new DataView((id===6?info:new Uint8Array(138)).buffer);
+ }};
+ const survivingDevice={...defaultDevice};
+ Object.defineProperty(globalThis,'navigator',{configurable:true,value:{hid:{
+  getDevices:async()=>boardReads>=2?[survivingDevice]:[disappearingDevice],
+  addEventListener:(_,listener)=>{removalListener=listener;}
+ }}});
+ globalThis.window={};
+ await waitForReconnection(5000, {vendorId:0xfeed,productId:0x0000});
+ assert.equal(state.device,survivingDevice,'Reconnect must retry after removal during board detection');
  console.log('PASS: delayed USB identity permission/reconnect; diagnostic/version layouts; legacy LED telemetry');
 } finally {
  Date.now=originalNow;globalThis.setTimeout=originalTimer;globalThis.window=originalWindow;

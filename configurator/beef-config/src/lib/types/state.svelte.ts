@@ -37,10 +37,15 @@ export async function onDisconnect(event?: HIDConnectionEvent): Promise<void> {
 
 async function finishConnection(device: HIDDevice | null): Promise<void> {
   appState.device = device;
-  appState.boardInfo = device ? await readBoardInfo(device) : null;
+  appState.boardInfo = null;
   if (!device) return;
-  appState.dfuReconnectAvailable = false;
+  // Watch removal before awaiting USB reports; a late result must not restore
+  // the board information after disconnect or overwrite a new connection.
   navigator.hid.addEventListener('disconnect', onDisconnect);
+  const boardInfo = await readBoardInfo(device);
+  if (appState.device !== device) return;
+  appState.boardInfo = boardInfo;
+  appState.dfuReconnectAvailable = false;
   appState.error = undefined;
 }
 

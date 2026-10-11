@@ -9,6 +9,7 @@
 	import HelpText from '$lib/HelpText.svelte';
 	import { Switch as UiSwitch } from '$lib/components/ui/switch';
 	import { diagnosticEventSlots } from '$lib/types/chatter-events';
+	import { ChatterAutoTuner } from '$lib/types/chatter-auto';
 	import { WaveClock } from '$lib/types/wave-history';
 	import { replayDebounce } from '$lib/types/wave-debounce';
 	import { measureWaveInterval } from '$lib/types/wave-measure';
@@ -481,6 +482,7 @@
 		const lastEdgeAt = Array(7).fill(0) as number[];
 		const lastPhase = Array<'press' | 'release' | undefined>(7).fill(undefined);
 		const phaseElapsed = Array(7).fill(0) as number[];
+		const autoTuner = new ChatterAutoTuner();
 		edgeEvents = [];
 		resetWaveHistory();
 		if (config.version < 41) return;
@@ -488,6 +490,7 @@
 			lastEdgeAt.fill(0);
 			lastPhase.fill(undefined);
 			phaseElapsed.fill(0);
+			autoTuner.reset();
 		};
 		resetDiagnostics = resetStream;
 
@@ -576,8 +579,10 @@
 				rawSamples.push({ timestamp: waveTimestamp, buttonIndex, pressed });
 				events.push({ id, timestamp, waveTimestamp, button: labels[buttonIndex], buttonIndex, pressed, phase, interval, threshold, chatter, candidate, phaseElapsed: lastPhase[buttonIndex] === phase ? phaseElapsed[buttonIndex] : undefined, logVisible: true });
 
-				if (autoSetting && candidate && lastPhase[buttonIndex] === phase) {
-					setButtonDebounce(buttonIndex, Math.min(160, Math.max(threshold, phaseElapsed[buttonIndex] + 1)), phase);
+				const recommendation = autoTuner.observe(buttonIndex, phaseStart, candidate,
+					lastPhase[buttonIndex] === phase ? phaseElapsed[buttonIndex] : undefined, threshold);
+				if (autoSetting && recommendation !== undefined) {
+					setButtonDebounce(buttonIndex, recommendation, phase);
 				}
 			}
 			// A complete short burst can arrive while the idle-compressed clock is
@@ -799,7 +804,7 @@
 		</div>
 
 		<aside class="panel settings-panel" aria-label={tr('チャタリング防止設定', 'Debounce settings')}>
-			<div class="toggle-row"><span class="toggle-label">{tr('自動設定', 'Auto setting')} <HelpText label={tr('自動設定', 'Auto setting')} side="left" sideOffset={8}><p>{tr('押下時・解放時の両方の揺れを検知すると、', 'When a bounce is found on press or release,')}</p><p>{tr('それぞれの操作開始から揺れまでの時間+0.1msに設定します。', 'set that phase to time since its start +0.1 ms.')}</p></HelpText></span><span class="flex shrink-0 items-center gap-2"><span aria-hidden="true" class="text-xs font-medium text-muted-foreground">{autoSetting ? 'ON' : 'OFF'}</span><UiSwitch aria-label={tr('自動設定', 'Auto setting')} bind:checked={autoSetting} /></span></div>
+			<div class="toggle-row"><span class="toggle-label">{tr('自動設定', 'Auto setting')} <HelpText label={tr('自動設定', 'Auto setting')} side="left" sideOffset={8}><p>{tr('押下時・解放時の揺れを検知すると、', 'When a bounce is found on press or release,')}</p><p>{tr('操作開始から元の状態に戻るまでの時間+0.1msに設定します。', 'set that phase to time until it returns to its original state +0.1 ms.')}</p></HelpText></span><span class="flex shrink-0 items-center gap-2"><span aria-hidden="true" class="text-xs font-medium text-muted-foreground">{autoSetting ? 'ON' : 'OFF'}</span><UiSwitch aria-label={tr('自動設定', 'Auto setting')} bind:checked={autoSetting} /></span></div>
 			<div class="toggle-row bulk-row"><span class="toggle-label">{tr('ボタン一括設定', 'Apply to all buttons')} <HelpText label={tr('ボタン一括設定', 'Apply to all buttons')} side="left" sideOffset={8}><p>{tr('ONにすると、選択中モードの値を', 'When on, changing a slider applies its value')}</p><p>{tr('B1〜B7へ一括適用します。', 'to B1–B7 in the selected mode.')}</p></HelpText></span><span class="flex shrink-0 items-center gap-2"><span aria-hidden="true" class="text-xs font-medium text-muted-foreground">{bulkSetting ? 'ON' : 'OFF'}</span><UiSwitch aria-label={tr('ボタン一括設定', 'Apply to all buttons')} checked={bulkSetting} onCheckedChange={setBulkSetting} /></span></div>
 			<div class="mode-row" role="group" aria-label={tr('チャタリング設定モード', 'Chatter setting mode')}>
 				<button type="button" class:mode-selected={edgeMode === 'press'} aria-pressed={edgeMode === 'press'} onclick={() => setEdgeMode('press')}>{tr('押下時', 'On press')}</button>
