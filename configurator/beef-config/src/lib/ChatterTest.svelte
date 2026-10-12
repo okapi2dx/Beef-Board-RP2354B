@@ -1,6 +1,6 @@
 <script lang="ts">
 	import HeadingIcon from '$lib/HeadingIcon.svelte';
-	import { tick } from 'svelte';
+	import { tick, onMount } from 'svelte';
 	import { parseChatterCounts, parseDiagnostics, ReportId, type ChatterCounts, type Diagnostics } from '$lib/types/hid';
 	import type { Config } from '$lib/types/config.svelte';
 	import { appState } from '$lib/types/state.svelte';
@@ -20,10 +20,29 @@
 	let signalSamples = $state<{ timestamp: number; buttonIndex: number; pressed: boolean }[]>([]);
 	let outputSamples = $state<typeof signalSamples>([]);
 	let waveMode = $state<'before' | 'after'>('before');
+	let windowVisible = $state(true);
+	const waveformRunning = $derived(windowVisible);
+	onMount(() => {
+		const native = window.beefNative;
+		if (native?.onWindowVisibility && native.getWindowVisibility) {
+			let disposed = false;
+			let receivedEvent = false;
+			const unsubscribe = native.onWindowVisibility((visible) => { receivedEvent = true; windowVisible = visible; });
+			void native.getWindowVisibility().then((visible) => {
+				if (!disposed && !receivedEvent) windowVisible = visible;
+			}).catch(() => { /* Keep the current state if the initial query fails. */ });
+			return () => { disposed = true; unsubscribe(); };
+		}
+		const updateVisibility = () => { windowVisible = document.visibilityState === 'visible'; };
+		updateVisibility();
+		document.addEventListener('visibilitychange', updateVisibility);
+		return () => document.removeEventListener('visibilitychange', updateVisibility);
+	});
 	let waveGaps = $state<{ start: number; end: number }[]>([]);
 	let buttonEdges = $state<number[]>(Array(7).fill(0));
 	let chatterCounts = $state<number[]>(Array(7).fill(0));
-	let edgeEvents = $state<{ id: number; timestamp: number; waveTimestamp: number; button: string; buttonIndex: number; pressed: boolean; phase: 'press' | 'release'; interval: number; threshold: number; chatter: boolean; candidate: boolean; phaseElapsed: number | undefined; logVisible: boolean }[]>([]);
+	// Entries are immutable after publication; only replacing the array is reactive.
+	let edgeEvents = $state.raw<{ id: number; timestamp: number; waveTimestamp: number; button: string; buttonIndex: number; pressed: boolean; phase: 'press' | 'release'; interval: number; threshold: number; chatter: boolean; candidate: boolean; phaseElapsed: number | undefined; logVisible: boolean }[]>([]);
 	let edgeMode = $state<'press' | 'release'>('press');
 	let logFilter = $state<'all' | 'press' | 'release'>('all');
 	let autoSetting = $state(false);
@@ -60,6 +79,12 @@
 	const detectedCount = $derived(chatterCounts.reduce((sum, count) => sum + count, 0));
 	const detectionRate = $derived(totalEdges ? detectedCount / totalEdges * 100 : 0);
 	const percent = (detected: number, edges: number) => (edges ? detected / edges * 100 : 0).toFixed(1);
+	const currentThresholds = $derived({
+		press: Array.from(config.iidx_button_debounce),
+		release: Array.from(config.sdvx_keys.button_release_debounce)
+	});
+	// Weak keys release results automatically when old logs/details are discarded.
+	const evaluatedEntries = new WeakMap<(typeof edgeEvents)[number], (typeof edgeEvents)[number]>();
 	const currentLog = $derived(edgeEvents.map(withCurrentSetting));
 	const visibleLog = $derived(currentLog.filter((entry) => entry.logVisible && (logFilter === 'all' || entry.pressed === (logFilter === 'press'))));
 	const oldestWaveTime = $derived(edgeEvents.at(-1)?.waveTimestamp);
@@ -71,7 +96,7 @@
 	const lastRenderedLog = $derived(Math.min(visibleLog.length, Math.ceil((logScrollTop + logViewportHeight) / logRowHeight) + logOverscan));
 	const renderedLog = $derived(visibleLog.slice(firstRenderedLog, lastRenderedLog));
 	const selectedLog = $derived(detailView ? withCurrentSetting(detailView.entry) : currentLog.find((entry) => entry.id === selectedLogId));
-	const waveMarkers = $derived((detailView?.entries ?? edgeEvents).map(withCurrentSetting).filter((entry) => entry.chatter)
+	const waveMarkers = $derived((detailView ? detailView.entries.map(withCurrentSetting) : currentLog).filter((entry) => entry.chatter)
 		.map((entry) => ({ id: entry.id, timestamp: entry.waveTimestamp, buttonIndex: entry.buttonIndex, phase: entry.phase, pressed: entry.pressed })));
 	const displayedWindowMs = $derived(detailView ? detailWindowMs : waveWindowMs);
 	const displayedEnd = $derived(detailView ? detailView.centerTimestamp + detailWindowMs / 2 : viewEnd);
@@ -96,8 +121,12 @@
 	const logThumbTop = $derived(logScrollExtent ? logScrollTop / logScrollExtent * (logViewportHeight - logThumbHeight) : 0);
 
 	function withCurrentSetting(entry: (typeof edgeEvents)[number]): (typeof edgeEvents)[number] {
-		const threshold = entry.phase === 'press' ? config.iidx_button_debounce[entry.buttonIndex] : config.sdvx_keys.button_release_debounce[entry.buttonIndex];
-		return { ...entry, threshold, chatter: entry.candidate && threshold > 0 && entry.phaseElapsed !== undefined && entry.phaseElapsed < threshold };
+		const threshold = currentThresholds[entry.phase][entry.buttonIndex];
+		const cached = evaluatedEntries.get(entry);
+		if (cached?.threshold === threshold) return cached;
+		const evaluated = { ...entry, threshold, chatter: entry.candidate && threshold > 0 && entry.phaseElapsed !== undefined && entry.phaseElapsed < threshold };
+		evaluatedEntries.set(entry, evaluated);
+		return evaluated;
 	}
 
 	function updateLogScroll(): void {
@@ -456,7 +485,7 @@
 	}));
 
 	$effect(() => {
-		if (!active) return;
+		if (!active || !waveformRunning) return;
 		let frame = 0;
 		let running = true;
 		const animate = () => {
@@ -697,6 +726,7 @@
 {/if}
 </div>
 </div>
+				{#if waveformRunning}
 <div class="wave-legend"><span class="legend-press">{tr('押下中', 'Pressed')}</span><span class="legend-release">{tr('解放中', 'Released')}</span><span class="legend-chatter">{tr('チャタリング', 'Chatter')}</span>{#if displayedGaps.length}<span class="wave-note missing-note">{tr('入力イベントの欠落あり・再現できない区間', 'Missing input events: this range cannot be replayed')}</span>{/if}</div>
 				<svg class="waveform" class:detail-waveform={detailView !== undefined} viewBox="0 0 700 320" preserveAspectRatio="none" role="button" tabindex="0" class:wave-dragging={waveDragging} onpointerdown={startWaveDrag} onpointermove={moveWaveDrag} onpointerup={stopWaveDrag} onpointercancel={stopWaveDrag} onlostpointercapture={stopWaveDrag} onkeydown={focusWaveFromKeyboard} aria-label={detailView ? `${detailView.entry.button} ${tr('詳細波形・50ms', 'detail waveform, 50ms')}` : tr('ボタン入力波形', 'Button input waveform')} data-testid="button-waveform">
 					{#if detailView}
@@ -776,13 +806,16 @@
 				<div class="wave-history">
 					<input type="range" min="0" max={maxBackMs} step="any" value={viewBackMs} oninput={moveWaveHistory} aria-label={tr('波形履歴', 'Waveform history')} title={tr('左へ動かすと保持中の入力ログまでさかのぼります。右端で最新の波形に戻ります。', 'Move left to review the retained input log. Move to the right edge to follow live input.')} data-testid="wave-history" />
 				</div>
-				<div class="summary-row">
+				{/if}
+				</div>
+				{:else}
+					<div class="wave-disabled" role="status">{tr('収納中は波形を停止しています。入力ログの記録は継続しています。', 'Waveform is paused while hidden. Input logging continues.')}</div>
+				{/if}
+				{#if !detailView}<div class="summary-row">
 					<div class="summary total"><span>{tr('総エッジ数', 'Total edges')}</span><strong>{totalEdges}</strong></div>
 					<div class="summary chatter"><span>{tr('検知数', 'Detected')}</span><strong>{detectedCount}</strong></div>
 					<div class="summary percent"><span>{tr('割合', 'Percent')}</span><strong>{detectionRate.toFixed(1)}%</strong></div>
-				</div>
-				{/if}
-				</div>
+				</div>{/if}
 			</section>
 			<section class="panel log-panel" aria-label={tr('入力ログ', 'Input log')}>
 				<div class="panel-heading">
@@ -867,7 +900,8 @@
 	.measurement-info button { margin-left:auto; border:1px solid var(--border); border-radius:4px; padding:1px 5px; background:var(--card); color:var(--foreground); cursor:pointer; }
 	.measurement-info button:disabled { opacity:.4; cursor:default; }
 	.detail-edge-hit { fill:transparent; cursor:pointer; }
-	.wave-footer { flex:0 0 72px; height:72px; display:flex; flex-direction:column; justify-content:space-between; gap:3px; padding-top:3px; }
+	.wave-footer { flex:0 0 36px; height:36px; display:flex; flex-direction:column; justify-content:space-between; gap:3px; padding-top:3px; }
+	.wave-detail-panel .wave-footer { flex-basis:72px; height:72px; }
 	.wave-legend .legend-press::before { background:var(--primary); }
 	.wave-detail-panel .legend-release::before { background:var(--primary); }
 	.wave-legend .legend-chatter::before { background:#d97706; }
@@ -905,10 +939,11 @@
 	.selected-wave-edge { stroke:#facc15; stroke-width:3; stroke-dasharray:4 3; }
 	.time-label { fill:var(--muted-foreground); font-size:18px; }
 	.unavailable-wave { fill:var(--card); opacity:.9; }
-	.wave-heading { flex-wrap:nowrap; gap:4px; }
-	.wave-title { display:flex; align-items:center; gap:6px; min-width:0; overflow:hidden; }
+	.wave-heading { flex-wrap:nowrap; gap:6px; }
+	.wave-title { display:flex; align-items:center; gap:6px; min-width:0; overflow:hidden; flex:1; }
 	.wave-title h2 { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-	.wave-actions { display:flex; align-items:center; gap:6px; margin-left:auto; flex-shrink:0; }
+	.wave-actions { display:flex; align-items:center; justify-content:flex-end; gap:4px; margin-left:auto; flex-shrink:0; }
+	.wave-disabled { display:flex; flex:1; min-height:150px; align-items:center; justify-content:center; padding:16px; color:var(--muted-foreground); font-size:.8rem; text-align:center; }
 	.wave-mode { display:flex; gap:4px; }
 	.wave-mode button { border:1px solid var(--border); border-radius:5px; padding:3px 6px; background:var(--card); color:var(--foreground); font-size:.7rem; cursor:pointer; }
 	.wave-mode button.wave-mode-selected { border-color:#0369a1; background:#0369a1; color:#fff; }
@@ -920,7 +955,7 @@
 	.detail-chatter { color:#c2410c; font-weight:700; }
 	.wave-history { margin:-2px 2px 6px 48px; height:18px; display:flex; align-items:center; }
 	.wave-history input { width:100%; margin:0; cursor:pointer; accent-color:#22d3ee; direction:rtl; }
-	.summary-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+	.summary-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; flex-shrink:0; margin-top:4px; }
 	.summary { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:4px; min-width:0; overflow:hidden; border:1px solid #cbd5e1; border-radius:9px; padding:6px 7px; background:#ffffff; }
 	.summary span { min-width:0; color:#475569; font-size:.69rem; white-space:nowrap; }
 	.summary strong { min-width:0; max-width:100%; font-size:1rem; color:#0284c7; font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right; }

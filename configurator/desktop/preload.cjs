@@ -1,5 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('beefNative', {
+  getWindowVisibility: () => ipcRenderer.invoke('beef:window-visible'),
+  onWindowVisibility: callback => {
+    const listener = (_event, visible) => callback(visible);
+    ipcRenderer.on('beef:window-visibility', listener);
+    return () => ipcRenderer.removeListener('beef:window-visibility', listener);
+  },
   selectFirmware: () => ipcRenderer.invoke('beef:select-firmware'),
   flashFirmware: () => ipcRenderer.invoke('beef:flash-firmware'),
   restartDfu: () => ipcRenderer.invoke('beef:restart-dfu'),

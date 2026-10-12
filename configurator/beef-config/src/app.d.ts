@@ -3,6 +3,8 @@
 declare global {
 	interface Window {
 		beefNative?: {
+			getWindowVisibility?: () => Promise<boolean>;
+			onWindowVisibility?: (callback: (visible: boolean) => void) => () => void;
 			selectFirmware(): Promise<{ name: string; bytes: number; commitHash: string | null; version: string | null } | null>;
 			flashFirmware(): Promise<{
 				success: boolean;

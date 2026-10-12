@@ -9,12 +9,13 @@ const { createFlasher } = require('./native-flash.cjs');
 const { checkForUpdate, checkForFirmwareUpdate } = require('./update-check.cjs');
 
 const startupLogPath = path.join(os.tmpdir(), 'Beef Board Configurator-startup.log');
+let startupLogEnabled = false;
 function startupLog(message) {
+  if (!startupLogEnabled) return;
   try {
     fs.appendFileSync(startupLogPath, `[${new Date().toISOString()}] ${message}\n`, 'utf8');
   } catch { /* Logging must never block startup. */ }
 }
-startupLog(`process start pid=${process.pid} packaged=${app.isPackaged} exec=${process.execPath}`);
 process.on('uncaughtException', error => {
   startupLog(`uncaughtException: ${error?.stack || error}`);
   try { dialog.showErrorBox('起動エラー', String(error)); } catch { /* best effort */ }
@@ -44,6 +45,12 @@ function activateMainWindow() {
 
 if (process.env.BEEF_TEST_USER_DATA) app.setPath('userData', process.env.BEEF_TEST_USER_DATA);
 const hasInstanceLock = process.env.BEEF_TEST_USER_DATA ? true : app.requestSingleInstanceLock();
+if (hasInstanceLock) {
+  // Only the primary process starts a new log; secondary launches must not erase it.
+  try { fs.writeFileSync(startupLogPath, '', 'utf8'); } catch { /* Logging must never block startup. */ }
+  startupLogEnabled = true;
+  startupLog(`process start pid=${process.pid} packaged=${app.isPackaged} exec=${process.execPath}`);
+}
 startupLog(`single-instance lock=${hasInstanceLock}`);
 if (!hasInstanceLock) {
   // The primary instance receives the second-instance event and is responsible
@@ -117,6 +124,10 @@ async function start() {
   ipcMain.handle('beef:get-version', async event => {
     authorize(event);
     return app.getVersion();
+  });
+  ipcMain.handle('beef:window-visible', event => {
+    authorize(event);
+    return window.isVisible() && !window.isMinimized();
   });
   ipcMain.handle('beef:check-update', async event => {
     authorize(event);
@@ -252,6 +263,11 @@ async function start() {
   window.on('close', event => { if (flasher.busy) event.preventDefault(); });
   app.on('before-quit', event => { if (flasher.busy) event.preventDefault(); });
   window.removeMenu();
+  for (const eventName of ['show', 'hide', 'minimize', 'restore']) {
+    window.on(eventName, () => {
+      if (window && !window.isDestroyed()) window.webContents.send('beef:window-visibility', window.isVisible() && !window.isMinimized());
+    });
+  }
 
   const external = url => { if (url.startsWith('https://github.com/') || url.startsWith('https://zadig.akeo.ie/')) void shell.openExternal(url); };
   window.webContents.setWindowOpenHandler(({ url }) => { external(url); return { action: 'deny' }; });
@@ -266,4 +282,5 @@ async function start() {
   startupLog('UI loaded');
   clearStartupShowTimer();
   activateMainWindow();
+
 }
